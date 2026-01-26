@@ -8,7 +8,7 @@ use PDO;
 class Service
 {
     /**
-     * Get all active services from DB
+     * Lấy tất cả dịch vụ hoạt động từ CSDL
      * @return array<int,array>
      */
     public static function all(): array
@@ -21,7 +21,7 @@ class Service
     }
 
     /**
-     * Get a service by ID
+     * Lấy dịch vụ theo ID
      */
     public static function getById(int $id): ?array
     {
@@ -35,7 +35,7 @@ class Service
     }
 
     /**
-     * Admin: list all services (active and inactive)
+     * Admin: liệt kê tất cả dịch vụ (hoạt động và bỏ hoạt động)
      */
     public static function listAllAdmin(): array
     {
@@ -44,8 +44,8 @@ class Service
     }
 
     /**
-     * Create a new service
-     * @return int inserted ID
+     * Tạo dịch vụ mới
+     * @return int ID được chèn vào
      */
     public static function create(array $data): int
     {
@@ -67,7 +67,7 @@ class Service
     }
 
     /**
-     * Update a service's fields
+     * Cập nhật các trường của dịch vụ
      */
     public static function update(int $id, array $data): bool
     {
@@ -96,7 +96,7 @@ class Service
     }
 
     /**
-     * Toggle active flag
+     * Bật/tắt cờtoggle cờ hoạt động
      */
     public static function toggleActive(int $id): bool
     {

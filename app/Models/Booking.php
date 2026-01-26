@@ -8,8 +8,8 @@ use PDO;
 class Booking
 {
     /**
-     * Create a new booking in DB
-     * @return int Inserted booking ID
+     * Tạo đơn đặt lịch mới trong CSDL
+     * @return int ID đặt lịch được chèn
      */
     public static function create(int $userId, int $serviceId, string $date, string $time, string $location, ?string $description): int
     {
@@ -29,7 +29,7 @@ class Booking
     }
 
     /**
-     * Get all bookings (with user/service names)
+     * Lấy tất cả đơn đặt (có tên người dùng/dịch vụ)
      */
     public static function getAll(): array
     {
@@ -42,7 +42,7 @@ class Booking
         return $stmt->fetchAll() ?: [];
     }
 
-    /** Get booking by ID */
+    /** Lấy đơn đặt theo ID */
     public static function getById(int $id): ?array
     {
         $stmt = DB::pdo()->prepare("SELECT * FROM bookings WHERE id = :id LIMIT 1");
@@ -51,7 +51,7 @@ class Booking
         return $row ?: null;
     }
 
-    /** Get bookings by user ID */
+    /** Lấy các đơn đặt theo ID người dùng */
     public static function getByUserId(int $userId): array
     {
         $stmt = DB::pdo()->prepare("SELECT * FROM bookings WHERE user_id = :uid ORDER BY created_at DESC");
@@ -59,14 +59,14 @@ class Booking
         return $stmt->fetchAll() ?: [];
     }
 
-    /** Update booking status */
+    /** Cập nhật trạng thái đơn đặt */
     public static function updateStatus(int $id, string $status): bool
     {
         $stmt = DB::pdo()->prepare("UPDATE bookings SET status = :st, updated_at = NOW() WHERE id = :id");
         return $stmt->execute(['st' => $status, 'id' => $id]);
     }
 
-    /** Assign a worker to a booking */
+    /** Gắn công nhân vào đơn đặt */
     public static function assignWorker(int $id, int $workerId): bool
     {
         $stmt = DB::pdo()->prepare("UPDATE bookings SET assigned_worker_id = :wid, assigned_at = NOW(), updated_at = NOW() WHERE id = :id");

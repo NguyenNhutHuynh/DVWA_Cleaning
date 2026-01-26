@@ -1,6 +1,7 @@
 <?php
 use App\Core\Auth;
 use App\Core\View;
+use App\Models\User;
 ?>
 <nav class="dashboard" aria-label="Điều hướng chính">
   <div class="dashboard-logo">
@@ -19,7 +20,7 @@ use App\Core\View;
   </div>
   <div class="functions">
     <?php if (Auth::id()): ?>
-      <?php $role = Auth::role(); ?>
+      <?php $role = Auth::role(); $user = User::findById((int)Auth::id()); $initial = strtoupper(substr($user['name'] ?? 'U', 0, 1)); ?>
       <?php if ($role === 'admin'): ?>
         <!-- <a href="/admin/dashboard" class="function-btn">Admin</a> -->
         <a href="/admin/services" class="function-btn">Dịch vụ</a>
@@ -27,20 +28,33 @@ use App\Core\View;
         <a href="/admin/moderation" class="function-btn">Kiểm duyệt</a>
         <a href="/admin/users" class="function-btn">Người dùng</a>
         <a href="/admin/stats" class="function-btn">Thống kê</a>
-        <a href="/logout" class="function-btn">Đăng xuất</a>
       <?php elseif ($role === 'worker'): ?>
         <!-- <a href="/worker/dashboard" class="function-btn">Worker</a> -->
         <a href="/worker/jobs" class="function-btn">Nhận việc</a>
         <a href="/worker/progress" class="function-btn">Tiến độ</a>
         <a href="/worker/schedule" class="function-btn">Lịch làm</a>
-        <a href="/logout" class="function-btn">Đăng xuất</a>
       <?php else: ?>
         <!-- <a href="/customer/dashboard" class="function-btn">Khách hàng</a> -->
         <a href="/book" class="function-btn">Đặt lịch</a>
         <a href="/bookings" class="function-btn">Lịch đã đặt</a>
         <a href="/services" class="function-btn">Dịch vụ</a>
-        <a href="/logout" class="function-btn">Đăng xuất</a>
       <?php endif; ?>
+      <div class="user-menu">
+        <button class="avatar-btn" id="userMenuBtn" aria-haspopup="true" aria-expanded="false" title="Quản lý tài khoản">
+          <?php if (!empty($user['avatar'])): ?>
+            <img src="<?= View::e($user['avatar']) ?>" alt="Avatar">
+          <?php else: ?>
+            <?= View::e($initial) ?>
+          <?php endif; ?>
+        </button>
+        <div class="user-dropdown" id="userDropdown" role="menu">
+          <div class="user-header">Chào <?= View::e($user['name'] ?? '') ?>,</div>
+          <a href="/account" role="menuitem">Thông tin cá nhân</a>
+          <a href="/account/edit" role="menuitem">Cập nhật thông tin</a>
+          <a href="/account/change-password" role="menuitem">Đổi mật khẩu</a>
+          <a href="/logout" role="menuitem">Đăng xuất</a>
+        </div>
+      </div>
     <?php else: ?>
       <a href="/services" class="function-btn">Dịch vụ</a>
       <a href="/pricing" class="function-btn">Bảng giá</a>
@@ -50,3 +64,19 @@ use App\Core\View;
     <?php endif; ?>
   </div>
 </nav>
+<script>
+  (function(){
+    const btn = document.getElementById('userMenuBtn');
+    const dd = document.getElementById('userDropdown');
+    if (!btn || !dd) return;
+    btn.addEventListener('click', function(){
+      const open = dd.classList.toggle('open');
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+    document.addEventListener('click', function(e){
+      if (!dd.classList.contains('open')) return;
+      const within = dd.contains(e.target) || btn.contains(e.target);
+      if (!within) dd.classList.remove('open');
+    });
+  })();
+</script>

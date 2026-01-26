@@ -39,7 +39,7 @@ final class AdminController {
   public function bookings(): void {
     $this->guard();
     $bookings = Booking::getAll();
-    // List active workers for assignment
+    // Liệt kê các công nhân hoạt động để phân công
     $allUsers = User::listAll();
     $workers = array_values(array_filter($allUsers, fn($u) => ($u['role'] ?? '') === 'worker' && ($u['approval_status'] ?? '') === 'active'));
     View::render('admin/bookings', [
@@ -64,6 +64,178 @@ final class AdminController {
       'pendingWorkers' => $pendingWorkers,
       'csrf' => Csrf::token(),
     ]);
+  }
+
+  public function userDetail(): void {
+    $this->guard();
+    $id = (int)($_GET['id'] ?? 0);
+    if ($id <= 0) { header('Location: /admin/users'); exit; }
+    $u = User::findById($id);
+    if (!$u) { header('Location: /admin/users'); exit; }
+    $approverName = null;
+    if (!empty($u['approved_by'])) {
+      $ap = User::findById((int)$u['approved_by']);
+      if ($ap) $approverName = $ap['name'] ?? null;
+    }
+    $u['approved_by_name'] = $approverName;
+    View::render('admin/user_detail', ['user' => $u, 'csrf' => Csrf::token()]);
+  }
+
+  /** Chi tiết JSON nhẹ nhòm cho hiển thị/modal đường dành */
+  public function userDetailJson(): void {
+    $this->guard();
+    header('Content-Type: application/json; charset=utf-8');
+    $id = (int)($_GET['id'] ?? 0);
+    if ($id <= 0) {
+      http_response_code(400);
+      echo json_encode(['error' => 'invalid_id'], JSON_UNESCAPED_UNICODE);
+      return;
+    }
+    $u = User::findById($id);
+    if (!$u) {
+      http_response_code(404);
+      echo json_encode(['error' => 'not_found'], JSON_UNESCAPED_UNICODE);
+      return;
+    }
+    // Chỉ kế khai các trường an toàn
+    $out = [
+      'id' => (int)$u['id'],
+      'name' => (string)($u['name'] ?? ''),
+      'email' => (string)($u['email'] ?? ''),
+      'phone' => $u['phone'] ?? null,
+      'address' => $u['address'] ?? null,
+      'avatar' => $u['avatar'] ?? null,
+      'role' => (string)($u['role'] ?? ''),
+      'approval_status' => (string)($u['approval_status'] ?? ''),
+      'approved_by' => $u['approved_by'] ?? null,
+      'approved_at' => $u['approved_at'] ?? null,
+      'reject_reason' => $u['reject_reason'] ?? null,
+    ];
+    if (!empty($u['approved_by'])) {
+      $ap = User::findById((int)$u['approved_by']);
+      if ($ap) $out['approved_by_name'] = $ap['name'] ?? null;
+    }
+    echo json_encode($out, JSON_UNESCAPED_UNICODE);
+  }
+
+  public function userUpdate(): void {
+    $this->guard();
+    if (!Csrf::verify($_POST['_csrf'] ?? null)) { http_response_code(419); echo 'CSRF token mismatch'; exit; }
+    $id = (int)($_POST['id'] ?? 0);
+    if ($id <= 0) { header('Location: /admin/users'); exit; }
+    $name = trim((string)($_POST['name'] ?? ''));
+    $email = trim((string)($_POST['email'] ?? ''));
+    $phone = trim((string)($_POST['phone'] ?? ''));
+    $address = trim((string)($_POST['address'] ?? ''));
+    if ($name === '' || $email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+      if (session_status() !== PHP_SESSION_ACTIVE) session_start();
+      $_SESSION['error'] = 'Tên và email hợp lệ là bắt buộc.';
+      header('Location: /admin/user?id=' . $id);
+      exit;
+    }
+    if ($phone !== '' && !preg_match('/^[0-9+\-\s]{6,20}$/', $phone)) {
+      if (session_status() !== PHP_SESSION_ACTIVE) session_start();
+      $_SESSION['error'] = 'Số điện thoại không hợp lệ.';
+      header('Location: /admin/user?id=' . $id);
+      exit;
+    }
+    // Cập nhật thông tin cơ bản
+    $ok = User::updateInfo($id, $name, $email, $phone !== '' ? $phone : null, $address !== '' ? $address : null);
+    // Tải lên ảnh đại diện tùy chọn
+    $avatarChanged = false;
+    if (isset($_FILES['avatar']) && is_array($_FILES['avatar']) && ($_FILES['avatar']['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE) {
+      $file = $_FILES['avatar'];
+      if (($file['error'] ?? UPLOAD_ERR_OK) !== UPLOAD_ERR_OK) {
+        if (session_status() !== PHP_SESSION_ACTIVE) session_start();
+        $_SESSION['error'] = 'Tải lên ảnh đại diện thất bại.';
+        header('Location: /admin/user?id=' . $id);
+        exit;
+      }
+      if (($file['size'] ?? 0) > 2 * 1024 * 1024) {
+        if (session_status() !== PHP_SESSION_ACTIVE) session_start();
+        $_SESSION['error'] = 'Ảnh đại diện vượt quá 2MB.';
+        header('Location: /admin/user?id=' . $id);
+        exit;
+      }
+      $allowedExt = ['jpg','jpeg','png','gif','webp'];
+      $ext = strtolower(pathinfo((string)$file['name'], PATHINFO_EXTENSION));
+      if (!in_array($ext, $allowedExt, true)) {
+        $imgInfo = @getimagesize($file['tmp_name']);
+        $mime = is_array($imgInfo) && isset($imgInfo['mime']) ? strtolower($imgInfo['mime']) : '';
+        $mimeMap = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/gif' => 'gif', 'image/webp' => 'webp'];
+        if (isset($mimeMap[$mime])) { $ext = $mimeMap[$mime]; } else {
+          if (session_status() !== PHP_SESSION_ACTIVE) session_start();
+          $_SESSION['error'] = 'Ảnh đại diện không hợp lệ (chỉ jpg/png/gif/webp).';
+          header('Location: /admin/user?id=' . $id);
+          exit;
+        }
+      }
+      $root = dirname(__DIR__, 2);
+      $dir = $root . '/public/uploads/avatars';
+      if (!is_dir($dir)) { @mkdir($dir, 0777, true); }
+      $base = 'u' . $id . '_' . time() . '_' . bin2hex(random_bytes(4));
+      $safeFile = $base . '.' . $ext;
+      $dest = $dir . '/' . $safeFile;
+      if (!@move_uploaded_file($file['tmp_name'], $dest)) {
+        if (session_status() !== PHP_SESSION_ACTIVE) session_start();
+        $_SESSION['error'] = 'Không thể lưu ảnh đại diện.';
+        header('Location: /admin/user?id=' . $id);
+        exit;
+      }
+      $webPath = '/uploads/avatars/' . $safeFile;
+      $avatarChanged = User::updateAvatar($id, $webPath);
+    }
+    if (session_status() !== PHP_SESSION_ACTIVE) session_start();
+    if ($ok || $avatarChanged) {
+      $_SESSION['success'] = 'Đã cập nhật thông tin người dùng #' . $id . '.';
+    } else {
+      $_SESSION['error'] = 'Không có thay đổi hoặc cập nhật thất bại.';
+    }
+    header('Location: /admin/user?id=' . $id);
+    exit;
+  }
+
+  public function userLock(): void {
+    $this->guard();
+    if (!Csrf::verify($_POST['_csrf'] ?? null)) { http_response_code(419); echo 'CSRF token mismatch'; exit; }
+    $id = (int)($_POST['id'] ?? 0);
+    $reason = trim((string)($_POST['reason'] ?? ''));
+    if ($id <= 0) { header('Location: /admin/users'); exit; }
+    User::setStatusAndReason($id, 'locked', $reason !== '' ? $reason : null);
+    if (session_status() !== PHP_SESSION_ACTIVE) session_start();
+    $_SESSION['success'] = 'Đã khóa tài khoản #' . $id . '.';
+    header('Location: /admin/user?id=' . $id);
+    exit;
+  }
+
+  public function userUnlock(): void {
+    $this->guard();
+    if (!Csrf::verify($_POST['_csrf'] ?? null)) { http_response_code(419); echo 'CSRF token mismatch'; exit; }
+    $id = (int)($_POST['id'] ?? 0);
+    if ($id <= 0) { header('Location: /admin/users'); exit; }
+    User::setStatusAndReason($id, 'active', null);
+    if (session_status() !== PHP_SESSION_ACTIVE) session_start();
+    $_SESSION['success'] = 'Đã mở khóa tài khoản #' . $id . '.';
+    header('Location: /admin/user?id=' . $id);
+    exit;
+  }
+
+  public function userDelete(): void {
+    $this->guard();
+    if (!Csrf::verify($_POST['_csrf'] ?? null)) { http_response_code(419); echo 'CSRF token mismatch'; exit; }
+    $id = (int)($_POST['id'] ?? 0);
+    $reason = trim((string)($_POST['reason'] ?? ''));
+    if ($id <= 0) { header('Location: /admin/users'); exit; }
+    // Xóa mềm: đánh dấu là đã xóa và lưu lửa do
+    $ok = User::setStatusAndReason($id, 'deleted', $reason !== '' ? $reason : null);
+    if (session_status() !== PHP_SESSION_ACTIVE) session_start();
+    if ($ok) {
+      $_SESSION['success'] = 'Đã xóa người dùng #' . $id . ' thành công.';
+    } else {
+      $_SESSION['error'] = 'Không thể xóa người dùng #' . $id . '.';
+    }
+    header('Location: /admin/users');
+    exit;
   }
 
   public function stats(): void {
@@ -134,9 +306,9 @@ final class AdminController {
       'unit' => trim((string)($_POST['unit'] ?? '')),
       'minimum' => (int)($_POST['minimum'] ?? 0),
     ];
-    // Remove empty values to avoid wiping unintentionally
+    // Loại bỏ các giá trị trống để tránh xóa vô tình
     foreach ($payload as $k => $v) {
-      if ($k === 'price' || $k === 'minimum') continue; // allow zero
+      if ($k === 'price' || $k === 'minimum') continue; // cho phép số không
       if ($v === '') unset($payload[$k]);
     }
     Service::update($id, $payload);
@@ -250,7 +422,7 @@ final class AdminController {
       exit;
     }
     Booking::assignWorker($id, $wid);
-    // Optionally mark as confirmed upon assignment
+    // Tuy chọn đánh dấu là đã xác nhận khi phân công
     Booking::updateStatus($id, 'confirmed');
     if (session_status() !== PHP_SESSION_ACTIVE) session_start();
     $_SESSION['success'] = 'Đã gán worker #' . $wid . ' cho đơn #' . $id . '.';

@@ -12,7 +12,7 @@ final class WorkerController {
       header("Location: /login");
       exit;
     }
-    // Ensure worker is approved (active)
+    // Đảm bảo công nhân được phê duyệt (hoạt động)
     $me = User::findById((int)Auth::id());
     if (!$me || ($me['approval_status'] ?? 'active') !== 'active') {
       header("Location: /worker/pending");
@@ -64,7 +64,12 @@ final class WorkerController {
       header("Location: /login");
       exit;
     }
-    View::render('worker/pending', []);
+    $me = User::findById((int)Auth::id());
+    View::render('worker/pending', [
+      'status' => $me['approval_status'] ?? 'pending',
+      'reason' => $me['reject_reason'] ?? null,
+      'name' => $me['name'] ?? 'Worker',
+    ]);
   }
 }
 

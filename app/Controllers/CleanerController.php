@@ -25,14 +25,14 @@ final class CleanerController {
 
   public function jobs(): void {
     $this->guard();
-    // Show pending bookings as available jobs (demo)
+    // Hiển thị các đơn chờ xử lý làm các công việc có sẵn (demo)
     $jobs = array_filter(Booking::getAll(), fn($b)=>$b['status']==='pending');
     View::render('cleaner/jobs', ['jobs' => $jobs]);
   }
 
   public function progress(): void {
     $this->guard();
-    // Fake progress items
+    // Giẳ lậ các mục tiến độ
     $progress = [
       ['booking_id'=>2,'step'=>'Đang di chuyển','time'=>'2026-01-24 13:30'],
       ['booking_id'=>2,'step'=>'Bắt đầu công việc','time'=>'2026-01-24 14:05'],
@@ -42,7 +42,7 @@ final class CleanerController {
 
   public function schedule(): void {
     $this->guard();
-    // Fake today schedule
+    // Giẳ lậ lịch hôm nay
     $schedule = [
       ['time'=>'10:00','location'=>'Quận 1','task'=>'Tổng vệ sinh 80m²'],
       ['time'=>'14:00','location'=>'Quận 7','task'=>'Giặt sofa 3 chỗ'],

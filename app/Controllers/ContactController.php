@@ -29,16 +29,16 @@ class ContactController
             return redirect('/contact');
         }
 
-        // Validate email
+        // Kiểm tra email
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
             $_SESSION['error'] = 'Email không hợp lệ';
             return redirect('/contact');
         }
 
-        // Create contact message
+        // Tạo tin nhắn liên hệ
         $contact = Contact::create($name, $email, $phone, $subject, $message);
 
-        // In production, send email notification
+        // Trong môi trường sản xuất, gửi thông báo qua email
         $_SESSION['success'] = 'Cảm ơn bạn! Chúng tôi sẽ liên hệ lại trong 2 giờ.';
         return redirect('/contact');
     }

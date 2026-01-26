@@ -7,14 +7,14 @@ use PDO;
 
 class Contact
 {
-    /** Get all contacts from DB */
+    /** Lấy tất cả các liên hệ từ CSDL */
     public static function getAll(): array
     {
         $stmt = DB::pdo()->query("SELECT * FROM contacts ORDER BY created_at DESC");
         return $stmt->fetchAll() ?: [];
     }
 
-    /** Create a new contact message in DB */
+    /** Tạo tin nhắn liên hệ mới trong CSDL */
     public static function create(string $name, string $email, string $phone, string $subject, string $message): int
     {
         $stmt = DB::pdo()->prepare(
@@ -25,7 +25,7 @@ class Contact
         return (int)DB::pdo()->lastInsertId();
     }
 
-    /** Get contact by ID */
+    /** Lấy liên hệ theo ID */
     public static function getById(int $id): ?array
     {
         $stmt = DB::pdo()->prepare("SELECT * FROM contacts WHERE id = :id LIMIT 1");
@@ -34,7 +34,7 @@ class Contact
         return $row ?: null;
     }
 
-    /** Update contact status (admin moderation) */
+    /** Cập nhật trạng thái liên hệ (kiểm tra xuất admin) */
     public static function updateStatus(int $id, string $status, ?int $adminId = null): bool
     {
         $stmt = DB::pdo()->prepare(

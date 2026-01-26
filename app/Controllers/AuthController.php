@@ -45,10 +45,10 @@ final class AuthController {
     }
 
     $hash = password_hash($pass, PASSWORD_DEFAULT);
-    // Set approval status based on role
+    // Đặt trạng thái phê duyệt dựa trên vai trò
     $approvalStatus = ($role === 'worker') ? 'pending' : 'active';
     $id = User::create($name, $email, $hash, $role, $approvalStatus);
-    // Do NOT auto login; set flash and redirect home
+    // KHÔNG tự đăng nhập; đặt flash và chuyển hướng về nhà
     if (session_status() !== PHP_SESSION_ACTIVE) session_start();
     $_SESSION['success'] = ($role === 'worker')
       ? 'Đăng ký thành công! Tài khoản Worker đang chờ phê duyệt. Vui lòng đăng nhập sau khi được duyệt.'
@@ -82,9 +82,21 @@ final class AuthController {
       return;
     }
 
-    // If worker not active, redirect to pending info
+    // Xử lý trạng thái tài khoản
     $role = $user['role'] === 'cleaner' ? 'worker' : $user['role'];
     $status = isset($user['approval_status']) ? (string)$user['approval_status'] : 'active';
+    if ($status === 'locked') {
+      $reason = isset($user['reject_reason']) && $user['reject_reason'] !== null ? (string)$user['reject_reason'] : 'Tài khoản đã bị khóa. Vui lòng liên hệ hỗ trợ.';
+      View::render('auth/login', ['csrf' => Csrf::token(), 'error' => $reason]);
+      return;
+    }
+    if ($status === 'deleted') {
+      $reason = isset($user['reject_reason']) && $user['reject_reason'] !== null ? (string)$user['reject_reason'] : 'Tài khoản đã bị xóa hoặc vô hiệu hóa.';
+      View::render('auth/login', ['csrf' => Csrf::token(), 'error' => $reason]);
+      return;
+    }
+
+    // Nếu công nhân không có vai trò hoạt động (chờ xử lý/bị từ chối), chuyển hướng đến thông tin chờ xử lý
     Auth::login((int)$user['id'], (string)$role);
     
     switch ($role) {

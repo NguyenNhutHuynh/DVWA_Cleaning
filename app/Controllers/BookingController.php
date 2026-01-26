@@ -64,14 +64,14 @@ class BookingController
             exit;
         }
 
-        // Validate date is in the future
+        // Kiểm tra ngày là trong tương lai
         if (strtotime($date) < strtotime(date('Y-m-d'))) {
             $_SESSION['error'] = 'Ngày đặt phải là trong tương lai';
             header('Location: /book');
             exit;
         }
 
-        // Create booking
+        // Tạo đặt lịch
         $booking = Booking::create(
             Auth::id(),
             $service_id,
