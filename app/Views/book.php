@@ -9,17 +9,19 @@ use App\Core\View;
     </header>
 
     <section style="margin-top: 30px; background: white; border: 1px solid #e0f2e9; border-radius: 12px; padding: 30px; max-width: 600px; margin-left: auto; margin-right: auto; box-shadow: 0 6px 20px rgba(44,62,80,0.06);">
-        <form method="POST" action="/book" style="display: flex; flex-direction: column; gap: 20px;">
+        <form id="bookingForm" method="POST" action="/book" style="display: flex; flex-direction: column; gap: 20px;">
             <div>
                 <label style="display: block; margin-bottom: 8px; color: #1f2d3d; font-weight: 500;">Chọn dịch vụ</label>
                 <select name="service" required style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 16px; box-sizing: border-box;">
                     <option value="">-- Chọn dịch vụ --</option>
-                    <option value="1">Tổng vệ sinh nhà (50.000đ/m²)</option>
-                    <option value="2">Giặt nệm / Sofa (350.000đ/chiếc)</option>
-                    <option value="3">Vệ sinh sau xây dựng (60.000đ/m²)</option>
-                    <option value="4">Khử khuẩn / Diệt côn trùng (30.000đ/m²)</option>
-                    <option value="5">Cắt tỉa sân vườn (40.000đ/m²)</option>
-                    <option value="6">Chuyển nhà / Văn phòng (15.000.000đ+)</option>
+                    <?php if (!empty($services)): ?>
+                        <?php foreach ($services as $s): ?>
+                            <option value="<?= (int)$s['id'] ?>" <?= (isset($selected) && (int)$selected === (int)$s['id']) ? 'selected' : '' ?>>
+                                <?= View::e($s['name']) ?>
+                                (<?= number_format((int)$s['price'], 0, ',', '.') ?>đ<?= $s['unit'] ? '/' . View::e($s['unit']) : '' ?><?= !empty($s['minimum']) ? ', tối thiểu ' . number_format((int)$s['minimum'], 0, ',', '.') . 'đ' : '' ?>)
+                            </option>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
                 </select>
             </div>
 
@@ -57,8 +59,29 @@ use App\Core\View;
                 </label>
             </div>
 
-            <button type="submit" style="background: #43c59e; color: white; border: none; padding: 14px 24px; border-radius: 10px; font-weight: 600; cursor: pointer; font-size: 16px; transition: background 0.2s;">Xác nhận đặt lịch</button>
+            <button id="submitBtn" type="submit" style="background: #43c59e; color: white; border: none; padding: 14px 24px; border-radius: 10px; font-weight: 600; cursor: not-allowed; opacity: 0.7; font-size: 16px; transition: background 0.2s;" disabled>Xác nhận đặt lịch</button>
         </form>
+            <script>
+                (function(){
+                    const form = document.getElementById('bookingForm');
+                    const submit = document.getElementById('submitBtn');
+                    const requiredFields = ['service','date','time','location','agree_terms'];
+                    const toggle = () => {
+                        const valid = requiredFields.every(name => {
+                            const el = form.querySelector('[name="'+name+'"]');
+                            if (!el) return false;
+                            if (el.type === 'checkbox') return el.checked;
+                            return !!el.value;
+                        });
+                        submit.disabled = !valid;
+                        submit.style.cursor = valid ? 'pointer' : 'not-allowed';
+                        submit.style.opacity = valid ? '1' : '0.7';
+                    };
+                    form.addEventListener('input', toggle);
+                    form.addEventListener('change', toggle);
+                    toggle();
+                })();
+            </script>
     </section>
 
     <section style="margin-top: 50px; background: #f7fdf9; border: 1px solid #e0f2e9; border-radius: 12px; padding: 30px; text-align: center;">

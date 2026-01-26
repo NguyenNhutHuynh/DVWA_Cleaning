@@ -17,8 +17,12 @@ class ServicesController
         ]);
     }
 
-    public function show($id)
+    public function show()
     {
+        $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+        if ($id <= 0) {
+            return View::render('404');
+        }
         $service = Service::getById($id);
         
         if (!$service) {

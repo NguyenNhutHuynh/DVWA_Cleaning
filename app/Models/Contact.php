@@ -2,89 +2,44 @@
 
 namespace App\Models;
 
+use App\Core\DB;
+use PDO;
+
 class Contact
 {
-    /**
-     * Get all contacts
-     */
-    public static function getAll()
+    /** Get all contacts from DB */
+    public static function getAll(): array
     {
-        return [
-            [
-                'id' => 1,
-                'name' => 'Chị Lan',
-                'email' => 'lan@example.com',
-                'phone' => '0912345678',
-                'subject' => 'Hỏi giá',
-                'message' => 'Tôi muốn hỏi giá dịch vụ tổng vệ sinh cho căn hộ 100m². Có giảm giá cho hợp đồng dài hạn không?',
-                'status' => 'replied',
-                'created_at' => '2026-01-23 10:30:00'
-            ],
-            [
-                'id' => 2,
-                'name' => 'Anh Minh',
-                'email' => 'minh.tran@company.com',
-                'phone' => '0987654321',
-                'subject' => 'Tư vấn',
-                'message' => 'Công ty chúng tôi cần dịch vụ vệ sinh văn phòng hàng ngày. Có thể tư vấn gói phù hợp không?',
-                'status' => 'replied',
-                'created_at' => '2026-01-22 14:15:00'
-            ],
-            [
-                'id' => 3,
-                'name' => 'Chị Hạnh',
-                'email' => 'hanh.ceo@agency.vn',
-                'phone' => '0934567890',
-                'subject' => 'Khiếu nại',
-                'message' => 'Dịch vụ hôm qua không đạt tiêu chuẩn. Nhân viên đến muộn và chất lượng làm việc không tốt.',
-                'status' => 'pending',
-                'created_at' => '2026-01-24 11:00:00'
-            ]
-        ];
+        $stmt = DB::pdo()->query("SELECT * FROM contacts ORDER BY created_at DESC");
+        return $stmt->fetchAll() ?: [];
     }
 
-    /**
-     * Create a new contact message
-     */
-    public static function create($name, $email, $phone, $subject, $message)
+    /** Create a new contact message in DB */
+    public static function create(string $name, string $email, string $phone, string $subject, string $message): int
     {
-        $contacts = self::getAll();
-        
-        return [
-            'id' => count($contacts) + 1,
-            'name' => $name,
-            'email' => $email,
-            'phone' => $phone,
-            'subject' => $subject,
-            'message' => $message,
-            'status' => 'pending',
-            'created_at' => date('Y-m-d H:i:s')
-        ];
+        $stmt = DB::pdo()->prepare(
+            "INSERT INTO contacts (name, email, phone, subject, message, status, created_at, updated_at)
+             VALUES (:name, :email, :phone, :subject, :message, 'pending', NOW(), NOW())"
+        );
+        $stmt->execute(compact('name','email','phone','subject','message'));
+        return (int)DB::pdo()->lastInsertId();
     }
 
-    /**
-     * Get contact by ID
-     */
-    public static function getById($id)
+    /** Get contact by ID */
+    public static function getById(int $id): ?array
     {
-        $contacts = self::getAll();
-        foreach ($contacts as $contact) {
-            if ($contact['id'] == $id) {
-                return $contact;
-            }
-        }
-        return null;
+        $stmt = DB::pdo()->prepare("SELECT * FROM contacts WHERE id = :id LIMIT 1");
+        $stmt->execute(['id' => $id]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $row ?: null;
     }
 
-    /**
-     * Update contact status
-     */
-    public static function updateStatus($id, $status)
+    /** Update contact status (admin moderation) */
+    public static function updateStatus(int $id, string $status, ?int $adminId = null): bool
     {
-        return [
-            'id' => $id,
-            'status' => $status,
-            'updated_at' => date('Y-m-d H:i:s')
-        ];
+        $stmt = DB::pdo()->prepare(
+            "UPDATE contacts SET status = :st, processed_by = :aid, processed_at = NOW(), updated_at = NOW() WHERE id = :id"
+        );
+        return $stmt->execute(['st' => $status, 'aid' => $adminId, 'id' => $id]);
     }
 }

@@ -20,42 +20,33 @@ use App\Core\View;
                     </tr>
                 </thead>
                 <tbody>
-                    <tr style="border-bottom: 1px solid #e0f2e9;">
-                        <td style="padding: 15px;">Tổng vệ sinh nhà (m²)</td>
-                        <td style="padding: 15px;">2-4 giờ</td>
-                        <td style="padding: 15px; color: #2eaf7d; font-weight: 600;">50.000đ/m²</td>
-                        <td style="padding: 15px; font-size: 13px; color: #546e7a;">Tối thiểu 2.5 triệu</td>
-                    </tr>
-                    <tr style="border-bottom: 1px solid #e0f2e9; background: #fdfcf8;">
-                        <td style="padding: 15px;">Giặt nệm/Sofa (chiếc)</td>
-                        <td style="padding: 15px;">1-2 giờ</td>
-                        <td style="padding: 15px; color: #2eaf7d; font-weight: 600;">350.000đ</td>
-                        <td style="padding: 15px; font-size: 13px; color: #546e7a;">Diệt khuẩn + khô</td>
-                    </tr>
-                    <tr style="border-bottom: 1px solid #e0f2e9;">
-                        <td style="padding: 15px;">Vệ sinh sau xây dựng (m²)</td>
-                        <td style="padding: 15px;">4-6 giờ</td>
-                        <td style="padding: 15px; color: #2eaf7d; font-weight: 600;">60.000đ/m²</td>
-                        <td style="padding: 15px; font-size: 13px; color: #546e7a;">Tối thiểu 3 triệu</td>
-                    </tr>
-                    <tr style="border-bottom: 1px solid #e0f2e9; background: #fdfcf8;">
-                        <td style="padding: 15px;">Khử khuẩn/Diệt côn trùng (m²)</td>
-                        <td style="padding: 15px;">1-2 giờ</td>
-                        <td style="padding: 15px; color: #2eaf7d; font-weight: 600;">30.000đ/m²</td>
-                        <td style="padding: 15px; font-size: 13px; color: #546e7a;">An toàn trẻ em</td>
-                    </tr>
-                    <tr style="border-bottom: 1px solid #e0f2e9;">
-                        <td style="padding: 15px;">Cắt tỉa sân vườn (m²)</td>
-                        <td style="padding: 15px;">2-4 giờ</td>
-                        <td style="padding: 15px; color: #2eaf7d; font-weight: 600;">40.000đ/m²</td>
-                        <td style="padding: 15px; font-size: 13px; color: #546e7a;">Từ 1.5 triệu</td>
-                    </tr>
-                    <tr style="background: #fdfcf8;">
-                        <td style="padding: 15px;">Chuyển nhà/Văn phòng (ngày)</td>
-                        <td style="padding: 15px;">6-8 giờ</td>
-                        <td style="padding: 15px; color: #2eaf7d; font-weight: 600;">15 triệu+</td>
-                        <td style="padding: 15px; font-size: 13px; color: #546e7a;">Tùy quy mô</td>
-                    </tr>
+                    <?php if (!empty($services)): ?>
+                        <?php foreach ($services as $index => $s): ?>
+                            <tr style="border-bottom: 1px solid #e0f2e9;<?= $index % 2 === 1 ? ' background: #fdfcf8;' : '' ?>">
+                                <td style="padding: 15px;">
+                                    <?= View::e($s['icon'] ?: '🧹') ?>
+                                    <?= View::e($s['name']) ?><?= $s['unit'] ? ' (' . View::e($s['unit']) . ')' : '' ?>
+                                </td>
+                                <td style="padding: 15px;">
+                                    <?= View::e($s['duration'] ?: '') ?>
+                                </td>
+                                <td style="padding: 15px; color: #2eaf7d; font-weight: 600;">
+                                    <?= number_format((int)$s['price'], 0, ',', '.') ?>đ<?= $s['unit'] ? '/' . View::e($s['unit']) : '' ?>
+                                </td>
+                                <td style="padding: 15px; font-size: 13px; color: #546e7a;">
+                                    <?php if (!empty($s['minimum'])): ?>
+                                        Tối thiểu <?= number_format((int)$s['minimum'], 0, ',', '.') ?>đ
+                                    <?php elseif (!empty($s['description'])): ?>
+                                        <?= View::e($s['description']) ?>
+                                    <?php endif; ?>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <tr>
+                            <td colspan="4" style="padding: 15px; color: #546e7a;">Chưa có dịch vụ nào được kích hoạt.</td>
+                        </tr>
+                    <?php endif; ?>
                 </tbody>
             </table>
         </div>

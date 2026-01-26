@@ -35,7 +35,7 @@ use App\Core\View;
         <a href="/worker/schedule" class="function-btn">Lịch làm</a>
         <a href="/logout" class="function-btn">Đăng xuất</a>
       <?php else: ?>
-        <a href="/customer/dashboard" class="function-btn">Khách hàng</a>
+        <!-- <a href="/customer/dashboard" class="function-btn">Khách hàng</a> -->
         <a href="/book" class="function-btn">Đặt lịch</a>
         <a href="/bookings" class="function-btn">Lịch đã đặt</a>
         <a href="/services" class="function-btn">Dịch vụ</a>

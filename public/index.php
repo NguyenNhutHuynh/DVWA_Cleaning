@@ -46,6 +46,8 @@ $router->get('/logout', [AuthController::class, 'logout']);
 
 // Services
 $router->get('/services', [ServicesController::class, 'index']);
+// Service detail via query: /service?id=123
+$router->get('/service', [ServicesController::class, 'show']);
 
 // Pricing
 $router->get('/pricing', [PricingController::class, 'index']);
@@ -69,7 +71,15 @@ $router->get('/customer/dashboard', [CustomerController::class, 'dashboard']);
 
 // Admin management pages
 $router->get('/admin/services', [AdminController::class, 'services']);
+$router->post('/admin/services/update', [AdminController::class, 'updateService']);
+$router->post('/admin/services/toggle', [AdminController::class, 'toggleService']);
+$router->post('/admin/services/delete', [AdminController::class, 'deleteService']);
+$router->post('/admin/services/create', [AdminController::class, 'createService']);
 $router->get('/admin/bookings', [AdminController::class, 'bookings']);
+// Admin booking actions
+$router->post('/admin/bookings/confirm', [AdminController::class, 'confirmBooking']);
+$router->post('/admin/bookings/cancel', [AdminController::class, 'cancelBooking']);
+$router->post('/admin/bookings/assign', [AdminController::class, 'assignBooking']);
 $router->get('/admin/moderation', [AdminController::class, 'moderation']);
 $router->get('/admin/users', [AdminController::class, 'users']);
 $router->get('/admin/stats', [AdminController::class, 'stats']);

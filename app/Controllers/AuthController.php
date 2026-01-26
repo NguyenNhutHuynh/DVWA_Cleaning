@@ -48,13 +48,12 @@ final class AuthController {
     // Set approval status based on role
     $approvalStatus = ($role === 'worker') ? 'pending' : 'active';
     $id = User::create($name, $email, $hash, $role, $approvalStatus);
-    Auth::login($id, $role);
-    // Redirect: pending workers go to awaiting approval page
-    if ($role === 'worker' && $approvalStatus === 'pending') {
-      header("Location: /worker/pending");
-    } else {
-      header("Location: /");
-    }
+    // Do NOT auto login; set flash and redirect home
+    if (session_status() !== PHP_SESSION_ACTIVE) session_start();
+    $_SESSION['success'] = ($role === 'worker')
+      ? 'Đăng ký thành công! Tài khoản Worker đang chờ phê duyệt. Vui lòng đăng nhập sau khi được duyệt.'
+      : 'Đăng ký thành công! Vui lòng đăng nhập để tiếp tục.';
+    header("Location: /");
     exit;
   }
 

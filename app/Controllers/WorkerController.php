@@ -47,10 +47,15 @@ final class WorkerController {
 
   public function schedule(): void {
     $this->guard();
-    $schedule = [
-      ['time'=>'10:00','location'=>'Quận 1','task'=>'Tổng vệ sinh 80m²'],
-      ['time'=>'14:00','location'=>'Quận 7','task'=>'Giặt sofa 3 chỗ'],
-    ];
+    $all = Booking::getAll();
+    $mine = array_values(array_filter($all, fn($b) => (int)($b['assigned_worker_id'] ?? 0) === (int)Auth::id() && ($b['status'] ?? '') !== 'cancelled'));
+    $schedule = array_map(function($b){
+      return [
+        'time' => ($b['date'] ?? '') . ' ' . ($b['time'] ?? ''),
+        'location' => $b['location'] ?? '',
+        'task' => ($b['service_name'] ?? 'Công việc') . ' • Trạng thái: ' . ($b['status'] ?? ''),
+      ];
+    }, $mine);
     View::render('worker/schedule', ['schedule' => $schedule]);
   }
 

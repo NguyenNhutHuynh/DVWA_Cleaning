@@ -12,7 +12,8 @@ class BookingController
     public function index()
     {
         if (!Auth::id()) {
-            return redirect('/login');
+            header('Location: /login');
+            exit;
         }
 
         $bookings = Booking::getByUserId(Auth::id());
@@ -25,24 +26,29 @@ class BookingController
     public function create()
     {
         if (!Auth::id()) {
-            return redirect('/login');
+            header('Location: /login');
+            exit;
         }
 
         $services = Service::all();
+        $selected = isset($_GET['service']) ? (int)$_GET['service'] : null;
 
         return View::render('book', [
-            'services' => $services
+            'services' => $services,
+            'selected' => $selected
         ]);
     }
 
     public function store()
     {
         if (!Auth::id()) {
-            return redirect('/login');
+            header('Location: /login');
+            exit;
         }
 
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            return redirect('/book');
+            header('Location: /book');
+            exit;
         }
 
         $service_id = $_POST['service'] ?? null;
@@ -50,16 +56,19 @@ class BookingController
         $time = $_POST['time'] ?? null;
         $location = $_POST['location'] ?? null;
         $description = $_POST['description'] ?? '';
+        $agree = isset($_POST['agree_terms']);
 
-        if (!$service_id || !$date || !$time || !$location) {
+        if (!$service_id || !$date || !$time || !$location || !$agree) {
             $_SESSION['error'] = 'Vui lòng điền đầy đủ thông tin';
-            return redirect('/book');
+            header('Location: /book');
+            exit;
         }
 
         // Validate date is in the future
         if (strtotime($date) < strtotime(date('Y-m-d'))) {
             $_SESSION['error'] = 'Ngày đặt phải là trong tương lai';
-            return redirect('/book');
+            header('Location: /book');
+            exit;
         }
 
         // Create booking
@@ -73,25 +82,29 @@ class BookingController
         );
 
         $_SESSION['success'] = 'Đặt lịch thành công! Chúng tôi sẽ liên hệ xác nhận trong 2 giờ.';
-        return redirect('/bookings');
+        header('Location: /bookings');
+        exit;
     }
 
     public function cancel($id)
     {
         if (!Auth::id()) {
-            return redirect('/login');
+            header('Location: /login');
+            exit;
         }
 
         $booking = Booking::getById($id);
 
         if (!$booking || $booking['user_id'] != Auth::id()) {
             $_SESSION['error'] = 'Không tìm thấy lịch đặt';
-            return redirect('/bookings');
+            header('Location: /bookings');
+            exit;
         }
 
         Booking::updateStatus($id, 'cancelled');
 
         $_SESSION['success'] = 'Hủy lịch đặt thành công';
-        return redirect('/bookings');
+        header('Location: /bookings');
+        exit;
     }
 }
