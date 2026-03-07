@@ -1,6 +1,6 @@
 <?php
 use App\Core\View;
-/** @var array $bookings */
+/** @var array $bookings Danh sách đơn đặt */
 ?>
 <section class="home-container">
   <header class="home-hero">

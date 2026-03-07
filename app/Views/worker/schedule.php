@@ -1,6 +1,6 @@
 <?php
 use App\Core\View;
-/** @var array $schedule */
+/** @var array $schedule Dữ liệu lịch làm việc */
 ?>
 <section class="home-container">
   <header class="home-hero">

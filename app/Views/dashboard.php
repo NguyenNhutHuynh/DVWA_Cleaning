@@ -22,14 +22,14 @@ use App\Models\User;
     <?php if (Auth::id()): ?>
       <?php $role = Auth::role(); $user = User::findById((int)Auth::id()); $initial = strtoupper(substr($user['name'] ?? 'U', 0, 1)); ?>
       <?php if ($role === 'admin'): ?>
-        <!-- <a href="/admin/dashboard" class="function-btn">Admin</a> -->
+        <!-- <a href="/admin/dashboard" class="function-btn">Trang quản trị</a> -->
         <a href="/admin/services" class="function-btn">Dịch vụ</a>
         <a href="/admin/bookings" class="function-btn">Đơn đặt</a>
         <a href="/admin/moderation" class="function-btn">Kiểm duyệt</a>
         <a href="/admin/users" class="function-btn">Người dùng</a>
         <a href="/admin/stats" class="function-btn">Thống kê</a>
       <?php elseif ($role === 'worker'): ?>
-        <!-- <a href="/worker/dashboard" class="function-btn">Worker</a> -->
+        <!-- <a href="/worker/dashboard" class="function-btn">Trang công nhân</a> -->
         <a href="/worker/jobs" class="function-btn">Nhận việc</a>
         <a href="/worker/progress" class="function-btn">Tiến độ</a>
         <a href="/worker/schedule" class="function-btn">Lịch làm</a>

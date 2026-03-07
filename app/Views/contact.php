@@ -9,7 +9,7 @@ use App\Core\View;
     </header>
 
     <section style="margin-top: 40px; display: grid; grid-template-columns: 1fr 1fr; gap: 30px; max-width: 900px; margin-left: auto; margin-right: auto;">
-        <!-- Contact Form -->
+        <!-- Biểu mẫu liên hệ -->
         <div style="background: white; border: 1px solid #e0f2e9; border-radius: 12px; padding: 30px; box-shadow: 0 6px 20px rgba(44,62,80,0.06);">
             <h2 style="color: #1f2d3d; margin-top: 0;">Gửi tin nhắn</h2>
             <form method="POST" action="/contact" style="display: flex; flex-direction: column; gap: 15px;">
@@ -43,7 +43,7 @@ use App\Core\View;
             </form>
         </div>
 
-        <!-- Contact Info -->
+        <!-- Thông tin liên hệ -->
         <div>
             <div style="background: white; border: 1px solid #e0f2e9; border-radius: 12px; padding: 25px; margin-bottom: 20px; box-shadow: 0 3px 12px rgba(44,62,80,0.06);">
                 <h3 style="color: #1f2d3d; margin-top: 0;">📞 Điện thoại</h3>

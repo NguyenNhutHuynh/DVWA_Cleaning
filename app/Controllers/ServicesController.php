@@ -1,36 +1,60 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Controllers;
 
 use App\Core\View;
-use App\Core\Auth;
 use App\Models\Service;
 
-class ServicesController
+/**
+ * ServicesController xử lý danh sách dịch vụ và trang chi tiết dịch vụ.
+ */
+final class ServicesController
 {
-    public function index()
+    /**
+     * Hiển thị tất cả dịch vụ đang hoạt động.
+     */
+    public function index(): void
     {
         $services = Service::all();
-        
-        return View::render('services', [
-            'services' => $services
+
+        View::render('services', [
+            'services' => $services,
         ]);
     }
 
-    public function show()
+    /**
+     * Hiển thị trang chi tiết của một dịch vụ cụ thể.
+     * Trả về trang 404 nếu không tìm thấy dịch vụ hoặc ID không hợp lệ.
+     */
+    public function show(): void
     {
-        $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
-        if ($id <= 0) {
-            return View::render('404');
-        }
-        $service = Service::getById($id);
-        
-        if (!$service) {
-            return View::render('404');
+        $serviceId = $this->extractServiceIdFromQuery();
+
+        if ($serviceId <= 0) {
+            View::render('404');
+            return;
         }
 
-        return View::render('service-detail', [
-            'service' => $service
+        $service = Service::getById($serviceId);
+
+        if ($service === null) {
+            View::render('404');
+            return;
+        }
+
+        View::render('service-detail', [
+            'service' => $service,
         ]);
+    }
+
+    /**
+     * Lấy và kiểm tra ID dịch vụ từ chuỗi truy vấn.
+     */
+    private function extractServiceIdFromQuery(): int
+    {
+        return isset($_GET['id']) ? (int)$_GET['id'] : 0;
     }
 }
+

@@ -166,6 +166,25 @@ main.main-content {
 .feature-card h3 { margin: 0 0 6px 0; }
 .feature-card p { margin: 0; color: #455a64; }
 
+.feature-card-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.feature-card-link:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  background: #edfaf2;
+}
+
+.feature-card-link h3,
+.feature-card-link p {
+  transition: color 0.3s ease;
+}
+
 .combo-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));

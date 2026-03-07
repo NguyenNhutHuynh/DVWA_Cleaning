@@ -1,7 +1,7 @@
 <?php
 use App\Core\View;
-/** @var string $csrf */
-/** @var ?string $error */
+/** @var string $csrf Token CSRF */
+/** @var ?string $error Thông báo lỗi */
 ?>
 <section class="auth-container" aria-labelledby="auth-login-heading">
   <header>

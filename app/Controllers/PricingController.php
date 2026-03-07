@@ -1,17 +1,26 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Controllers;
 
 use App\Core\View;
 use App\Models\Service;
 
-class PricingController
+/**
+ * PricingController hiển thị thông tin bảng giá dịch vụ.
+ */
+final class PricingController
 {
-    public function index()
+    /**
+     * Hiển thị trang bảng giá với toàn bộ dịch vụ.
+     */
+    public function index(): void
     {
         $services = Service::all();
-        return View::render('pricing', [
-            'services' => $services
+
+        View::render('pricing', [
+            'services' => $services,
         ]);
     }
 }

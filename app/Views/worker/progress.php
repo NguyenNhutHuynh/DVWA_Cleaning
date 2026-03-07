@@ -1,6 +1,6 @@
 <?php
 use App\Core\View;
-/** @var array $progress */
+/** @var array $progress Dữ liệu tiến độ công việc */
 ?>
 <section class="home-container">
   <header class="home-hero">

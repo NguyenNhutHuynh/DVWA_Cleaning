@@ -1,6 +1,6 @@
 <?php
 use App\Core\View;
-/** @var array $jobs */
+/** @var array $jobs Danh sách công việc */
 ?>
 <section class="home-container">
   <header class="home-hero">

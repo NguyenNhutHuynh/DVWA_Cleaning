@@ -1,34 +1,108 @@
 <?php
+
+declare(strict_types=1);
+
 namespace App\Core;
 
-final class Router {
-  private array $get = [];
-  private array $post = [];
+/**
+ * Bộ định tuyến đơn giản để xử lý request GET và POST.
+ * Ánh xạ URI tới hàm xử lý (closure hoặc phương thức class).
+ */
+final class Router
+{
+    private array $getRoutes = [];
+    private array $postRoutes = [];
 
-  public function get(string $path, callable|array $handler): void { $this->get[$path] = $handler; }
-  public function post(string $path, callable|array $handler): void { $this->post[$path] = $handler; }
-
-  private function callHandler($handler): void {
-    if (is_array($handler)) {
-      [$class, $method] = $handler;
-      $instance = new $class();
-      $instance->$method();
-    } else {
-      $handler();
+    /**
+     * Đăng ký handler cho route GET.
+     *
+     * @param string $path Đường dẫn route (ví dụ: '/user')
+     * @param callable|array $handler Closure hoặc [ClassName::class, 'methodName']
+     */
+    public function get(string $path, callable|array $handler): void
+    {
+        $this->getRoutes[$path] = $handler;
     }
-  }
 
-  public function dispatch(): void {
-    $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
-    $uri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
-
-    $map = ($method === 'POST') ? $this->post : $this->get;
-    if (!isset($map[$uri])) {
-      http_response_code(404);
-      echo "404 Not Found";
-      return;
+    /**
+     * Đăng ký handler cho route POST.
+     *
+     * @param string $path Đường dẫn route
+     * @param callable|array $handler Closure hoặc [ClassName::class, 'methodName']
+     */
+    public function post(string $path, callable|array $handler): void
+    {
+        $this->postRoutes[$path] = $handler;
     }
-    $this->callHandler($map[$uri]);
-  }
+
+    /**
+     * Điều phối request hiện tại tới handler phù hợp.
+     * Trả về 404 nếu không tìm thấy route.
+     */
+    public function dispatch(): void
+    {
+        $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+        $path = $this->extractPath();
+        $routes = $this->selectRoutes($method);
+
+        if (!isset($routes[$path])) {
+            $this->handleNotFound();
+            return;
+        }
+
+        $this->executeHandler($routes[$path]);
+    }
+
+    /**
+     * Trích xuất đường dẫn request từ URI.
+     */
+    private function extractPath(): string
+    {
+        $uri = $_SERVER['REQUEST_URI'] ?? '/';
+        $path = parse_url($uri, PHP_URL_PATH) ?: '/';
+        return $path;
+    }
+
+    /**
+     * Chọn bảng route tương ứng theo phương thức request.
+     */
+    private function selectRoutes(string $method): array
+    {
+        return $method === 'POST' ? $this->postRoutes : $this->getRoutes;
+    }
+
+    /**
+     * Thực thi handler (closure hoặc phương thức class).
+     *
+     * @param callable|array $handler
+     */
+    private function executeHandler($handler): void
+    {
+        if (is_array($handler)) {
+            $this->executeClassMethod($handler);
+        } else {
+            $handler();
+        }
+    }
+
+    /**
+     * Thực thi handler dạng phương thức class.
+     *
+     * @param array $handler [ClassName, 'methodName']
+     */
+    private function executeClassMethod(array $handler): void
+    {
+        [$class, $method] = $handler;
+        $instance = new $class();
+        $instance->$method();
+    }
+
+    /**
+     * Xử lý phản hồi 404 Not Found.
+     */
+    private function handleNotFound(): void
+    {
+        http_response_code(404);
+        echo '404 Not Found';
+    }
 }
-?>
