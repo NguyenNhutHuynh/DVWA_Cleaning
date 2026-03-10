@@ -61,6 +61,11 @@ $router->post('/contact', [ContactController::class, 'store']);
 $router->get('/book', [BookingController::class, 'create']);
 $router->post('/book', [BookingController::class, 'store']);
 $router->get('/bookings', [BookingController::class, 'index']);
+$router->get('/bookings/{id}', [BookingController::class, 'detail']);
+$router->post('/bookings/{id}/cancel', [BookingController::class, 'cancel']);
+$router->post('/bookings/{id}/message', [BookingController::class, 'sendMessage']);
+$router->get('/bookings/{id}/review', [BookingController::class, 'review']);
+$router->post('/bookings/{id}/review', [BookingController::class, 'submitReview']);
 
 // Bảng điều khiển theo vai trò
 $router->get('/admin', function() { header('Location: /admin/dashboard'); exit; });
@@ -102,6 +107,13 @@ $router->get('/cleaner/schedule', [CleanerController::class, 'schedule']);
 
 // Trang công nhân (tên vai trò mới)
 $router->get('/worker/jobs', [WorkerController::class, 'jobs']);
+$router->post('/worker/jobs/{id}/accept', [WorkerController::class, 'acceptJob']);
+$router->get('/worker/jobs/{id}', [WorkerController::class, 'jobDetail']);
+$router->post('/worker/jobs/{id}/start', [WorkerController::class, 'startJob']);
+$router->post('/worker/jobs/{id}/progress', [WorkerController::class, 'updateProgress']);
+$router->post('/worker/jobs/{id}/message', [WorkerController::class, 'sendMessage']);
+$router->get('/worker/jobs/{id}/report', [WorkerController::class, 'completionReport']);
+$router->post('/worker/jobs/{id}/report', [WorkerController::class, 'submitReport']);
 $router->get('/worker/progress', [WorkerController::class, 'progress']);
 $router->get('/worker/schedule', [WorkerController::class, 'schedule']);
 

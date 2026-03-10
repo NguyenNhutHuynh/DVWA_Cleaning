@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Core\DB;
 use PDO;
+use PDOException;
 
 /**
  * Model User dùng để quản lý tài khoản và xác thực người dùng.
@@ -14,7 +15,7 @@ use PDO;
 final class User
 {
     // Các cột dữ liệu dùng chung khi truy vấn người dùng
-    private const BASE_USER_COLUMNS = 'id, name, email, phone, address, avatar, password_hash, role, approval_status, approved_by, approved_at, reject_reason';
+    private const BASE_USER_COLUMNS = 'id, name, email, phone, address, avatar, COALESCE(password_hash, password) AS password_hash, role, approval_status, approved_by, approved_at, reject_reason';
 
     // Các trạng thái tài khoản người dùng
     public const STATUS_ACTIVE = 'active';
@@ -73,19 +74,42 @@ final class User
         string $email,
         string $passwordHash,
         string $role = self::ROLE_CUSTOMER,
-        string $approvalStatus = self::STATUS_ACTIVE
+        string $approvalStatus = self::STATUS_ACTIVE,
+        ?string $phone = null,
+        ?string $address = null
     ): int {
-        $stmt = DB::pdo()->prepare(
-            "INSERT INTO users (name, email, password_hash, role, approval_status) 
-             VALUES (:name, :email, :hash, :role, :approval_status)"
-        );
-        $stmt->execute([
+        $payload = [
             'name' => $name,
             'email' => $email,
             'hash' => $passwordHash,
             'role' => $role,
             'approval_status' => $approvalStatus,
-        ]);
+            'phone' => $phone,
+            'address' => $address,
+        ];
+
+        try {
+            $stmt = DB::pdo()->prepare(
+                "INSERT INTO users (name, email, phone, address, password_hash, password, role, approval_status)
+                 VALUES (:name, :email, :phone, :address, :hash, :hash, :role, :approval_status)"
+            );
+            $stmt->execute($payload);
+        } catch (PDOException $exception) {
+            try {
+                $stmt = DB::pdo()->prepare(
+                    "INSERT INTO users (name, email, phone, address, password_hash, role, approval_status)
+                     VALUES (:name, :email, :phone, :address, :hash, :role, :approval_status)"
+                );
+                $stmt->execute($payload);
+            } catch (PDOException $secondaryException) {
+                $stmt = DB::pdo()->prepare(
+                    "INSERT INTO users (name, email, phone, address, password, role, approval_status)
+                     VALUES (:name, :email, :phone, :address, :hash, :role, :approval_status)"
+                );
+                $stmt->execute($payload);
+            }
+        }
+
         return (int)DB::pdo()->lastInsertId();
     }
 

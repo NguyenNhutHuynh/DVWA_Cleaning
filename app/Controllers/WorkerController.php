@@ -4,8 +4,14 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Core\Auth;
+use App\Core\Csrf;
 use App\Core\View;
 use App\Models\Booking;
+use App\Models\BookingMessage;
+use App\Models\BookingPayment;
+use App\Models\BookingProgress;
+use App\Models\BookingReport;
+use App\Models\BookingReview;
 use App\Models\User;
 
 /**
@@ -43,28 +49,254 @@ final class WorkerController
     public function jobs(): void
     {
         $this->requireApprovedWorkerRole();
-        $allBookings = Booking::getAll();
-        $pendingJobs = array_filter(
-            $allBookings,
-            static fn(array $booking): bool => ($booking['status'] ?? '') === 'pending'
-        );
-        View::render('worker/jobs', ['jobs' => $pendingJobs]);
+        $workerId = (int)Auth::id();
+        $bookings = Booking::getByWorkerId($workerId);
+
+        $readyJobs = array_values(array_filter(
+            $bookings,
+            static fn(array $booking): bool => ($booking['status'] ?? '') === Booking::STATUS_CONFIRMED
+        ));
+
+        $activeJobs = array_values(array_filter(
+            $bookings,
+            static fn(array $booking): bool => in_array($booking['status'] ?? '', [Booking::STATUS_ACCEPTED, Booking::STATUS_IN_PROGRESS], true)
+        ));
+
+        View::render('worker/jobs', [
+            'readyJobs' => $readyJobs,
+            'activeJobs' => $activeJobs,
+            'csrf' => Csrf::token(),
+        ]);
     }
 
     /**
-     * Hiển thị tiến độ công việc của các đơn đã phân công.
-     * Yêu cầu vai trò worker và trạng thái duyệt đang hoạt động.
-     *
-     * @return void
+     * Worker xác nhận nhận việc.
+     */
+    public function acceptJob(int $id): void
+    {
+        $this->requireApprovedWorkerRole();
+        $this->verifyCsrfToken();
+
+        $booking = $this->findOwnedBooking($id);
+        if ($booking === null) {
+            $this->redirect('/worker/jobs');
+        }
+
+        if (($booking['status'] ?? '') !== Booking::STATUS_CONFIRMED) {
+            $_SESSION['error'] = 'Công việc chưa sẵn sàng để nhận.';
+            $this->redirect('/worker/jobs');
+        }
+
+        Booking::updateStatus($id, Booking::STATUS_ACCEPTED);
+        $_SESSION['success'] = 'Đã nhận việc. Bạn có thể bắt đầu ngay.';
+        $this->redirect('/worker/jobs/' . $id);
+    }
+
+    /**
+     * Hiển thị chi tiết công việc để bắt đầu thực hiện.
+     */
+    public function jobDetail(int $id): void
+    {
+        $this->requireApprovedWorkerRole();
+        $booking = $this->findOwnedBooking($id);
+
+        if ($booking === null) {
+            $_SESSION['error'] = 'Không tìm thấy công việc.';
+            $this->redirect('/worker/jobs');
+        }
+
+        $progress = BookingProgress::byBookingId($id);
+        $messages = BookingMessage::byBookingId($id);
+        $payment = BookingPayment::byBookingId($id);
+
+        View::render('worker/job-detail', [
+            'job' => $booking,
+            'progress' => $progress,
+            'messages' => $messages,
+            'payment' => $payment,
+            'csrf' => Csrf::token(),
+        ]);
+    }
+
+    /**
+     * Worker bấm Let's go để bắt đầu di chuyển.
+     */
+    public function startJob(int $id): void
+    {
+        $this->requireApprovedWorkerRole();
+        $this->verifyCsrfToken();
+
+        $booking = $this->findOwnedBooking($id);
+        if ($booking === null) {
+            $this->redirect('/worker/jobs');
+        }
+
+        $status = (string)($booking['status'] ?? '');
+        if (!in_array($status, [Booking::STATUS_ACCEPTED, Booking::STATUS_CONFIRMED], true)) {
+            $_SESSION['error'] = 'Không thể bắt đầu công việc này.';
+            $this->redirect('/worker/jobs/' . $id);
+        }
+
+        Booking::updateStatus($id, Booking::STATUS_IN_PROGRESS);
+        BookingProgress::add($id, BookingProgress::ON_THE_WAY, 'Worker bắt đầu di chuyển.', (int)Auth::id());
+
+        $_SESSION['success'] = 'Bắt đầu di chuyển! Công việc đã được bắt đầu.';
+        $this->redirect('/worker/jobs/' . $id . '?live=1');
+    }
+
+    /**
+     * Worker cập nhật tiến độ và ảnh.
+     */
+    public function updateProgress(int $id): void
+    {
+        $this->requireApprovedWorkerRole();
+        $this->verifyCsrfToken();
+
+        $booking = $this->findOwnedBooking($id);
+        if ($booking === null) {
+            $this->redirect('/worker/jobs');
+        }
+
+        $step = trim((string)($_POST['step'] ?? ''));
+        $note = trim((string)($_POST['note'] ?? ''));
+        $validSteps = [
+            BookingProgress::ON_THE_WAY,
+            BookingProgress::ARRIVED,
+            BookingProgress::BEFORE_PHOTO,
+            BookingProgress::AFTER_PHOTO,
+            BookingProgress::COMPLETED,
+        ];
+
+        if (!in_array($step, $validSteps, true)) {
+            $_SESSION['error'] = 'Bước tiến độ không hợp lệ.';
+            $this->redirect('/worker/jobs/' . $id);
+        }
+
+        $progressId = BookingProgress::add($id, $step, $note !== '' ? $note : null, (int)Auth::id());
+        $this->uploadProgressPhotos($progressId);
+
+        if ($step === BookingProgress::COMPLETED) {
+            Booking::updateStatus($id, Booking::STATUS_COMPLETED);
+            $_SESSION['success'] = 'Công việc đã hoàn thành. Vui lòng gửi báo cáo.';
+            $this->redirect('/worker/jobs/' . $id . '/report');
+        }
+
+        if (($booking['status'] ?? '') !== Booking::STATUS_IN_PROGRESS) {
+            Booking::updateStatus($id, Booking::STATUS_IN_PROGRESS);
+        }
+
+        $_SESSION['success'] = 'Đã cập nhật tiến độ.';
+        $this->redirect('/worker/jobs/' . $id);
+    }
+
+    /**
+     * Worker gửi tin nhắn cho khách hàng.
+     */
+    public function sendMessage(int $id): void
+    {
+        $this->requireApprovedWorkerRole();
+        $this->verifyCsrfToken();
+
+        $booking = $this->findOwnedBooking($id);
+        if ($booking === null) {
+            $this->redirect('/worker/jobs');
+        }
+
+        $message = trim((string)($_POST['content'] ?? ''));
+        if ($message === '') {
+            $_SESSION['error'] = 'Tin nhắn không được để trống.';
+            $this->redirect('/worker/jobs/' . $id);
+        }
+
+        BookingMessage::add($id, (int)Auth::id(), $message);
+        $this->redirect('/worker/jobs/' . $id);
+    }
+
+    /**
+     * Trang báo cáo sau khi hoàn thành job.
+     */
+    public function completionReport(int $id): void
+    {
+        $this->requireApprovedWorkerRole();
+        $booking = $this->findOwnedBooking($id);
+
+        if ($booking === null) {
+            $this->redirect('/worker/jobs');
+        }
+
+        if (($booking['status'] ?? '') !== Booking::STATUS_COMPLETED) {
+            $_SESSION['error'] = 'Chỉ có thể gửi báo cáo sau khi hoàn thành công việc.';
+            $this->redirect('/worker/jobs/' . $id);
+        }
+
+        View::render('worker/completion-report', [
+            'job' => $booking,
+            'hasReport' => BookingReport::exists($id),
+            'csrf' => Csrf::token(),
+        ]);
+    }
+
+    /**
+     * Gửi báo cáo và tạo dữ liệu thanh toán.
+     */
+    public function submitReport(int $id): void
+    {
+        $this->requireApprovedWorkerRole();
+        $this->verifyCsrfToken();
+
+        $booking = $this->findOwnedBooking($id);
+        if ($booking === null) {
+            $this->redirect('/worker/jobs');
+        }
+
+        if (($booking['status'] ?? '') !== Booking::STATUS_COMPLETED) {
+            $_SESSION['error'] = 'Công việc chưa hoàn thành.';
+            $this->redirect('/worker/jobs/' . $id);
+        }
+
+        if (!BookingReport::exists($id)) {
+            $difficulties = trim((string)($_POST['difficulties'] ?? ''));
+            $note = trim((string)($_POST['note'] ?? ''));
+            BookingReport::add(
+                $id,
+                (int)Auth::id(),
+                $difficulties !== '' ? $difficulties : null,
+                $note !== '' ? $note : null
+            );
+        }
+
+        BookingPayment::createIfNotExists(
+            $id,
+            (int)$booking['user_id'],
+            (int)$booking['assigned_worker_id'],
+            (float)($booking['service_price'] ?? 0)
+        );
+
+        $_SESSION['success'] = 'Đã gửi báo cáo hoàn thành.';
+        $this->redirect('/worker/jobs');
+    }
+
+    /**
+     * Hiển thị tiến độ các job của worker.
      */
     public function progress(): void
     {
         $this->requireApprovedWorkerRole();
-        $progress = [
-            ['booking_id' => 2, 'step' => 'Đang di chuyển', 'time' => '2026-01-24 13:30'],
-            ['booking_id' => 2, 'step' => 'Bắt đầu công việc', 'time' => '2026-01-24 14:05'],
-        ];
-        View::render('worker/progress', ['progress' => $progress]);
+        $workerId = (int)Auth::id();
+        $jobs = Booking::getByWorkerId($workerId);
+
+        $items = [];
+        foreach ($jobs as $job) {
+            $latest = BookingProgress::latestStep((int)$job['id']);
+            $items[] = [
+                'booking_id' => (int)$job['id'],
+                'step' => $latest !== null ? BookingProgress::stepLabel($latest) : 'Chưa cập nhật',
+                'time' => ($job['date'] ?? '') . ' ' . ($job['time'] ?? ''),
+                'status' => $job['status'] ?? '',
+            ];
+        }
+
+        View::render('worker/progress', ['progress' => $items]);
     }
 
     /**
@@ -97,6 +329,64 @@ final class WorkerController
         );
 
         View::render('worker/schedule', ['schedule' => $schedule]);
+    }
+
+    /**
+     * Tìm job theo id và kiểm tra worker sở hữu job đó.
+     */
+    private function findOwnedBooking(int $bookingId): ?array
+    {
+        $booking = Booking::getDetailById($bookingId);
+        if ($booking === null) {
+            return null;
+        }
+
+        if ((int)($booking['assigned_worker_id'] ?? 0) !== (int)Auth::id()) {
+            return null;
+        }
+
+        return $booking;
+    }
+
+    private function uploadProgressPhotos(int $progressId): void
+    {
+        if (!isset($_FILES['photos']) || !is_array($_FILES['photos']['name'])) {
+            return;
+        }
+
+        $uploadDir = __DIR__ . '/../../public/uploads/progress';
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
+        }
+
+        $count = count($_FILES['photos']['name']);
+        for ($index = 0; $index < $count; $index++) {
+            if ((int)($_FILES['photos']['error'][$index] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+                continue;
+            }
+
+            $tmpPath = (string)$_FILES['photos']['tmp_name'][$index];
+            $original = (string)$_FILES['photos']['name'][$index];
+            $extension = strtolower((string)pathinfo($original, PATHINFO_EXTENSION));
+            if (!in_array($extension, ['jpg', 'jpeg', 'png', 'webp'], true)) {
+                continue;
+            }
+
+            $fileName = 'p_' . $progressId . '_' . bin2hex(random_bytes(4)) . '.' . $extension;
+            $targetPath = $uploadDir . '/' . $fileName;
+            if (move_uploaded_file($tmpPath, $targetPath)) {
+                BookingProgress::addPhoto($progressId, '/uploads/progress/' . $fileName);
+            }
+        }
+    }
+
+    private function verifyCsrfToken(): void
+    {
+        if (!Csrf::verify($_POST['_csrf'] ?? null)) {
+            http_response_code(419);
+            echo 'Mã bảo mật không hợp lệ. Vui lòng thử lại.';
+            exit(1);
+        }
     }
 
     /**

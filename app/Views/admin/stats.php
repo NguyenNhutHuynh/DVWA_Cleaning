@@ -34,7 +34,7 @@ use App\Core\View;
   </section>
 
   <!-- Thống kê Doanh thu & Chuyển đổi -->
-  <section class="home-stats revenue-stats" style="margin-top: 20px;">
+  <section class="home-stats revenue-stats stats-section-gap">
     <div class="stat-card stat-revenue">
       <strong><?= number_format($stats['total_revenue'], 0, ',', '.') ?>đ</strong>
       <span>💰 Tổng doanh thu</span>
@@ -50,6 +50,26 @@ use App\Core\View;
     <div class="stat-card stat-completion">
       <strong><?= View::e($stats['completion_rate']) ?>%</strong>
       <span>✅ Tỷ lệ hoàn thành</span>
+    </div>
+  </section>
+
+  <?php $paymentTotals = $stats['payment_totals'] ?? []; ?>
+  <section class="home-stats revenue-stats stats-section-gap">
+    <div class="stat-card stat-revenue">
+      <strong><?= number_format((float)($paymentTotals['total_service_price'] ?? 0), 0, ',', '.') ?>đ</strong>
+      <span>💳 Tổng tiền thu khách</span>
+    </div>
+    <div class="stat-card stat-aov">
+      <strong><?= number_format((float)($paymentTotals['total_worker_salary'] ?? 0), 0, ',', '.') ?>đ</strong>
+      <span>👷 Tổng lương worker</span>
+    </div>
+    <div class="stat-card stat-conversion">
+      <strong><?= number_format((float)($paymentTotals['total_company_fee'] ?? 0), 0, ',', '.') ?>đ</strong>
+      <span>🏢 Tổng phí công ty</span>
+    </div>
+    <div class="stat-card stat-completion">
+      <strong><?= number_format((float)($paymentTotals['total_tax'] ?? 0), 0, ',', '.') ?>đ</strong>
+      <span>🧾 Tổng thuế</span>
     </div>
   </section>
 
@@ -660,6 +680,57 @@ use App\Core\View;
   animation: fadeInUp 0.6s ease-out 0.3s both;
 }
 
+.stats-section-gap {
+  margin-top: 20px;
+}
+
+.home-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.home-stats .stat-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 16px;
+  min-height: 94px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
+  transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+}
+
+.home-stats .stat-card strong {
+  font-size: 1.35rem;
+  line-height: 1.25;
+  color: #0f172a;
+}
+
+.home-stats .stat-card span {
+  font-size: 0.93rem;
+  color: #475569;
+  font-weight: 500;
+}
+
+#statsOverview .stat-card {
+  background: linear-gradient(135deg, #f8fffb 0%, #f3f9ff 100%);
+  border-color: #dbe7f3;
+}
+
+#statsOverview .stat-card strong {
+  color: #1e3a8a;
+}
+
+.home-stats .stat-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
+  border-color: #cbd5e1;
+}
+
 .chart-section {
   background: #fff;
   border-radius: 12px;
@@ -871,6 +942,10 @@ use App\Core\View;
 }
 
 @media (max-width: 768px) {
+  .home-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .chart-header {
     flex-direction: column;
     align-items: flex-start;
@@ -878,6 +953,12 @@ use App\Core\View;
   
   .chart-container {
     height: 300px;
+  }
+}
+
+@media (max-width: 520px) {
+  .home-stats {
+    grid-template-columns: 1fr;
   }
 }
 </style>

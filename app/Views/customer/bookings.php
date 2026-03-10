@@ -4,7 +4,7 @@ use App\Core\View;
 ?>
 <section class="home-container">
   <header class="home-hero">
-    <p class="home-kicker">TÀI KHOẢN • ĐƠN ĐẶT</p>
+    <p class="home-kicker">TÀI KHOẢN • KHÁCH HÀNG</p>
     <h1>Đơn đặt của bạn</h1>
     <p>Xem trạng thái và chi tiết các lịch đã đặt.</p>
     <div class="hero-actions">
@@ -27,15 +27,18 @@ use App\Core\View;
             <?php if (!empty($b['service_name'])): ?>
               <div style="margin-top:4px;color:#455a64;">Dịch vụ: <?= View::e($b['service_name']) ?></div>
             <?php endif; ?>
+            <?php if (isset($b['quantity']) && (float)$b['quantity'] > 0): ?>
+              <div style="margin-top:4px;color:#455a64;">Khối lượng: <?= View::e((string)$b['quantity']) ?> <?= View::e((string)($b['measure_unit'] ?? '')) ?></div>
+            <?php endif; ?>
+            <div style="margin-top:4px;color:#1f2d3d;font-weight:600;">Thành tiền tạm tính: <?= number_format((float)($b['service_price'] ?? 0), 0, ',', '.') ?>đ</div>
             <?php if (!empty($b['description'])): ?>
               <p style="margin:6px 0;"><?= View::e($b['description']) ?></p>
             <?php endif; ?>
             <div class="hero-actions" style="justify-content:flex-start;margin-top:6px;gap:8px;">
-              <!-- Hành động huỷ có thể được bổ sung sau qua route POST -->
-              <!-- <form method="post" action="/bookings/cancel" style="display:inline-block;"> -->
-              <!--   <input type="hidden" name="id" value="<?= View::e($b['id']) ?>"> -->
-              <!--   <button class="home-btn home-btn-outline" type="submit">Huỷ</button> -->
-              <!-- </form> -->
+              <a class="home-btn" href="/bookings/<?= (int)$b['id'] ?>">Theo dõi đơn</a>
+              <?php if (($b['status'] ?? '') === 'completed' && empty($b['has_review'])): ?>
+                <a class="home-btn home-btn-outline" href="/bookings/<?= (int)$b['id'] ?>/review">Đánh giá</a>
+              <?php endif; ?>
             </div>
           </div>
         <?php endforeach; ?>

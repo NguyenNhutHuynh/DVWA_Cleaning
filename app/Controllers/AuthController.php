@@ -22,6 +22,7 @@ final class AuthController
 
     // Mã trạng thái HTTP
     private const STATUS_CSRF_TOKEN_MISMATCH = 419;
+    private const ALLOWED_CITIES = ['TP.HCM', 'Thành phố Hồ Chí Minh', 'Ho Chi Minh City'];
 
     /**
      * Hiển thị biểu mẫu đăng ký người dùng.
@@ -43,7 +44,7 @@ final class AuthController
         // Xác thực token CSRF
         if (!Csrf::verify($_POST['_csrf'] ?? null)) {
             http_response_code(self::STATUS_CSRF_TOKEN_MISMATCH);
-            echo 'Security token mismatch. Please try again.';
+            echo 'Mã bảo mật không hợp lệ. Vui lòng thử lại.';
             exit(1);
         }
 
@@ -52,9 +53,22 @@ final class AuthController
         $email = trim((string)($_POST['email'] ?? ''));
         $password = (string)($_POST['password'] ?? '');
         $role = trim((string)($_POST['role'] ?? User::ROLE_CUSTOMER));
+        $phone = trim((string)($_POST['phone'] ?? ''));
+        $city = trim((string)($_POST['city'] ?? ''));
+        $ward = trim((string)($_POST['ward'] ?? ''));
+        $addressDetail = trim((string)($_POST['address_detail'] ?? ''));
 
         // Kiểm tra dữ liệu đầu vào
-        $validationError = self::validateRegistrationInput($name, $email, $password, $role);
+        $validationError = self::validateRegistrationInput(
+            $name,
+            $email,
+            $password,
+            $role,
+            $phone,
+            $city,
+            $ward,
+            $addressDetail
+        );
         if ($validationError !== null) {
             View::render('auth/register', [
                 'csrf' => Csrf::token(),
@@ -63,10 +77,12 @@ final class AuthController
             return;
         }
 
+        $fullAddress = $addressDetail . ', ' . $ward . ', ' . $city;
+
         // Tạo tài khoản người dùng
         $passwordHash = password_hash($password, PASSWORD_DEFAULT);
         $approvalStatus = $role === User::ROLE_WORKER ? User::STATUS_PENDING : User::STATUS_ACTIVE;
-        $userId = User::create($name, $email, $passwordHash, $role, $approvalStatus);
+        $userId = User::create($name, $email, $passwordHash, $role, $approvalStatus, $phone, $fullAddress);
 
         // Gán thông báo thành công và chuyển hướng
         self::setSessionMessage(
@@ -98,7 +114,7 @@ final class AuthController
         // Xác thực token CSRF
         if (!Csrf::verify($_POST['_csrf'] ?? null)) {
             http_response_code(self::STATUS_CSRF_TOKEN_MISMATCH);
-            echo 'Security token mismatch. Please try again.';
+            echo 'Mã bảo mật không hợp lệ. Vui lòng thử lại.';
             exit(1);
         }
 
@@ -120,7 +136,7 @@ final class AuthController
         if (!password_verify($password, $user['password_hash'])) {
             View::render('auth/login', [
                 'csrf' => Csrf::token(),
-                'error' => 'Password is incorrect.',
+                'error' => 'Mật khẩu không chính xác.',
             ]);
             return;
         }
@@ -163,31 +179,56 @@ final class AuthController
         string $name,
         string $email,
         string $password,
-        string $role
+        string $role,
+        string $phone,
+        string $city,
+        string $ward,
+        string $addressDetail
     ): ?string {
         // Kiểm tra các trường bắt buộc
-        if (empty($name) || empty($email) || empty($password)) {
-            return 'Please fill in all required fields.';
+        if (
+            empty($name)
+            || empty($email)
+            || empty($password)
+            || empty($phone)
+            || empty($city)
+            || empty($ward)
+            || empty($addressDetail)
+        ) {
+            return 'Vui lòng điền đầy đủ các trường bắt buộc.';
+        }
+
+        if (!in_array($city, self::ALLOWED_CITIES, true)) {
+            return 'Chỉ hỗ trợ đăng ký trong khu vực TP.HCM.';
+        }
+
+        if (mb_strlen($addressDetail) < 5) {
+            return 'Vui lòng nhập địa chỉ chi tiết hợp lệ.';
+        }
+
+        $normalizedPhone = preg_replace('/\D+/', '', $phone) ?? '';
+        if (!preg_match('/^(0|84)([0-9]{9,10})$/', $normalizedPhone)) {
+            return 'Số điện thoại không hợp lệ.';
         }
 
         // Kiểm tra định dạng email
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            return 'Please provide a valid email address.';
+            return 'Vui lòng nhập địa chỉ email hợp lệ.';
         }
 
         // Kiểm tra độ dài mật khẩu
         if (strlen($password) < self::MIN_PASSWORD_LENGTH) {
-            return 'Password must be at least ' . self::MIN_PASSWORD_LENGTH . ' characters.';
+            return 'Mật khẩu phải có ít nhất ' . self::MIN_PASSWORD_LENGTH . ' ký tự.';
         }
 
         // Kiểm tra vai trò
         if (!in_array($role, self::ALLOWED_ROLES, true)) {
-            return 'Invalid user role.';
+            return 'Vai trò người dùng không hợp lệ.';
         }
 
         // Kiểm tra email đã tồn tại hay chưa
         if (User::findByEmail($email) !== null) {
-            return 'Email address already exists.';
+            return 'Địa chỉ email đã tồn tại.';
         }
 
         return null;
@@ -204,12 +245,12 @@ final class AuthController
     private static function validateAccountStatus(string $status, array $user): ?string
     {
         if ($status === User::STATUS_LOCKED) {
-            $reason = (string)($user['reject_reason'] ?? 'Account has been locked. Please contact support.');
+            $reason = (string)($user['reject_reason'] ?? 'Tài khoản đã bị khóa. Vui lòng liên hệ bộ phận hỗ trợ.');
             return $reason;
         }
 
         if ($status === User::STATUS_DELETED) {
-            $reason = (string)($user['reject_reason'] ?? 'Account has been deleted or deactivated.');
+            $reason = (string)($user['reject_reason'] ?? 'Tài khoản đã bị xóa hoặc bị vô hiệu hóa.');
             return $reason;
         }
 

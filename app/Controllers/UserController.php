@@ -68,7 +68,7 @@ final class UserController
         $id = (int)($_POST['id'] ?? 0);
         if ($id <= 0) {
             http_response_code(400);
-            echo 'Invalid user ID';
+            echo 'ID người dùng không hợp lệ';
             exit(1);
         }
 
@@ -90,7 +90,7 @@ final class UserController
         $id = (int)($_POST['id'] ?? 0);
         if ($id <= 0) {
             http_response_code(400);
-            echo 'Invalid user ID';
+            echo 'ID người dùng không hợp lệ';
             exit(1);
         }
 
@@ -111,7 +111,7 @@ final class UserController
         $id = (int)($_POST['id'] ?? 0);
         if ($id <= 0) {
             http_response_code(400);
-            echo 'Invalid user ID';
+            echo 'ID người dùng không hợp lệ';
             exit(1);
         }
 
@@ -129,7 +129,7 @@ final class UserController
     {
         if (!Auth::hasRole(User::ROLE_ADMIN)) {
             http_response_code(403);
-            echo 'Access denied';
+            echo 'Truy cập bị từ chối';
             exit(1);
         }
     }
@@ -146,16 +146,16 @@ final class UserController
     private function validateUserUpdateInput(int $id, string $name, string $email): ?string
     {
         if ($id <= 0) {
-            return 'Invalid user ID';
+            return 'ID người dùng không hợp lệ';
         }
 
         if ($name === '' || $email === '') {
-            return 'Invalid input';
+            return 'Dữ liệu đầu vào không hợp lệ';
         }
 
         $user = User::findById($id);
         if (!$user) {
-            return 'User not found';
+            return 'Không tìm thấy người dùng';
         }
 
         return null;

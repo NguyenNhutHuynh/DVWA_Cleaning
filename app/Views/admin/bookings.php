@@ -253,7 +253,7 @@ use App\Core\View;
               <form method="POST" action="/admin/bookings/confirm">
                 <input type="hidden" name="_csrf" value="<?= View::e($csrf) ?>">
                 <input type="hidden" name="id" value="<?= (int)$b['id'] ?>">
-                <button class="home-btn" type="submit">Xác nhận</button>
+                <button class="home-btn" type="submit" <?= empty($b['assigned_worker_id']) ? 'disabled' : '' ?>>Xác nhận</button>
               </form>
 
               <form method="POST" action="/admin/bookings/cancel">
@@ -268,12 +268,15 @@ use App\Core\View;
                 <select name="worker_id" required class="worker-select">
                   <option value="">-- Chọn worker --</option>
                   <?php foreach (($workers ?? []) as $w): ?>
-                    <option value="<?= (int)$w['id'] ?>">Worker #<?= (int)$w['id'] ?> · <?= View::e($w['name']) ?></option>
+                    <option value="<?= (int)$w['id'] ?>" <?= (int)($b['assigned_worker_id'] ?? 0) === (int)$w['id'] ? 'selected' : '' ?>>Worker #<?= (int)$w['id'] ?> · <?= View::e($w['name']) ?></option>
                   <?php endforeach; ?>
                 </select>
                 <button class="home-btn home-btn-outline" type="submit">Gán worker</button>
               </form>
             </div>
+            <?php if (empty($b['assigned_worker_id'])): ?>
+              <p style="margin-top:8px;color:#b26a00;font-size:13px;">Cần gán worker trước khi xác nhận đơn.</p>
+            <?php endif; ?>
           </article>
         <?php endforeach; ?>
       <?php endif; ?>

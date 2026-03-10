@@ -41,14 +41,14 @@ final class ContactController
 
         // Kiểm tra các trường bắt buộc
         if (!$this->validateContactData($name, $email, $phone, $subject, $message)) {
-            $_SESSION['error'] = 'Please fill in all required fields.';
+            $_SESSION['error'] = 'Vui lòng điền đầy đủ các trường bắt buộc.';
             $this->redirect('/contact');
             return;
         }
 
         // Kiểm tra định dạng email
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            $_SESSION['error'] = 'Please provide a valid email address.';
+            $_SESSION['error'] = 'Vui lòng nhập địa chỉ email hợp lệ.';
             $this->redirect('/contact');
             return;
         }
@@ -57,7 +57,7 @@ final class ContactController
         Contact::create($name, $email, $phone, $subject, $message);
 
         // Hiển thị thông báo thành công
-        $_SESSION['success'] = 'Thank you! We will contact you back within 2 hours.';
+        $_SESSION['success'] = 'Cảm ơn bạn! Chúng tôi sẽ liên hệ lại trong vòng 2 giờ.';
         $this->redirect('/contact');
     }
 
@@ -87,7 +87,7 @@ final class ContactController
      */
     private function handleInvalidMethod(): void
     {
-        $_SESSION['error'] = 'Invalid request method.';
+        $_SESSION['error'] = 'Phương thức yêu cầu không hợp lệ.';
         $this->redirect('/contact');
     }
 

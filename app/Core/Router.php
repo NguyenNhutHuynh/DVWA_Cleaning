@@ -45,12 +45,63 @@ final class Router
         $path = $this->extractPath();
         $routes = $this->selectRoutes($method);
 
-        if (!isset($routes[$path])) {
-            $this->handleNotFound();
+        if (isset($routes[$path])) {
+            $this->executeHandler($routes[$path]);
             return;
         }
 
-        $this->executeHandler($routes[$path]);
+        foreach ($routes as $routePath => $handler) {
+            $params = $this->matchPath($routePath, $path);
+            if ($params !== null) {
+                $this->executeHandler($handler, $params);
+                return;
+            }
+        }
+
+        $this->handleNotFound();
+    }
+
+    /**
+     * So khớp route động kiểu /bookings/{id}.
+     */
+    private function matchPath(string $routePath, string $path): ?array
+    {
+        if (!str_contains($routePath, '{')) {
+            return null;
+        }
+
+        $paramNames = [];
+        $regex = preg_replace_callback(
+            '/\{([a-zA-Z_][a-zA-Z0-9_]*)\}/',
+            static function (array $matches) use (&$paramNames): string {
+                $paramNames[] = $matches[1];
+                return '([^/]+)';
+            },
+            $routePath
+        );
+
+        if ($regex === null) {
+            return null;
+        }
+
+        $regex = '#^' . $regex . '$#';
+        if (!preg_match($regex, $path, $matched)) {
+            return null;
+        }
+
+        array_shift($matched);
+        $params = [];
+        foreach ($paramNames as $index => $name) {
+            $value = $matched[$index] ?? null;
+            if (is_string($value) && ctype_digit($value)) {
+                $params[$name] = (int)$value;
+                continue;
+            }
+
+            $params[$name] = $value;
+        }
+
+        return $params;
     }
 
     /**
@@ -76,12 +127,12 @@ final class Router
      *
      * @param callable|array $handler
      */
-    private function executeHandler($handler): void
+    private function executeHandler($handler, array $params = []): void
     {
         if (is_array($handler)) {
-            $this->executeClassMethod($handler);
+            $this->executeClassMethod($handler, $params);
         } else {
-            $handler();
+            $handler(...array_values($params));
         }
     }
 
@@ -90,11 +141,11 @@ final class Router
      *
      * @param array $handler [ClassName, 'methodName']
      */
-    private function executeClassMethod(array $handler): void
+    private function executeClassMethod(array $handler, array $params = []): void
     {
         [$class, $method] = $handler;
         $instance = new $class();
-        $instance->$method();
+        $instance->$method(...array_values($params));
     }
 
     /**

@@ -8,6 +8,7 @@ use App\Core\Auth;
 use App\Core\Csrf;
 use App\Core\View;
 use App\Models\Booking;
+use App\Models\BookingPayment;
 use App\Models\Contact;
 use App\Models\Service;
 use App\Models\User;
@@ -108,7 +109,7 @@ final class AdminController
 
         $user = User::findById($userId);
         if ($user === null) {
-            $this->setSessionMessage('error', 'User not found.');
+            $this->setSessionMessage('error', 'Không tìm thấy người dùng.');
             $this->redirect('/admin/users');
         }
 
@@ -153,7 +154,7 @@ final class AdminController
 
         $existingUser = User::findById($userId);
         if ($existingUser === null) {
-            $this->setSessionMessage('error', 'User not found.');
+            $this->setSessionMessage('error', 'Không tìm thấy người dùng.');
             $this->redirect('/admin/users');
         }
 
@@ -174,7 +175,7 @@ final class AdminController
 
         $allowedRoles = [User::ROLE_ADMIN, User::ROLE_WORKER, User::ROLE_CUSTOMER];
         if (!in_array($role, $allowedRoles, true)) {
-            $this->setSessionMessage('error', 'Invalid user role.');
+            $this->setSessionMessage('error', 'Vai trò người dùng không hợp lệ.');
             $this->redirect($returnTo !== '' ? $returnTo : '/admin/user?id=' . $userId);
         }
 
@@ -186,7 +187,7 @@ final class AdminController
             User::STATUS_DELETED,
         ];
         if (!in_array($approvalStatus, $allowedStatuses, true)) {
-            $this->setSessionMessage('error', 'Invalid account status.');
+            $this->setSessionMessage('error', 'Trạng thái tài khoản không hợp lệ.');
             $this->redirect($returnTo !== '' ? $returnTo : '/admin/user?id=' . $userId);
         }
 
@@ -202,7 +203,7 @@ final class AdminController
         );
 
         if (!$updated) {
-            $this->setSessionMessage('error', 'Email already exists or update failed.');
+            $this->setSessionMessage('error', 'Email đã tồn tại hoặc cập nhật thất bại.');
             $this->redirect($returnTo !== '' ? $returnTo : '/admin/user?id=' . $userId);
         }
 
@@ -214,7 +215,7 @@ final class AdminController
             }
         }
 
-        $this->setSessionMessage('success', 'User #' . $userId . ' info updated successfully.');
+        $this->setSessionMessage('success', 'Cập nhật thông tin người dùng #' . $userId . ' thành công.');
         $this->redirect($returnTo !== '' ? $returnTo : '/admin/user?id=' . $userId);
     }
 
@@ -231,7 +232,7 @@ final class AdminController
         $reason = trim((string)($_POST['reason'] ?? ''));
         User::setStatusAndReason($userId, User::STATUS_LOCKED, $reason !== '' ? $reason : null);
 
-        $this->setSessionMessage('success', 'User #' . $userId . ' locked successfully.');
+        $this->setSessionMessage('success', 'Đã khóa người dùng #' . $userId . ' thành công.');
         $returnTo = trim((string)($_POST['return_to'] ?? ''));
         $this->redirect($returnTo !== '' ? $returnTo : '/admin/user?id=' . $userId);
     }
@@ -248,7 +249,7 @@ final class AdminController
 
         User::setStatusAndReason($userId, User::STATUS_ACTIVE, null);
 
-        $this->setSessionMessage('success', 'User #' . $userId . ' unlocked successfully.');
+        $this->setSessionMessage('success', 'Đã mở khóa người dùng #' . $userId . ' thành công.');
         $returnTo = trim((string)($_POST['return_to'] ?? ''));
         $this->redirect($returnTo !== '' ? $returnTo : '/admin/user?id=' . $userId);
     }
@@ -267,9 +268,9 @@ final class AdminController
         $success = User::setStatusAndReason($userId, User::STATUS_DELETED, $reason !== '' ? $reason : null);
 
         if ($success) {
-            $this->setSessionMessage('success', 'User #' . $userId . ' deleted successfully.');
+            $this->setSessionMessage('success', 'Đã xóa người dùng #' . $userId . ' thành công.');
         } else {
-            $this->setSessionMessage('error', 'Failed to delete user #' . $userId . '.');
+            $this->setSessionMessage('error', 'Xóa người dùng #' . $userId . ' thất bại.');
         }
 
         $this->redirect('/admin/users');
@@ -281,6 +282,7 @@ final class AdminController
 
         $bookings = Booking::getAll();
         $users = User::listAll();
+        $paymentTotals = BookingPayment::totals();
         
         $stats = [
             'service_count' => count(Service::all()),
@@ -298,6 +300,7 @@ final class AdminController
             'average_order_value' => $this->calculateAverageOrderValue($bookings),
             'conversion_rate' => $this->calculateConversionRate($bookings),
             'completion_rate' => $this->calculateCompletionRate($bookings),
+            'payment_totals' => $paymentTotals,
         ];
 
         View::render('admin/stats', ['stats' => $stats]);
@@ -314,7 +317,7 @@ final class AdminController
         }
 
         User::approveWorker($workerId, (int)Auth::id());
-        $this->setSessionMessage('success', 'Worker approved successfully.');
+        $this->setSessionMessage('success', 'Duyệt worker thành công.');
         $this->redirect('/admin/users');
     }
 
@@ -330,7 +333,7 @@ final class AdminController
 
         $reason = trim((string)($_POST['reason'] ?? ''));
         User::rejectWorker($workerId, (int)Auth::id(), $reason !== '' ? $reason : null);
-        $this->setSessionMessage('success', 'Worker rejected.');
+        $this->setSessionMessage('success', 'Đã từ chối worker.');
         $this->redirect('/admin/users');
     }
 
@@ -345,7 +348,7 @@ final class AdminController
         }
 
         Service::update($serviceId, $this->extractServiceData());
-        $this->setSessionMessage('success', 'Service #' . $serviceId . ' updated successfully.');
+        $this->setSessionMessage('success', 'Cập nhật dịch vụ #' . $serviceId . ' thành công.');
         $this->redirect('/admin/services');
     }
 
@@ -360,7 +363,7 @@ final class AdminController
         }
 
         Service::toggleActive($serviceId);
-        $this->setSessionMessage('success', 'Service #' . $serviceId . ' status toggled.');
+        $this->setSessionMessage('success', 'Đã thay đổi trạng thái dịch vụ #' . $serviceId . '.');
         $this->redirect('/admin/services');
     }
 
@@ -376,9 +379,9 @@ final class AdminController
 
         $success = Service::delete($serviceId);
         if ($success) {
-            $this->setSessionMessage('success', 'Service #' . $serviceId . ' deleted successfully.');
+            $this->setSessionMessage('success', 'Đã xóa dịch vụ #' . $serviceId . ' thành công.');
         } else {
-            $this->setSessionMessage('error', 'Cannot delete service #' . $serviceId . '. It may be referenced by bookings.');
+            $this->setSessionMessage('error', 'Không thể xóa dịch vụ #' . $serviceId . '. Dịch vụ có thể đang được tham chiếu bởi các đơn đặt.');
         }
 
         $this->redirect('/admin/services');
@@ -393,12 +396,12 @@ final class AdminController
         $payload['is_active'] = (int)($_POST['is_active'] ?? 1);
 
         if (empty($payload['name']) || empty($payload['unit'])) {
-            $this->setSessionMessage('error', 'Service name and unit are required.');
+            $this->setSessionMessage('error', 'Tên dịch vụ và đơn vị là bắt buộc.');
             $this->redirect('/admin/services');
         }
 
         $serviceId = Service::create($payload);
-        $this->setSessionMessage('success', 'Service #' . $serviceId . ' created successfully.');
+        $this->setSessionMessage('success', 'Tạo dịch vụ #' . $serviceId . ' thành công.');
         $this->redirect('/admin/services');
     }
 
@@ -412,8 +415,19 @@ final class AdminController
             $this->redirect('/admin/bookings');
         }
 
+        $booking = Booking::getById($bookingId);
+        if ($booking === null) {
+            $this->setSessionMessage('error', 'Không tìm thấy đơn đặt.');
+            $this->redirect('/admin/bookings');
+        }
+
+        if (empty($booking['assigned_worker_id'])) {
+            $this->setSessionMessage('error', 'Vui lòng phân công worker trước khi xác nhận đơn đặt này.');
+            $this->redirect('/admin/bookings');
+        }
+
         Booking::updateStatus($bookingId, Booking::STATUS_CONFIRMED);
-        $this->setSessionMessage('success', 'Booking #' . $bookingId . ' confirmed.');
+        $this->setSessionMessage('success', 'Đã xác nhận đơn đặt #' . $bookingId . '.');
         $this->redirect('/admin/bookings');
     }
 
@@ -428,7 +442,7 @@ final class AdminController
         }
 
         Booking::updateStatus($bookingId, Booking::STATUS_CANCELLED);
-        $this->setSessionMessage('success', 'Booking #' . $bookingId . ' cancelled.');
+        $this->setSessionMessage('success', 'Đã hủy đơn đặt #' . $bookingId . '.');
         $this->redirect('/admin/bookings');
     }
 
@@ -449,14 +463,12 @@ final class AdminController
             || ($worker['role'] ?? '') !== User::ROLE_WORKER
             || ($worker['approval_status'] ?? '') !== User::STATUS_ACTIVE
         ) {
-            $this->setSessionMessage('error', 'Invalid worker for assignment.');
+            $this->setSessionMessage('error', 'Worker được chọn để phân công không hợp lệ.');
             $this->redirect('/admin/bookings');
         }
 
         Booking::assignWorker($bookingId, $workerId);
-        Booking::updateStatus($bookingId, Booking::STATUS_CONFIRMED);
-
-        $this->setSessionMessage('success', 'Worker #' . $workerId . ' assigned to booking #' . $bookingId . '.');
+        $this->setSessionMessage('success', 'Đã phân công worker #' . $workerId . '. Hãy xác nhận đơn khi sẵn sàng.');
         $this->redirect('/admin/bookings');
     }
 
@@ -471,7 +483,7 @@ final class AdminController
     {
         if (!Csrf::verify($_POST['_csrf'] ?? null)) {
             http_response_code(419);
-            echo 'Security token mismatch. Please try again.';
+            echo 'Mã bảo mật không hợp lệ. Vui lòng thử lại.';
             exit(1);
         }
     }
@@ -522,11 +534,11 @@ final class AdminController
     private function validateUserUpdateData(string $name, string $email, string $phone): ?string
     {
         if ($name === '' || $email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            return 'Name and valid email are required.';
+            return 'Họ tên và email hợp lệ là bắt buộc.';
         }
 
         if ($phone !== '' && !preg_match('/^[0-9+\-\s]{6,20}$/', $phone)) {
-            return 'Phone number format is invalid.';
+            return 'Định dạng số điện thoại không hợp lệ.';
         }
 
         return null;
@@ -544,23 +556,23 @@ final class AdminController
         $file = $_FILES['avatar'];
 
         if (($file['error'] ?? UPLOAD_ERR_OK) !== UPLOAD_ERR_OK) {
-            return 'Avatar upload failed.';
+            return 'Tải ảnh đại diện lên thất bại.';
         }
 
         if (($file['size'] ?? 0) > self::MAX_AVATAR_SIZE) {
-            return 'Avatar exceeds 2MB limit.';
+            return 'Ảnh đại diện vượt quá giới hạn 2MB.';
         }
 
         $extension = $this->getValidatedImageExtension($file);
         if ($extension === null) {
-            return 'Invalid avatar format. Allowed: jpg, png, gif, webp.';
+            return 'Định dạng ảnh đại diện không hợp lệ. Chỉ chấp nhận: jpg, png, gif, webp.';
         }
 
         $filename = $this->generateAvatarFilename($userId, $extension);
         $filePath = $this->getAvatarDirectory() . '/' . $filename;
 
         if (!@move_uploaded_file((string)$file['tmp_name'], $filePath)) {
-            return 'Could not save avatar file.';
+            return 'Không thể lưu tệp ảnh đại diện.';
         }
 
         User::updateAvatar($userId, '/uploads/avatars/' . $filename);
