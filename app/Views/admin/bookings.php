@@ -250,6 +250,8 @@ use App\Core\View;
             <?php endif; ?>
 
             <div class="hero-actions booking-actions">
+              <a class="home-btn home-btn-outline" href="/admin/bookings/<?= (int)$b['id'] ?>">Xem chi tiết</a>
+
               <form method="POST" action="/admin/bookings/confirm">
                 <input type="hidden" name="_csrf" value="<?= View::e($csrf) ?>">
                 <input type="hidden" name="id" value="<?= (int)$b['id'] ?>">

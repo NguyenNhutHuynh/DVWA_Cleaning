@@ -33,4 +33,27 @@ final class BookingMessage
         $stmt->execute(['booking_id' => $bookingId]);
         return $stmt->fetchAll() ?: [];
     }
+
+    public static function getComplaintsForModeration(): array
+    {
+        $stmt = DB::pdo()->query(
+            "SELECT bm.*, 
+                    b.id AS booking_id,
+                    u.name AS sender_name, 
+                    u.email AS sender_email,
+                    u.role AS sender_role,
+                    s.name AS service_name
+             FROM booking_messages bm
+             JOIN bookings b ON b.id = bm.booking_id
+             JOIN users u ON u.id = bm.sender_id
+             LEFT JOIN services s ON s.id = b.service_id
+             WHERE LOWER(bm.content) LIKE '%khiếu nại%'
+                OR LOWER(bm.content) LIKE '%complaint%'
+                OR LOWER(bm.content) LIKE '%khieu nai%'
+                OR LOWER(bm.content) LIKE '%phàn nàn%'
+                OR LOWER(bm.content) LIKE '%phan nan%'
+             ORDER BY bm.created_at DESC"
+        );
+        return $stmt->fetchAll() ?: [];
+    }
 }

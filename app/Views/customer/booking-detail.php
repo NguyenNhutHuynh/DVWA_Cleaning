@@ -101,6 +101,28 @@ use App\Models\BookingProgress;
     </div>
   </section>
 
+  <?php if (($booking['status'] ?? '') === 'completed' && !empty($review)): ?>
+    <section class="home-feature">
+      <h2>✨ Đánh giá của bạn</h2>
+      <div class="review-box">
+        <div style="margin-bottom:12px;">
+          <p style="margin:0 0 8px;"><strong>Điểm đánh giá:</strong></p>
+          <div style="font-size:1.5rem;color:#ffc107;">
+            <?= str_repeat('⭐', (int)($review['rating'] ?? 0)) ?>
+            <span style="color:#546e7a;font-size:1rem;margin-left:8px;">(<?= (int)($review['rating'] ?? 0) ?>/5)</span>
+          </div>
+        </div>
+        <?php if (!empty($review['comment'])): ?>
+          <p style="margin:0 0 4px;"><strong>Bình luận của bạn:</strong></p>
+          <div style="background:#f8f9fa;padding:12px;border-radius:8px;border-left:4px solid #2eaf7d;margin-bottom:12px;">
+            <p style="margin:0;font-style:italic;color:#546e7a;">"<?= View::e($review['comment']) ?>"</p>
+          </div>
+        <?php endif; ?>
+        <p style="margin:0;"><small style="color:#78909c;">Đánh giá vào: <?= View::e($review['created_at'] ?? '') ?></small></p>
+      </div>
+    </section>
+  <?php endif; ?>
+
   <?php if (($booking['status'] ?? '') === 'completed' && !$hasReview): ?>
     <section class="home-feature">
       <h2>Đánh giá sau khi hoàn thành</h2>

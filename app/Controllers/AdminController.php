@@ -8,7 +8,11 @@ use App\Core\Auth;
 use App\Core\Csrf;
 use App\Core\View;
 use App\Models\Booking;
+use App\Models\BookingMessage;
 use App\Models\BookingPayment;
+use App\Models\BookingProgress;
+use App\Models\BookingReport;
+use App\Models\BookingReview;
 use App\Models\Contact;
 use App\Models\Service;
 use App\Models\User;
@@ -81,10 +85,36 @@ final class AdminController
         ]);
     }
 
+    public function bookingDetail(int $id): void
+    {
+        $this->requireAdminRole();
+
+        $booking = Booking::getDetailById($id);
+        if ($booking === null) {
+            $this->setSessionMessage('error', 'Không tìm thấy đơn đặt #' . $id . '.');
+            $this->redirect('/admin/bookings');
+        }
+
+        View::render('admin/booking-detail', [
+            'booking' => $booking,
+            'progress' => BookingProgress::byBookingId($id),
+            'messages' => BookingMessage::byBookingId($id),
+            'payment' => BookingPayment::byBookingId($id),
+            'report' => BookingReport::getByBookingId($id),
+            'review' => BookingReview::getByBookingId($id),
+            'csrf' => Csrf::token(),
+        ]);
+    }
+
     public function moderation(): void
     {
         $this->requireAdminRole();
-        View::render('admin/moderation', ['contacts' => Contact::getAll()]);
+        View::render('admin/moderation', [
+            'contacts' => Contact::getAll(),
+            'reviews' => BookingReview::getAll(),
+            'bookingMessages' => BookingMessage::getComplaintsForModeration(),
+            'reports' => BookingReport::getAll(),
+        ]);
     }
 
     public function users(): void

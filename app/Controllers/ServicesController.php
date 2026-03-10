@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Core\View;
+use App\Models\BookingReview;
 use App\Models\Service;
 
 /**
@@ -44,8 +45,17 @@ final class ServicesController
             return;
         }
 
+        $reviews = BookingReview::getByServiceId($serviceId);
+        $totalReviews = count($reviews);
+        $averageRating = $totalReviews > 0
+            ? round(array_sum(array_map(static fn(array $review): int => (int)($review['rating'] ?? 0), $reviews)) / $totalReviews, 1)
+            : null;
+
         View::render('service-detail', [
             'service' => $service,
+            'reviews' => $reviews,
+            'totalReviews' => $totalReviews,
+            'averageRating' => $averageRating,
         ]);
     }
 

@@ -82,6 +82,7 @@ $router->post('/admin/services/toggle', [AdminController::class, 'toggleService'
 $router->post('/admin/services/delete', [AdminController::class, 'deleteService']);
 $router->post('/admin/services/create', [AdminController::class, 'createService']);
 $router->get('/admin/bookings', [AdminController::class, 'bookings']);
+$router->get('/admin/bookings/{id}', [AdminController::class, 'bookingDetail']);
 // Các hành động đặt lịch Admin
 $router->post('/admin/bookings/confirm', [AdminController::class, 'confirmBooking']);
 $router->post('/admin/bookings/cancel', [AdminController::class, 'cancelBooking']);

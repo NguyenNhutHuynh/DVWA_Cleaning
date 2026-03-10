@@ -1,6 +1,9 @@
 <?php
 use App\Core\View;
 /** @var array $contacts Danh sách liên hệ */
+/** @var array $reviews Danh sách đánh giá từ booking_reviews */
+/** @var array $bookingMessages Danh sách tin nhắn khiếu nại từ booking_messages */
+/** @var array $reports Danh sách báo cáo hoàn thành từ booking_reports */
 
 $comments = [];
 $ratings = [];
@@ -308,25 +311,110 @@ $renderModerationList = static function (array $items, string $emptyText): void 
     <h1>Kiểm duyệt nội dung</h1>
     <p>Duyệt phản hồi, khiếu nại, nội dung gửi lên.</p>
   </header>
-
+  
   <section class="home-feature">
-    <h2>Bình luận của khách hàng</h2>
+    <h2>Đánh giá từ khách hàng (Reviews)</h2>
     <div class="review-box">
-      <?php $renderModerationList($comments, 'Chưa có bình luận nào.'); ?>
+      <?php if (empty($reviews)): ?>
+        <p class="moderation-empty">Chưa có đánh giá nào.</p>
+      <?php else: ?>
+        <?php foreach ($reviews as $r): ?>
+          <article class="moderation-item">
+            <p class="moderation-meta">
+              <strong><?= str_repeat('⭐', (int)($r['rating'] ?? 0)) ?> - <?= View::e((string)($r['service_name'] ?? 'N/A')) ?></strong> • 
+              Booking #<?= (int)($r['booking_id'] ?? 0) ?>
+            </p>
+            <p class="moderation-message" style="color:#546e7a;margin-bottom:8px;">
+              <strong>Khách hàng:</strong> <?= View::e((string)($r['customer_name'] ?? '')) ?> (<?= View::e((string)($r['customer_email'] ?? '')) ?>)
+              <?php if (!empty($r['worker_name'])): ?>
+                → <strong>Worker:</strong> <?= View::e((string)$r['worker_name']) ?>
+              <?php endif; ?>
+            </p>
+            <?php if (!empty($r['comment'])): ?>
+              <p class="moderation-message">"<?= View::e((string)$r['comment']) ?>"</p>
+            <?php endif; ?>
+            <p class="moderation-status">
+              Đánh giá vào: <span><?= View::e((string)($r['created_at'] ?? '')) ?></span>
+            </p>
+            <div class="hero-actions moderation-actions">
+              <a class="home-btn" href="/admin/bookings/<?= (int)($r['booking_id'] ?? 0) ?>">Xem đơn</a>
+              <a class="home-btn home-btn-outline" href="#">Ẩn đánh giá</a>
+              <a class="home-btn home-btn-outline" href="#">Gắn cờ</a>
+            </div>
+          </article>
+        <?php endforeach; ?>
+      <?php endif; ?>
     </div>
   </section>
 
   <section class="home-feature">
-    <h2>Đánh giá của khách hàng</h2>
+    <h2>Tin nhắn khiếu nại trong đơn hàng</h2>
     <div class="review-box">
-      <?php $renderModerationList($ratings, 'Chưa có đánh giá nào.'); ?>
+      <?php if (empty($bookingMessages)): ?>
+        <p class="moderation-empty">Không có khiếu nại nào.</p>
+      <?php else: ?>
+        <?php foreach ($bookingMessages as $msg): ?>
+          <article class="moderation-item">
+            <p class="moderation-meta">
+              <strong>Booking #<?= (int)($msg['booking_id'] ?? 0) ?></strong> • 
+              <?= View::e((string)($msg['service_name'] ?? 'N/A')) ?>
+            </p>
+            <p class="moderation-message" style="color:#546e7a;margin-bottom:8px;">
+              <strong>Người gửi:</strong> <?= View::e((string)($msg['sender_name'] ?? '')) ?> 
+              (<span style="text-transform:uppercase;color:#2eaf7d;font-weight:700;"><?= View::e((string)($msg['sender_role'] ?? '')) ?></span>) - 
+              <?= View::e((string)($msg['sender_email'] ?? '')) ?>
+            </p>
+            <p class="moderation-message">"<?= View::e((string)($msg['content'] ?? '')) ?>"</p>
+            <p class="moderation-status">
+              Gửi lúc: <span><?= View::e((string)($msg['created_at'] ?? '')) ?></span>
+            </p>
+            <div class="hero-actions moderation-actions">
+              <a class="home-btn" href="/admin/bookings/<?= (int)($msg['booking_id'] ?? 0) ?>">Xem đơn hàng</a>
+              <a class="home-btn home-btn-outline" href="#">Liên hệ<?= ($msg['sender_role'] ?? '') === 'worker' ? ' Worker' : ' Khách' ?></a>
+              <a class="home-btn home-btn-outline" href="#">Xử lý</a>
+            </div>
+          </article>
+        <?php endforeach; ?>
+      <?php endif; ?>
     </div>
   </section>
 
   <section class="home-feature">
-    <h2>Khiếu nại của khách hàng</h2>
+    <h2>📋 Báo cáo hoàn thành từ Worker</h2>
     <div class="review-box">
-      <?php $renderModerationList($complaints, 'Chưa có khiếu nại nào.'); ?>
+      <?php if (empty($reports)): ?>
+        <p class="moderation-empty">Chưa có báo cáo nào.</p>
+      <?php else: ?>
+        <?php foreach ($reports as $rep): ?>
+          <article class="moderation-item">
+            <p class="moderation-meta">
+              <strong>Booking #<?= (int)($rep['booking_id'] ?? 0) ?> - <?= View::e((string)($rep['service_name'] ?? 'N/A')) ?></strong>
+            </p>
+            <p class="moderation-message" style="color:#546e7a;margin-bottom:8px;">
+              <strong>Worker:</strong> <?= View::e((string)($rep['worker_name'] ?? '')) ?> (<?= View::e((string)($rep['worker_email'] ?? '')) ?>)
+              <?php if (!empty($rep['customer_name'])): ?>
+                • <strong>Khách hàng:</strong> <?= View::e((string)$rep['customer_name']) ?>
+              <?php endif; ?>
+            </p>
+            <?php if (!empty($rep['difficulties'])): ?>
+              <div style="background:#fff3cd;padding:12px;border-radius:8px;border-left:4px solid #ffc107;margin:8px 0;">
+                <p class="moderation-message" style="margin:0;white-space:pre-wrap;"><?= View::e((string)$rep['difficulties']) ?></p>
+              </div>
+            <?php endif; ?>
+            <?php if (!empty($rep['summary'])): ?>
+              <p class="moderation-message"><strong>Tóm tắt:</strong> <?= View::e((string)$rep['summary']) ?></p>
+            <?php endif; ?>
+            <p class="moderation-status">
+              Báo cáo vào: <span><?= View::e((string)($rep['created_at'] ?? '')) ?></span>
+            </p>
+            <div class="hero-actions moderation-actions">
+              <a class="home-btn" href="/admin/bookings/<?= (int)($rep['booking_id'] ?? 0) ?>">Xem đơn hàng</a>
+              <a class="home-btn home-btn-outline" href="#">Liên hệ Worker</a>
+              <a class="home-btn home-btn-outline" href="#">Gắn cờ</a>
+            </div>
+          </article>
+        <?php endforeach; ?>
+      <?php endif; ?>
     </div>
   </section>
 </section>

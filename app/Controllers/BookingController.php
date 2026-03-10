@@ -174,6 +174,7 @@ final class BookingController
         $messages = BookingMessage::byBookingId($id);
         $payment = BookingPayment::byBookingId($id);
         $hasReview = BookingReview::exists($id);
+        $review = BookingReview::getByBookingId($id);
 
         View::render('customer/booking-detail', [
             'booking' => $booking,
@@ -181,6 +182,7 @@ final class BookingController
             'messages' => $messages,
             'payment' => $payment,
             'hasReview' => $hasReview,
+            'review' => $review,
             'csrf' => Csrf::token(),
         ]);
     }

@@ -257,11 +257,21 @@ final class WorkerController
         if (!BookingReport::exists($id)) {
             $difficulties = trim((string)($_POST['difficulties'] ?? ''));
             $note = trim((string)($_POST['note'] ?? ''));
+            
+            // Gộp cả difficulties và note thành 1 report
+            $report = '';
+            if ($difficulties !== '') {
+                $report .= "Khó khăn gặp phải:\n" . $difficulties;
+            }
+            if ($note !== '') {
+                if ($report !== '') $report .= "\n\n";
+                $report .= "Ghi chú thêm:\n" . $note;
+            }
+            
             BookingReport::add(
                 $id,
                 (int)Auth::id(),
-                $difficulties !== '' ? $difficulties : null,
-                $note !== '' ? $note : null
+                $report !== '' ? $report : null
             );
         }
 

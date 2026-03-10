@@ -21,6 +21,6 @@ final class PricingController
 
         View::render('pricing', [
             'services' => $services,
-}
-        );
+        ]);
     }
+}
