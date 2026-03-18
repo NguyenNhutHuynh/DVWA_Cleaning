@@ -42,15 +42,156 @@ $status = $job['status'] ?? '';
     </div>
   </section>
 
-  <?php if ($liveMode || in_array($status, ['in_progress', 'completed'], true)): ?>
+  <?php if (in_array($status, ['accepted', 'in_progress'], true)): ?>
     <section class="home-feature">
-      <h2>Bản đồ di chuyển</h2>
+      <h2>⏱️ Thời gian ước tính đến</h2>
       <div class="review-box">
-        <p><strong>Địa chỉ worker:</strong> <span id="workerAddress"><?= View::e($job['worker_address'] ?? '') ?></span></p>
-        <p><strong>Khoảng cách ước tính:</strong> <span id="distanceResult">Đang tính...</span></p>
-        <p><strong>Thời gian đến dự kiến:</strong> <span id="etaResult">Đang tính...</span></p>
-        <iframe id="mapFrame" title="Map" style="width:100%;height:360px;border:0;border-radius:10px;"></iframe>
+        <?php if (!empty($job['estimated_arrival_time'])): ?>
+          <p><strong>Thời gian dự kiến:</strong> <?= View::e($job['estimated_arrival_time']) ?></p>
+          <hr style="margin:12px 0;">
+        <?php endif; ?>
+        <form method="post" action="/worker/jobs/<?= (int)$job['id'] ?>/update-eta">
+          <input type="hidden" name="_csrf" value="<?= View::e($csrf) ?>">
+          <label for="eta">Cập nhật thời gian dự kiến đến</label>
+          <input type="datetime-local" id="eta" name="estimated_arrival_time" 
+                 value="<?= !empty($job['estimated_arrival_time']) ? View::e(str_replace(' ', 'T', substr($job['estimated_arrival_time'], 0, 16))) : '' ?>"
+                 required style="width:100%;padding:10px;border-radius:8px;margin:8px 0 12px;border:1px solid #ddd;">
+          <button type="submit" class="home-btn">Cập nhật ETA</button>
+        </form>
       </div>
+    </section>
+  <?php endif; ?>
+
+  <?php if ($liveMode || in_array($status, ['in_progress', 'completed'], true)): ?>
+    <section class="map-card">
+      <h2>📍 Chỉ đường</h2>
+      
+      <div class="map-info">
+        <div class="map-info-item">
+          <strong>Từ vị trí</strong>
+          <span id="workerAddress"><?= View::e($job['worker_address'] ?? 'Đang định vị...') ?></span>
+        </div>
+        <div class="map-info-item">
+          <strong>Đến khách hàng</strong>
+          <span id="customerAddress"><?= View::e($job['location'] ?? 'Không xác định') ?></span>
+        </div>
+        <!-- <div class="map-info-item">
+          <strong>Khoảng cách</strong>
+          <span id="distanceResult">Đang tính...</span>
+        </div>
+        <div class="map-info-item">
+          <strong>ETA</strong>
+          <span id="etaResult">Đang tính...</span>
+        </div> -->
+      </div>
+
+      <div style="display: flex; gap: 16px; margin-top: 20px; justify-content: center;">
+        <button type="button" onclick="toggleDirections()" style="width: 40px; height: 40px; border: none; border-radius: 50%; background: linear-gradient(135deg, #b5d8b8 0%, #a8c9a8 100%); color: white; font-weight: 600; cursor: pointer; font-size: 20px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(181, 216, 184, 0.3); transition: all 0.3s ease;" onmouseover="this.style.boxShadow='0 6px 16px rgba(181, 216, 184, 0.4)'; this.style.transform='scale(1.1)';" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 12px rgba(181, 216, 184, 0.3)';" title="Chỉ đường">
+          📍
+        </button>
+        <button type="button" onclick="toggleLocation()" style="width: 40px; height: 40px; border: none; border-radius: 50%; background: linear-gradient(135deg, #d4c5e8 0%, #c8b8dc 100%); color: white; font-weight: 600; cursor: pointer; font-size: 20px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(212, 197, 232, 0.3); transition: all 0.3s ease;" onmouseover="this.style.boxShadow='0 6px 16px rgba(212, 197, 232, 0.4)'; this.style.transform='scale(1.1)';" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 12px rgba(212, 197, 232, 0.3)';" title="Vị trí">
+          🗺️
+        </button>
+      </div>
+
+      <div id="worker-map" role="region" aria-label="Bản đồ chỉ đường">
+        <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #a8a8a8;">
+          <div style="text-align: center;">
+            <div style="font-size: 24px; margin-bottom: 8px;">📍</div>
+            <div style="font-size: 13px;">Đang tải bản đồ...</div>
+          </div>
+        </div>
+      </div>
+
+      <script>
+        var mapMode = 'directions';
+        
+        function toggleDirections() {
+          mapMode = 'directions';
+          updateMap();
+        }
+        
+        function toggleLocation() {
+          mapMode = 'location';
+          updateMap();
+        }
+        
+        function updateMap() {
+          var workerAddr = document.getElementById('workerAddress')?.textContent?.trim() || '';
+          var customerAddr = document.getElementById('customerAddress')?.textContent?.trim() || '';
+          var mapContainer = document.getElementById('worker-map');
+          
+          if (!workerAddr || !customerAddr) {
+            mapContainer.innerHTML = '<p style="padding: 20px; color: #a8a8a8; text-align: center;">Chưa có địa chỉ</p>';
+            return;
+          }
+          
+          if (mapMode === 'directions') {
+            // Show Google Maps Directions
+            var directionsUrl = 'https://maps.google.com/maps?f=d&source=s_d&saddr=' + encodeURIComponent(workerAddr) + 
+              '&daddr=' + encodeURIComponent(customerAddr) + '&output=embed&z=14';
+            
+            mapContainer.innerHTML = '<iframe src="' + directionsUrl + '" ' +
+              'width="100%" height="100%" frameborder="0" style="border:none; border-radius: 20px;" ' +
+              'allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>';
+          } else {
+            // Show Google Maps Location
+            var locationUrl = 'https://maps.google.com/maps?q=' + encodeURIComponent(customerAddr) + 
+              '&t=m&z=16&ie=UTF8&iwloc=&output=embed';
+            
+            mapContainer.innerHTML = '<iframe src="' + locationUrl + '" ' +
+              'width="100%" height="100%" frameborder="0" style="border:none; border-radius: 20px;" ' +
+              'allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>';
+          }
+          
+          // Calculate distance and ETA
+          calculateDistance(workerAddr, customerAddr);
+        }
+        
+        function geocodeAddress(address, callback) {
+          fetch('https://nominatim.openstreetmap.org/search?q=' + encodeURIComponent(address) + 
+            '&format=json&limit=1', { headers: { 'Accept': 'application/json' } })
+          .then(r => r.json())
+          .then(data => {
+            if (data?.length > 0) {
+              callback({ lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) });
+            } else {
+              callback(null);
+            }
+          })
+          .catch(() => callback(null));
+        }
+        
+        function calculateDistance(workerAddr, customerAddr) {
+          geocodeAddress(workerAddr, function(w) {
+            if (!w) return;
+            geocodeAddress(customerAddr, function(c) {
+              if (!c) return;
+              
+              var toRad = deg => deg * Math.PI / 180;
+              var R = 6371;
+              var dLat = toRad(c.lat - w.lat);
+              var dLon = toRad(c.lng - w.lng);
+              var a = Math.sin(dLat/2)**2 + Math.cos(toRad(w.lat)) * Math.cos(toRad(c.lat)) * Math.sin(dLon/2)**2;
+              var distance = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+              var eta = Math.max(1, Math.round(distance / 30 * 60));
+              
+              document.getElementById('distanceResult').textContent = distance.toFixed(2) + ' km';
+              document.getElementById('etaResult').textContent = eta + ' phút';
+            });
+          });
+        }
+        
+        // Initialize on page load
+        (function() {
+          var workerAddr = document.getElementById('workerAddress')?.textContent?.trim() || '';
+          var customerAddr = document.getElementById('customerAddress')?.textContent?.trim() || '';
+          
+          if (workerAddr && customerAddr) {
+            updateMap();
+          }
+        })();
+      </script>
     </section>
   <?php endif; ?>
 
@@ -127,64 +268,4 @@ $status = $job['status'] ?? '';
   </section>
 </section>
 
-<?php if ($liveMode || in_array($status, ['in_progress', 'completed'], true)): ?>
-<script>
-(async function () {
-  const workerAddress = (document.getElementById('workerAddress')?.textContent || '').trim();
-  const customerAddress = (document.getElementById('customerAddress')?.textContent || '').trim();
-  const distanceEl = document.getElementById('distanceResult');
-  const etaEl = document.getElementById('etaResult');
-  const map = document.getElementById('mapFrame');
 
-  if (!workerAddress || !customerAddress) {
-    distanceEl.textContent = 'Thiếu địa chỉ để tính.';
-    etaEl.textContent = 'Thiếu địa chỉ để tính.';
-    return;
-  }
-
-  const geocode = async (address) => {
-    const url = 'https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(address);
-    const response = await fetch(url, { headers: { 'Accept': 'application/json' } });
-    const data = await response.json();
-    if (!Array.isArray(data) || data.length === 0) return null;
-    return { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon), name: data[0].display_name };
-  };
-
-  const haversineKm = (a, b) => {
-    const toRad = (d) => d * Math.PI / 180;
-    const R = 6371;
-    const dLat = toRad(b.lat - a.lat);
-    const dLon = toRad(b.lon - a.lon);
-    const lat1 = toRad(a.lat);
-    const lat2 = toRad(b.lat);
-    const h = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) ** 2;
-    return 2 * R * Math.asin(Math.sqrt(h));
-  };
-
-  try {
-    const [workerPoint, customerPoint] = await Promise.all([geocode(workerAddress), geocode(customerAddress)]);
-    if (!workerPoint || !customerPoint) {
-      distanceEl.textContent = 'Không định vị được địa chỉ.';
-      etaEl.textContent = 'Không định vị được địa chỉ.';
-      return;
-    }
-
-    const distance = haversineKm(workerPoint, customerPoint);
-    const averageSpeedKmPerHour = 30;
-    const etaMinutes = Math.max(1, Math.round((distance / averageSpeedKmPerHour) * 60));
-
-    distanceEl.textContent = distance.toFixed(2) + ' km';
-    etaEl.textContent = etaMinutes + ' phút';
-
-    const centerLat = (workerPoint.lat + customerPoint.lat) / 2;
-    const centerLon = (workerPoint.lon + customerPoint.lon) / 2;
-    map.src = 'https://www.openstreetmap.org/export/embed.html?bbox=' +
-      (centerLon - 0.02) + '%2C' + (centerLat - 0.02) + '%2C' + (centerLon + 0.02) + '%2C' + (centerLat + 0.02) +
-      '&layer=mapnik&marker=' + customerPoint.lat + '%2C' + customerPoint.lon;
-  } catch (error) {
-    distanceEl.textContent = 'Không thể tính khoảng cách lúc này.';
-    etaEl.textContent = 'Không thể tính ETA lúc này.';
-  }
-})();
-</script>
-<?php endif; ?>

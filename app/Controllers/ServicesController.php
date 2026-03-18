@@ -14,14 +14,27 @@ use App\Models\Service;
 final class ServicesController
 {
     /**
-     * Hiển thị tất cả dịch vụ đang hoạt động.
+     * Hiển thị tất cả dịch vụ đang hoạt động hoặc kết quả tìm kiếm.
      */
     public function index(): void
     {
-        $services = Service::all();
+        $query = isset($_GET['q']) ? trim((string)$_GET['q']) : '';
+        
+        if (!empty($query) && strlen($query) >= 2) {
+            $services = Service::search($query);
+        } else {
+            $services = Service::all();
+        }
+
+        // Resolve image paths for all services
+        foreach ($services as &$service) {
+            $service['image_path'] = Service::resolveImagePath($service);
+        }
+        unset($service);
 
         View::render('services', [
             'services' => $services,
+            'searchQuery' => $query,
         ]);
     }
 
@@ -44,6 +57,9 @@ final class ServicesController
             View::render('404');
             return;
         }
+
+        // Resolve image path
+        $service['image_path'] = Service::resolveImagePath($service);
 
         $reviews = BookingReview::getByServiceId($serviceId);
         $totalReviews = count($reviews);

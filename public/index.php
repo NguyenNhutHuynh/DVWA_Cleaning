@@ -27,7 +27,10 @@ use App\Controllers\WorkerController;
 use App\Controllers\AccountController;
 use App\Core\Auth;
 use App\Core\View;
+use App\Core\DB;
 use App\Models\User;
+use App\Models\Service;
+use App\Models\Booking;
 
 $router = new Router();
 
@@ -35,7 +38,49 @@ $router = new Router();
 $router->get('/', function() {
   $uid = Auth::id();
   $user = $uid ? User::findById((int)$uid) : null;
-  View::render('home', ['uid' => $uid, 'name' => $user['name'] ?? null]);
+  
+  // Get featured services (first 6)
+  $allServices = Service::all();
+  $featuredServices = array_slice($allServices, 0, 6);
+  
+  // Get statistics
+  $totalServices = count($allServices);
+  
+  // Count total bookings
+  $allBookings = Booking::getAll();
+  $totalBookings = count($allBookings);
+  
+  // Count completed bookings (successfully finished jobs)
+  $completedBookings = count(array_filter(
+    $allBookings,
+    static fn(array $b): bool => ($b['status'] ?? '') === 'completed'
+  ));
+  
+  // Count active approved workers
+  $stmt = DB::pdo()->prepare(
+    "SELECT COUNT(*) as total FROM users WHERE role = 'worker' AND approval_status = 'active'"
+  );
+  $stmt->execute();
+  $workerResult = $stmt->fetch();
+  $totalWorkers = (int)($workerResult['total'] ?? 0);
+  
+  // Average rating from reviews
+  $avgRatingStmt = DB::pdo()->query(
+    "SELECT AVG(rating) as avg_rating FROM booking_reviews"
+  );
+  $ratingResult = $avgRatingStmt->fetch();
+  $averageRating = $ratingResult ? round((float)($ratingResult['avg_rating'] ?? 4.9), 1) : 4.9;
+  
+  View::render('home', [
+    'uid' => $uid,
+    'name' => $user['name'] ?? null,
+    'featuredServices' => $featuredServices,
+    'totalBookings' => $totalBookings,
+    'completedBookings' => $completedBookings,
+    'totalWorkers' => $totalWorkers,
+    'averageRating' => $averageRating,
+    'totalServices' => $totalServices,
+  ]);
 });
 
 // Xác thực
@@ -112,6 +157,7 @@ $router->post('/worker/jobs/{id}/accept', [WorkerController::class, 'acceptJob']
 $router->get('/worker/jobs/{id}', [WorkerController::class, 'jobDetail']);
 $router->post('/worker/jobs/{id}/start', [WorkerController::class, 'startJob']);
 $router->post('/worker/jobs/{id}/progress', [WorkerController::class, 'updateProgress']);
+$router->post('/worker/jobs/{id}/update-eta', [WorkerController::class, 'updateETA']);
 $router->post('/worker/jobs/{id}/message', [WorkerController::class, 'sendMessage']);
 $router->get('/worker/jobs/{id}/report', [WorkerController::class, 'completionReport']);
 $router->post('/worker/jobs/{id}/report', [WorkerController::class, 'submitReport']);

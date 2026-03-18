@@ -25,7 +25,7 @@ final class Service
     public static function all(): array
     {
         $stmt = DB::pdo()->query(
-            "SELECT id, name, description, icon, duration_text AS duration, price, unit, minimum_price AS minimum, is_active
+            "SELECT id, name, description, icon, image_path, duration_text AS duration, price, unit, minimum_price AS minimum, is_active
              FROM services
              WHERE is_active = 1
              ORDER BY id ASC"
@@ -42,13 +42,39 @@ final class Service
     public static function getById(int $id): ?array
     {
         $stmt = DB::pdo()->prepare(
-            "SELECT id, name, description, icon, duration_text AS duration, price, unit, minimum_price AS minimum, is_active
+            "SELECT id, name, description, icon, image_path, duration_text AS duration, price, unit, minimum_price AS minimum, is_active
              FROM services
              WHERE id = :id
              LIMIT 1"
         );
         $stmt->execute(['id' => $id]);
         return $stmt->fetch() ?: null;
+    }
+
+    /**
+     * Tìm kiếm dịch vụ theo keyword (tên hoặc mô tả).
+     *
+     * @param string $keyword Từ khóa tìm kiếm
+     * @return array Danh sách dịch vụ khớp với từ khóa
+     */
+    public static function search(string $keyword): array
+    {
+        $searchTerm = '%' . $keyword . '%';
+        $stmt = DB::pdo()->prepare(
+            "SELECT id, name, description, icon, image_path, duration_text AS duration, price, unit, minimum_price AS minimum, is_active
+             FROM services
+             WHERE is_active = 1 AND (name LIKE :search_name OR description LIKE :search_desc)
+             ORDER BY CASE 
+                WHEN name LIKE :exact_match THEN 0
+                ELSE 1
+             END, name ASC"
+        );
+        $stmt->execute([
+            'search_name' => $searchTerm,
+            'search_desc' => $searchTerm,
+            'exact_match' => $keyword
+        ]);
+        return $stmt->fetchAll() ?: [];
     }
 
     /**
@@ -164,6 +190,80 @@ final class Service
         } catch (PDOException $exception) {
             return false;
         }
+    }
+
+    /**
+     * Cập nhật đường dẫn ảnh của dịch vụ.
+     *
+     * @param int $id ID dịch vụ
+     * @param string $imagePath Đường dẫn đến ảnh
+     * @return bool True nếu cập nhật thành công
+     */
+    public static function updateImage(int $id, string $imagePath): bool
+    {
+        $stmt = DB::pdo()->prepare(
+            "UPDATE services SET image_path = :image_path, updated_at = NOW() WHERE id = :id"
+        );
+        return $stmt->execute(['id' => $id, 'image_path' => $imagePath]);
+    }
+    /**
+     * Mảng ánh xạ tên dịch vụ thành tên file hình ảnh.
+     * Sử dụng để fallback nếu database không có image_path.
+     *
+     * @return array Mảng mapping [service_name => image_filename]
+     */
+    private static function getServiceImagesMapping(): array
+    {
+        return [
+            'combo tổng vệ sinh' => 'combo-tong-ve-sinh.png',
+            'giặt nệm & sofa' => 'sofa.png',
+            'giặt nệm và sofa' => 'sofa.png',
+            'khử khuẩn' => 'khu-khuan.png',
+            'vệ sinh nhà vệ sinh' => 'nha-ve-sinh.png',
+            'vệ sinh phòng khách' => 'phong-khach.png',
+            'vệ sinh phòng ngủ' => 'phong-ngu.png',
+            'vệ sinh nhà bếp' => 'nha-bep.png',
+            'combo chuyển nhà' => 'combo-chuyen-nha.png',
+            'vệ sinh kính' => 'kinh.png',
+            'combo cơ bản' => 'combo-co-ban.png',
+            'combo gia đình' => 'combo-gia-dinh.png',
+            'tổng vệ sinh nhà' => 'tong-ve-sinh-nha.png',
+            'vệ sinh' => 'nha-ve-sinh.png',
+        ];
+    }
+
+    /**
+     * Lấy đường dẫn hình ảnh dịch vụ.
+     * Nếu database có image_path, sử dụng nó; nếu không, fallback đến mảng mapping.
+     *
+     * @param array $service Dữ liệu dịch vụ từ database
+     * @return string Đường dẫn hình ảnh
+     */
+    public static function resolveImagePath(array $service): string
+    {
+        // Ưu tiên sử dụng image_path từ database
+        if (!empty($service['image_path'])) {
+            return $service['image_path'];
+        }
+
+        // Fallback: Tìm hình ảnh từ mảng mapping dựa trên tên dịch vụ
+        $serviceName = strtolower(trim($service['name'] ?? ''));
+        $imageMapping = self::getServiceImagesMapping();
+
+        // Tìm match chính xác (đã convert thành lowercase)
+        if (isset($imageMapping[$serviceName])) {
+            return '/assets/img/' . $imageMapping[$serviceName];
+        }
+
+        // Nếu không có match chính xác, tìm match theo từ khóa
+        foreach ($imageMapping as $mapName => $filename) {
+            if (strpos($serviceName, $mapName) !== false || strpos($mapName, $serviceName) !== false) {
+                return '/assets/img/' . $filename;
+            }
+        }
+
+        // Fallback cuối cùng: placeholder
+        return '/assets/img/placeholder.png';
     }
 }
 

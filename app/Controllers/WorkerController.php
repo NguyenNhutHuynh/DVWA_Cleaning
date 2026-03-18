@@ -33,10 +33,43 @@ final class WorkerController
         $this->requireApprovedWorkerRole();
         $uid = Auth::id();
         $user = User::findById($uid);
+        
+        // Lấy danh sách công việc được phân công cho nhân viên
+        $allBookings = Booking::getByWorkerId($uid);
+        
+        // Lọc công việc hôm nay
+        $today = date('Y-m-d');
+        $todayBookings = array_values(array_filter(
+            $allBookings,
+            static fn(array $booking): bool => ($booking['date'] ?? '') === $today &&
+                                               in_array($booking['status'] ?? '', 
+                                                   [Booking::STATUS_ACCEPTED, 
+                                                    Booking::STATUS_IN_PROGRESS,
+                                                    Booking::STATUS_CONFIRMED], true)
+        ));
+        
+        // Đếm công việc chưa xem
+        $newJobs = count(array_filter($allBookings, 
+            static fn(array $b): bool => ($b['status'] ?? '') === Booking::STATUS_CONFIRMED));
+        
+        // Đếm công việc đang thực hiện
+        $activeJobs = count(array_filter($allBookings, 
+            static fn(array $b): bool => ($b['status'] ?? '') === Booking::STATUS_IN_PROGRESS));
+        
+        // Lấy công việc hoàn thành trong tuần
+        $oneWeekAgo = date('Y-m-d', strtotime('-7 days'));
+        $completedThisWeek = count(array_filter($allBookings, 
+            static fn(array $b): bool => ($b['status'] ?? '') === Booking::STATUS_COMPLETED &&
+                                        ($b['updated_at'] ?? '') >= $oneWeekAgo));
+        
         View::render('worker/dashboard', [
             'uid' => $uid,
             'role' => User::ROLE_WORKER,
             'name' => $user['name'] ?? 'Worker',
+            'todayBookings' => $todayBookings,
+            'newJobs' => $newJobs,
+            'activeJobs' => $activeJobs,
+            'completedThisWeek' => $completedThisWeek,
         ]);
     }
 
@@ -186,6 +219,37 @@ final class WorkerController
         }
 
         $_SESSION['success'] = 'Đã cập nhật tiến độ.';
+        $this->redirect('/worker/jobs/' . $id);
+    }
+
+    /**
+     * Worker cập nhật thời gian ước tính đến.
+     */
+    public function updateETA(int $id): void
+    {
+        $this->requireApprovedWorkerRole();
+        $this->verifyCsrfToken();
+
+        $booking = $this->findOwnedBooking($id);
+        if ($booking === null) {
+            $this->redirect('/worker/jobs');
+        }
+
+        $eta = trim((string)($_POST['estimated_arrival_time'] ?? ''));
+        if ($eta === '') {
+            $_SESSION['error'] = 'Vui lòng chọn thời gian dự kiến.';
+            $this->redirect('/worker/jobs/' . $id);
+        }
+
+        // Convert datetime-local format (YYYY-MM-DDTHH:MM) to database format (YYYY-MM-DD HH:MM)
+        $eta = str_replace('T', ' ', $eta);
+
+        if (Booking::updateEstimatedArrivalTime($id, $eta)) {
+            $_SESSION['success'] = 'Đã cập nhật thời gian dự kiến đến.';
+        } else {
+            $_SESSION['error'] = 'Không thể cập nhật thời gian dự kiến.';
+        }
+
         $this->redirect('/worker/jobs/' . $id);
     }
 

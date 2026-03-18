@@ -69,11 +69,28 @@ use App\Models\BookingProgress;
 
   <?php if (!empty($booking['assigned_worker_id']) && in_array($booking['status'] ?? '', ['accepted', 'confirmed', 'in_progress'], true)): ?>
     <section class="home-feature">
+      <h2>⏱️ Thời gian ước tính đến</h2>
+      <div class="review-box">
+        <?php if (!empty($booking['estimated_arrival_time'])): ?>
+          <p><strong>Worker sẽ đến lúc:</strong> <span style="color:#2eaf7d;font-weight:700;"><?= View::e($booking['estimated_arrival_time']) ?></span></p>
+          <p style="font-size:14px;color:#666;margin:8px 0 0;">Worker đã cập nhật thời gian dự kiến đến</p>
+        <?php else: ?>
+          <p><strong>Thời gian ước tính:</strong> <span id="etaResult">Đang tính...</span></p>
+          <p style="font-size:14px;color:#666;margin:8px 0 0;">Tính toán dựa trên vị trí hiện tại của worker</p>
+        <?php endif; ?>
+      </div>
+    </section>
+  <?php endif; ?>
+
+  <?php if (!empty($booking['assigned_worker_id']) && in_array($booking['status'] ?? '', ['accepted', 'confirmed', 'in_progress'], true)): ?>
+    <section class="home-feature">
       <h2>Bản đồ di chuyển</h2>
       <div class="review-box">
         <p><strong>Địa chỉ worker:</strong> <span id="workerAddress"><?= View::e($booking['worker_address'] ?? '') ?></span></p>
         <p><strong>Khoảng cách ước tính:</strong> <span id="distanceResult">Đang tính...</span></p>
-        <p><strong>Thời gian đến dự kiến:</strong> <span id="etaResult">Đang tính...</span></p>
+        <?php if (empty($booking['estimated_arrival_time'])): ?>
+          <p><strong>Thời gian đến (tự động tính):</strong> <span id="autoEtaResult">Đang tính...</span></p>
+        <?php endif; ?>
         <iframe id="mapFrame" title="Map" style="width:100%;height:360px;border:0;border-radius:10px;"></iframe>
       </div>
     </section>
@@ -144,12 +161,12 @@ use App\Models\BookingProgress;
   const workerAddress = (document.getElementById('workerAddress')?.textContent || '').trim();
   const customerAddress = (document.getElementById('customerAddress')?.textContent || '').trim();
   const distanceEl = document.getElementById('distanceResult');
-  const etaEl = document.getElementById('etaResult');
+  const autoEtaEl = document.getElementById('autoEtaResult');
   const map = document.getElementById('mapFrame');
 
   if (!workerAddress || !customerAddress) {
-    distanceEl.textContent = 'Thiếu địa chỉ để tính.';
-    etaEl.textContent = 'Thiếu địa chỉ để tính.';
+    if (distanceEl) distanceEl.textContent = 'Thiếu địa chỉ để tính.';
+    if (autoEtaEl) autoEtaEl.textContent = 'Thiếu địa chỉ để tính.';
     return;
   }
 
@@ -202,15 +219,15 @@ use App\Models\BookingProgress;
     
     if (!workerPoint) {
       console.warn('Worker address not geocoded:', workerAddress);
-      distanceEl.textContent = 'Không thể xác định vị trí worker.';
-      etaEl.textContent = 'Không thể xác định vị trí worker.';
+      if (distanceEl) distanceEl.textContent = 'Không thể xác định vị trí worker.';
+      if (autoEtaEl) autoEtaEl.textContent = 'Không thể xác định vị trí worker.';
       return;
     }
     
     if (!customerPoint) {
       console.warn('Customer address not geocoded:', customerAddress);
-      distanceEl.textContent = 'Không thể xác định vị trí khách hàng.';
-      etaEl.textContent = 'Không thể xác định vị trí khách hàng.';
+      if (distanceEl) distanceEl.textContent = 'Không thể xác định vị trí khách hàng.';
+      if (autoEtaEl) autoEtaEl.textContent = 'Không thể xác định vị trí khách hàng.';
       return;
     }
 
@@ -218,22 +235,25 @@ use App\Models\BookingProgress;
     const averageSpeedKmPerHour = 30;
     const etaMinutes = Math.max(1, Math.round((distance / averageSpeedKmPerHour) * 60));
 
-    distanceEl.textContent = distance.toFixed(2) + ' km';
-    etaEl.textContent = etaMinutes + ' phút';
+    if (distanceEl) distanceEl.textContent = distance.toFixed(2) + ' km';
+    if (autoEtaEl) autoEtaEl.textContent = etaMinutes + ' phút';
 
-    const south = Math.min(customerPoint.lat, workerPoint.lat) - 0.03;
-    const north = Math.max(customerPoint.lat, workerPoint.lat) + 0.03;
-    const west = Math.min(customerPoint.lon, workerPoint.lon) - 0.03;
-    const east = Math.max(customerPoint.lon, workerPoint.lon) + 0.03;
+    if (map) {
+      const south = Math.min(customerPoint.lat, workerPoint.lat) - 0.03;
+      const north = Math.max(customerPoint.lat, workerPoint.lat) + 0.03;
+      const west = Math.min(customerPoint.lon, workerPoint.lon) - 0.03;
+      const east = Math.max(customerPoint.lon, workerPoint.lon) + 0.03;
 
-    map.src = 'https://www.openstreetmap.org/export/embed.html?bbox=' +
-      west + '%2C' + south + '%2C' + east + '%2C' + north +
-      '&layer=mapnik&marker=' + customerPoint.lat + '%2C' + customerPoint.lon + 
-      '&marker=' + workerPoint.lat + '%2C' + workerPoint.lon;
+      map.src = 'https://www.openstreetmap.org/export/embed.html?bbox=' +
+        west + '%2C' + south + '%2C' + east + '%2C' + north +
+        '&layer=mapnik&marker=' + customerPoint.lat + '%2C' + customerPoint.lon + 
+        '&marker=' + workerPoint.lat + '%2C' + workerPoint.lon;
+    }
   } catch (error) {
     console.error('Map error:', error);
-    distanceEl.textContent = 'Lỗi khi tính toán bản đồ.';
-    etaEl.textContent = 'Lỗi khi tính toán bản đồ.';
+    if (distanceEl) distanceEl.textContent = 'Lỗi khi tính toán bản đồ.';
+    if (autoEtaEl) autoEtaEl.textContent = 'Lỗi khi tính toán bản đồ.';
   }
 })();
 </script>
+

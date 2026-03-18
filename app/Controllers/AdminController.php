@@ -25,6 +25,10 @@ final class AdminController
 {
     private const MAX_AVATAR_SIZE = 2 * 1024 * 1024;
     private const ALLOWED_AVATAR_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+    
+    private const MAX_SERVICE_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
+    private const ALLOWED_SERVICE_IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp'];
+    private const SERVICE_IMAGE_UPLOAD_DIR = __DIR__ . '/../../public/uploads/services/';
 
     public function dashboard(): void
     {
@@ -378,6 +382,17 @@ final class AdminController
         }
 
         Service::update($serviceId, $this->extractServiceData());
+        
+        // Handle service image upload if provided
+        if ($this->hasServiceImageUpload()) {
+            $imageError = $this->handleServiceImageUpload($serviceId);
+            if ($imageError !== null) {
+                $this->setSessionMessage('error', 'Cập nhật dịch vụ thành công nhưng upload ảnh thất bại: ' . $imageError);
+                $this->redirect('/admin/services');
+                return;
+            }
+        }
+        
         $this->setSessionMessage('success', 'Cập nhật dịch vụ #' . $serviceId . ' thành công.');
         $this->redirect('/admin/services');
     }
@@ -431,6 +446,17 @@ final class AdminController
         }
 
         $serviceId = Service::create($payload);
+        
+        // Handle service image upload
+        if ($this->hasServiceImageUpload()) {
+            $imageError = $this->handleServiceImageUpload($serviceId);
+            if ($imageError !== null) {
+                $this->setSessionMessage('error', 'Tạo dịch vụ thành công nhưng upload ảnh thất bại: ' . $imageError);
+                $this->redirect('/admin/services');
+                return;
+            }
+        }
+        
         $this->setSessionMessage('success', 'Tạo dịch vụ #' . $serviceId . ' thành công.');
         $this->redirect('/admin/services');
     }
@@ -639,6 +665,76 @@ final class AdminController
     private function getAvatarDirectory(): string
     {
         $dir = dirname(__DIR__, 2) . '/public/uploads/avatars';
+        if (!is_dir($dir)) {
+            @mkdir($dir, 0777, true);
+        }
+        return $dir;
+    }
+
+    private function hasServiceImageUpload(): bool
+    {
+        return isset($_FILES['service_image']) && $_FILES['service_image']['error'] === UPLOAD_ERR_OK;
+    }
+
+    private function handleServiceImageUpload(int $serviceId): ?string
+    {
+        $file = $_FILES['service_image'] ?? [];
+        
+        if (empty($file['name'])) {
+            return null;
+        }
+        
+        $fileSize = (int)($file['size'] ?? 0);
+        if ($fileSize > self::MAX_SERVICE_IMAGE_SIZE) {
+            return 'Ảnh quá lớn. Tối đa 5MB.';
+        }
+        
+        $extension = $this->getValidatedServiceImageExtension($file);
+        if ($extension === null) {
+            return 'Định dạng ảnh không được hỗ trợ. Hỗ trợ: JPG, PNG, WebP.';
+        }
+        
+        $uploadDir = $this->getServiceImageDirectory();
+        $filename = $this->generateServiceImageFilename($serviceId, $extension);
+        $filePath = $uploadDir . $filename;
+        
+        if (!@move_uploaded_file((string)$file['tmp_name'], $filePath)) {
+            return 'Không thể lưu tệp ảnh dịch vụ.';
+        }
+        
+        Service::updateImage($serviceId, '/uploads/services/' . $filename);
+        return null;
+    }
+
+    private function getValidatedServiceImageExtension(array $file): ?string
+    {
+        $extension = strtolower(pathinfo((string)($file['name'] ?? ''), PATHINFO_EXTENSION));
+        if (in_array($extension, self::ALLOWED_SERVICE_IMAGE_EXTENSIONS, true)) {
+            return $extension;
+        }
+        
+        $imageInfo = @getimagesize((string)($file['tmp_name'] ?? ''));
+        if (is_array($imageInfo) && isset($imageInfo['mime'])) {
+            $mimeMap = [
+                'image/jpeg' => 'jpg',
+                'image/png' => 'png',
+                'image/webp' => 'webp',
+            ];
+            $mimeType = strtolower((string)$imageInfo['mime']);
+            return $mimeMap[$mimeType] ?? null;
+        }
+        
+        return null;
+    }
+
+    private function generateServiceImageFilename(int $serviceId, string $extension): string
+    {
+        return sprintf('service_%d_%d_%s.%s', $serviceId, time(), bin2hex(random_bytes(4)), $extension);
+    }
+
+    private function getServiceImageDirectory(): string
+    {
+        $dir = dirname(__DIR__, 2) . '/public/uploads/services';
         if (!is_dir($dir)) {
             @mkdir($dir, 0777, true);
         }

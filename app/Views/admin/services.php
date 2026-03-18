@@ -260,7 +260,7 @@ use App\Core\View;
   <section class="services-section" aria-label="Quản lý dịch vụ">
     <h2 class="section-title">Thêm dịch vụ mới</h2>
     <div class="service-form-box">
-      <form method="post" action="/admin/services/create">
+      <form method="post" action="/admin/services/create" enctype="multipart/form-data">
         <input type="hidden" name="_csrf" value="<?= View::e($csrf) ?>">
         <div class="form-grid">
           <input class="auth-input" name="name" placeholder="Tên" required>
@@ -275,6 +275,11 @@ use App\Core\View;
           </select>
         </div>
         <textarea class="auth-input" name="description" rows="3" placeholder="Mô tả" required></textarea>
+        <div style="margin-bottom: 10px;">
+          <label style="display: block; margin-bottom: 8px; color: #1f2d3d; font-weight: 600;">Ảnh dịch vụ:</label>
+          <input type="file" class="auth-input" name="service_image" accept="image/jpeg,image/png,image/webp" placeholder="Chọn ảnh">
+          <small style="color: #78909c; display: block; margin-top: 4px;">JPG, PNG, WebP. Tối đa 5MB</small>
+        </div>
         <div class="form-actions">
           <button class="home-btn" type="submit">Thêm dịch vụ</button>
         </div>
@@ -301,7 +306,7 @@ use App\Core\View;
           </div>
 
           <div class="service-actions">
-            <form method="post" action="/admin/services/update" class="update-form">
+            <form method="post" action="/admin/services/update" class="update-form" enctype="multipart/form-data">
               <input type="hidden" name="_csrf" value="<?= View::e($csrf) ?>">
               <input type="hidden" name="id" value="<?= View::e((string)$s['id']) ?>">
               <div class="form-grid">
@@ -313,6 +318,17 @@ use App\Core\View;
                 <input class="auth-input" name="minimum" type="number" min="0" placeholder="Tối thiểu" value="<?= View::e((string)($s['minimum'] ?? ($s['minimum_price'] ?? 0))) ?>">
               </div>
               <textarea class="auth-input" name="description" rows="3" placeholder="Mô tả"><?= View::e($s['description']) ?></textarea>
+              <?php if (!empty($s['image_path'])): ?>
+                <div style="margin-bottom: 10px; padding: 10px; background: #f0fff4; border-radius: 8px; border: 1px solid #d9efe5;">
+                  <p style="margin: 0 0 8px 0; color: #1f2d3d; font-weight: 600;">Ảnh hiện tại:</p>
+                  <img src="<?= View::e($s['image_path']) ?>" alt="<?= View::e($s['name']) ?>" style="width: 120px; height: 120px; object-fit: cover; border-radius: 6px;">
+                </div>
+              <?php endif; ?>
+              <div style="margin-bottom: 10px;">
+                <label style="display: block; margin-bottom: 8px; color: #1f2d3d; font-weight: 600;">Thay đổi ảnh (tùy chọn):</label>
+                <input type="file" class="auth-input" name="service_image" accept="image/jpeg,image/png,image/webp" placeholder="Chọn ảnh">
+                <small style="color: #78909c; display: block; margin-top: 4px;">JPG, PNG, WebP. Tối đa 5MB</small>
+              </div>
               <div class="form-actions">
                 <button class="home-btn" type="submit">Lưu</button>
               </div>

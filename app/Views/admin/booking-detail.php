@@ -9,52 +9,189 @@ use App\Models\BookingProgress;
 /** @var array|null $review */
 ?>
 
-<section class="home-container" style="max-width:1180px; margin:0 auto 70px; padding:0 16px; display:grid; gap:24px;">
-  <header class="home-hero" style="background: linear-gradient(135deg, #2eaf7d 0%, #43c59e 50%, #8cdf94 100%); color:#fff; border-radius:20px; box-shadow:0 10px 40px rgba(46,175,125,.3);">
-    <p class="home-kicker" style="color:#fff;">ADMIN • CHI TIET DON</p>
-    <h1>Don #<?= (int)($booking['id'] ?? 0) ?></h1>
-    <p>Theo doi toan bo qua trinh worker thuc hien cong viec.</p>
-    <div style="margin-top:12px;">
-      <a class="home-btn home-btn-outline" href="/admin/bookings" style="background:#fff;">Quay lai danh sach don</a>
+<style>
+.admin-booking-detail {
+  max-width: 1200px;
+  margin: 0 auto 70px;
+  padding: 0 16px;
+  display: grid;
+  gap: 24px;
+}
+
+.booking-detail-hero {
+  background: linear-gradient(135deg, #2eaf7d 0%, #43c59e 50%, #8cdf94 100%);
+  border-radius: 20px;
+  padding: 48px 38px;
+  color: #fff;
+  box-shadow: 0 10px 40px rgba(46, 175, 125, 0.3);
+  position: relative;
+  overflow: hidden;
+  animation: slideInDown 0.6s ease-out;
+}
+
+.booking-detail-hero::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+  animation: rotate 20s linear infinite;
+}
+
+.booking-detail-hero .home-kicker,
+.booking-detail-hero h1,
+.booking-detail-hero p,
+.booking-detail-hero .hero-back {
+  position: relative;
+  z-index: 1;
+}
+
+.booking-detail-hero .home-kicker {
+  color: #fff;
+}
+
+.booking-detail-hero h1 {
+  margin: 0 0 10px;
+  font-size: 2.4rem;
+}
+
+.booking-detail-page .home-feature {
+  border: 1px solid #e7f3ed;
+  background: #fff;
+  box-shadow: 0 6px 20px rgba(44,62,80,0.06);
+  animation: fadeInUp 0.8s ease-out 0.2s both;
+}
+
+.booking-detail-page .review-box {
+  border: 1px solid #dff1e8;
+  background: #fff;
+  display: grid;
+  gap: 10px;
+}
+
+.meta-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 10px 16px;
+}
+
+.status-chip {
+  display: inline-block;
+  color: #2eaf7d;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+.timeline-item,
+.message-item {
+  margin-bottom: 12px;
+  padding: 12px;
+  border: 1px solid #e9ecef;
+  border-radius: 10px;
+  background: #fcfffd;
+}
+
+.photo-list {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.photo-list img {
+  width: 110px;
+  height: 110px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.report-box {
+  background: #fff3cd;
+  padding: 12px;
+  border-radius: 8px;
+  border-left: 4px solid #ffc107;
+}
+
+.review-stars {
+  color: #ffb400;
+  font-size: 1.1rem;
+}
+
+@keyframes slideInDown {
+  from { opacity: 0; transform: translateY(-30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@media (max-width: 768px) {
+  .booking-detail-hero {
+    padding: 34px 24px;
+  }
+
+  .booking-detail-hero h1 {
+    font-size: 2rem;
+  }
+}
+</style>
+
+<section class="home-container admin-booking-detail booking-detail-page">
+  <header class="home-hero booking-detail-hero">
+    <p class="home-kicker">ADMIN • CHI TIẾT ĐƠN</p>
+    <h1>Đơn #<?= (int)($booking['id'] ?? 0) ?></h1>
+    <p>Theo dõi toàn bộ quá trình worker thực hiện công việc.</p>
+    <div class="hero-back" style="margin-top: 12px;">
+      <a class="home-btn home-btn-outline" href="/admin/bookings" style="background:#fff;">Quay lại danh sách đơn</a>
     </div>
   </header>
 
   <section class="home-feature">
-    <h2>Thong tin tong quan</h2>
+    <h2>Thông tin tổng quan</h2>
     <div class="review-box">
-      <p><strong>Dich vu:</strong> <?= View::e((string)($booking['service_name'] ?? '')) ?></p>
-      <p><strong>Khach hang:</strong> <?= View::e((string)($booking['user_name'] ?? '')) ?> (<?= View::e((string)($booking['user_phone'] ?? '')) ?>)</p>
-      <p><strong>Dia chi:</strong> <?= View::e((string)($booking['location'] ?? '')) ?></p>
-      <p><strong>Lich lam:</strong> <?= View::e((string)($booking['date'] ?? '')) ?> <?= View::e((string)($booking['time'] ?? '')) ?></p>
-      <p><strong>Worker:</strong> <?= View::e((string)($booking['worker_name'] ?? 'Chua phan cong')) ?> (<?= View::e((string)($booking['worker_phone'] ?? '')) ?>)</p>
-      <p><strong>Trang thai:</strong> <span style="font-weight:700;color:#2eaf7d;"><?= View::e((string)($booking['status'] ?? '')) ?></span></p>
+      <div class="meta-grid">
+        <p><strong>Dịch vụ:</strong> <?= View::e((string)($booking['service_name'] ?? '')) ?></p>
+        <p><strong>Khách hàng:</strong> <?= View::e((string)($booking['user_name'] ?? '')) ?> (<?= View::e((string)($booking['user_phone'] ?? '')) ?>)</p>
+        <p><strong>Địa chỉ:</strong> <?= View::e((string)($booking['location'] ?? '')) ?></p>
+        <p><strong>Lịch làm:</strong> <?= View::e((string)($booking['date'] ?? '')) ?> <?= View::e((string)($booking['time'] ?? '')) ?></p>
+        <p><strong>Worker:</strong> <?= View::e((string)($booking['worker_name'] ?? 'Chưa phân công')) ?> (<?= View::e((string)($booking['worker_phone'] ?? '')) ?>)</p>
+        <p><strong>Trạng thái:</strong> <span class="status-chip"><?= View::e((string)($booking['status'] ?? '')) ?></span></p>
+      </div>
+      <hr style="margin: 4px 0 2px; border: none; border-top: 1px solid #e8f2ed;">
       <?php if ($payment !== null): ?>
-        <hr style="margin:12px 0;">
-        <p><strong>Thanh toan:</strong> <?= number_format((float)($payment['service_price'] ?? 0), 0, ',', '.') ?>d</p>
+        <p><strong>Thanh toán:</strong> <?= number_format((float)($payment['service_price'] ?? 0), 0, ',', '.') ?>đ</p>
       <?php else: ?>
-        <hr style="margin:12px 0;">
-        <p><strong>Thanh toan:</strong> <?= number_format((float)($booking['service_price'] ?? 0), 0, ',', '.') ?>d</p>
+        <p><strong>Thanh toán:</strong> <?= number_format((float)($booking['service_price'] ?? 0), 0, ',', '.') ?>đ</p>
       <?php endif; ?>
     </div>
   </section>
 
   <section class="home-feature">
-    <h2>Worker da lam gi (Tien do)</h2>
+    <h2>Worker đã làm gì (tiến độ)</h2>
     <div class="review-box">
       <?php if (empty($progress)): ?>
-        <p>Worker chua cap nhat tien do.</p>
+        <p>Worker chưa cập nhật tiến độ.</p>
       <?php else: ?>
         <?php foreach ($progress as $item): ?>
-          <article style="margin-bottom:14px;padding:12px;border:1px solid #e9ecef;border-radius:10px;">
+          <article class="timeline-item">
             <p><strong><?= View::e(BookingProgress::stepLabel((string)($item['step'] ?? ''))) ?></strong> • <?= View::e((string)($item['created_at'] ?? '')) ?></p>
             <?php if (!empty($item['note'])): ?>
               <p><?= View::e((string)$item['note']) ?></p>
             <?php endif; ?>
             <?php if (!empty($item['photos'])): ?>
-              <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              <div class="photo-list">
                 <?php foreach ($item['photos'] as $photo): ?>
                   <a href="<?= View::e((string)$photo) ?>" target="_blank" rel="noopener">
-                    <img src="<?= View::e((string)$photo) ?>" alt="progress" style="width:110px;height:110px;object-fit:cover;border-radius:8px;">
+                    <img src="<?= View::e((string)$photo) ?>" alt="progress">
                   </a>
                 <?php endforeach; ?>
               </div>
@@ -66,49 +203,49 @@ use App\Models\BookingProgress;
   </section>
 
   <section class="home-feature">
-    <h2>Bao cao hoan thanh</h2>
+    <h2>Báo cáo hoàn thành</h2>
     <div class="review-box">
       <?php if ($report === null): ?>
-        <p>Worker chua gui bao cao hoan thanh.</p>
+        <p>Worker chưa gửi báo cáo hoàn thành.</p>
       <?php else: ?>
         <?php if (!empty($report['difficulties'])): ?>
-          <div style="background:#fff3cd;padding:12px;border-radius:8px;border-left:4px solid #ffc107;">
-            <p style="margin:0;white-space:pre-wrap;"><?= View::e((string)$report['difficulties']) ?></p>
+          <div class="report-box">
+            <p style="margin: 0; white-space: pre-wrap;"><?= View::e((string)$report['difficulties']) ?></p>
           </div>
         <?php endif; ?>
         <?php if (!empty($report['summary'])): ?>
-          <p><strong>Tom tat:</strong> <?= View::e((string)$report['summary']) ?></p>
+          <p><strong>Tóm tắt:</strong> <?= View::e((string)$report['summary']) ?></p>
         <?php endif; ?>
-        <p><small>Gui luc: <?= View::e((string)($report['created_at'] ?? '')) ?></small></p>
+        <p><small>Gửi lúc: <?= View::e((string)($report['created_at'] ?? '')) ?></small></p>
       <?php endif; ?>
     </div>
   </section>
 
   <section class="home-feature">
-    <h2>Danh gia cua khach hang</h2>
+    <h2>Đánh giá của khách hàng</h2>
     <div class="review-box">
       <?php if ($review === null): ?>
-        <p>Khach hang chua gui danh gia.</p>
+        <p>Khách hàng chưa gửi đánh giá.</p>
       <?php else: ?>
-        <p><strong>Diem:</strong> <?= str_repeat('⭐', (int)($review['rating'] ?? 0)) ?> (<?= (int)($review['rating'] ?? 0) ?>/5)</p>
+        <p><strong>Điểm:</strong> <span class="review-stars"><?= str_repeat('★', (int)($review['rating'] ?? 0)) ?></span> (<?= (int)($review['rating'] ?? 0) ?>/5)</p>
         <?php if (!empty($review['comment'])): ?>
-          <p><strong>Noi dung:</strong> "<?= View::e((string)$review['comment']) ?>"</p>
+          <p><strong>Nội dung:</strong> "<?= View::e((string)$review['comment']) ?>"</p>
         <?php endif; ?>
-        <p><small>Danh gia luc: <?= View::e((string)($review['created_at'] ?? '')) ?></small></p>
+        <p><small>Đánh giá lúc: <?= View::e((string)($review['created_at'] ?? '')) ?></small></p>
       <?php endif; ?>
     </div>
   </section>
 
   <section class="home-feature">
-    <h2>Trao doi trong don</h2>
+    <h2>Trao đổi trong đơn</h2>
     <div class="review-box">
       <?php if (empty($messages)): ?>
-        <p>Chua co tin nhan trong don nay.</p>
+        <p>Chưa có tin nhắn trong đơn này.</p>
       <?php else: ?>
         <?php foreach ($messages as $message): ?>
-          <article style="margin-bottom:10px;padding:10px;border:1px solid #e9ecef;border-radius:8px;">
-            <p style="margin:0 0 4px;"><strong><?= View::e((string)($message['sender_name'] ?? '')) ?></strong> (<?= View::e((string)($message['sender_role'] ?? '')) ?>)</p>
-            <p style="margin:0 0 4px;"><?= View::e((string)($message['content'] ?? '')) ?></p>
+          <article class="message-item">
+            <p style="margin: 0 0 4px;"><strong><?= View::e((string)($message['sender_name'] ?? '')) ?></strong> (<?= View::e((string)($message['sender_role'] ?? '')) ?>)</p>
+            <p style="margin: 0 0 4px;"><?= View::e((string)($message['content'] ?? '')) ?></p>
             <small><?= View::e((string)($message['created_at'] ?? '')) ?></small>
           </article>
         <?php endforeach; ?>

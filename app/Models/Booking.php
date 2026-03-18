@@ -234,6 +234,21 @@ final class Booking
     }
 
     /**
+     * Cập nhật thời gian ước tính worker sẽ đến.
+     *
+     * @param int $id ID đơn đặt
+     * @param string $estimatedArrivalTime Thời gian ước tính (định dạng: YYYY-MM-DD HH:MM)
+     * @return bool True nếu cập nhật thành công
+     */
+    public static function updateEstimatedArrivalTime(int $id, string $estimatedArrivalTime): bool
+    {
+        $stmt = DB::pdo()->prepare(
+            "UPDATE bookings SET estimated_arrival_time = :eta, updated_at = NOW() WHERE id = :id"
+        );
+        return $stmt->execute(['eta' => $estimatedArrivalTime, 'id' => $id]);
+    }
+
+    /**
      * Chuyển trạng thái ứng dụng sang trạng thái hợp lệ theo enum hiện có trong DB.
      * Giúp tương thích với schema cũ chưa có các trạng thái mở rộng.
      */
