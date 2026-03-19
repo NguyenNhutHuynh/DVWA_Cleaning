@@ -118,6 +118,7 @@ final class AdminController
             'reviews' => BookingReview::getAll(),
             'bookingMessages' => BookingMessage::getComplaintsForModeration(),
             'reports' => BookingReport::getAll(),
+            'csrf' => Csrf::token(),
         ]);
     }
 
@@ -526,6 +527,78 @@ final class AdminController
         Booking::assignWorker($bookingId, $workerId);
         $this->setSessionMessage('success', 'Đã phân công worker #' . $workerId . '. Hãy xác nhận đơn khi sẵn sàng.');
         $this->redirect('/admin/bookings');
+    }
+
+    public function replyContact(): void
+    {
+        // Set JSON header immediately before any output
+        header('Content-Type: application/json; charset=utf-8');
+        
+        try {
+            ob_start(); // Buffer output to prevent accidental output
+            
+            $this->requireAdminRole();
+            
+            // Verify CSRF token manually for JSON response
+            if (!Csrf::verify($_POST['_csrf'] ?? null)) {
+                ob_end_clean();
+                http_response_code(419);
+                echo json_encode([
+                    'error' => 'invalid_csrf',
+                    'message' => 'Mã bảo mật không hợp lệ. Vui lòng tải lại trang.',
+                ], JSON_UNESCAPED_UNICODE);
+                return;
+            }
+
+            $contactId = (int)($_POST['id'] ?? 0);
+            $reply = trim((string)($_POST['reply'] ?? ''));
+            
+            if ($contactId <= 0) {
+                ob_end_clean();
+                http_response_code(400);
+                echo json_encode(['error' => 'invalid_id'], JSON_UNESCAPED_UNICODE);
+                return;
+            }
+
+            if (empty($reply)) {
+                ob_end_clean();
+                http_response_code(400);
+                echo json_encode(['error' => 'empty_reply'], JSON_UNESCAPED_UNICODE);
+                return;
+            }
+
+            $contact = Contact::getById($contactId);
+            if ($contact === null) {
+                ob_end_clean();
+                http_response_code(404);
+                echo json_encode(['error' => 'not_found'], JSON_UNESCAPED_UNICODE);
+                return;
+            }
+
+            $success = Contact::addReply($contactId, $reply, (int)Auth::id());
+            
+            if ($success) {
+                ob_end_clean();
+                http_response_code(200);
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Trả lời thành công.',
+                    'reply' => $reply,
+                    'replied_at' => date('Y-m-d H:i:s'),
+                ], JSON_UNESCAPED_UNICODE);
+            } else {
+                ob_end_clean();
+                http_response_code(500);
+                echo json_encode(['error' => 'update_failed'], JSON_UNESCAPED_UNICODE);
+            }
+        } catch (\Throwable $e) {
+            ob_end_clean();
+            http_response_code(500);
+            echo json_encode([
+                'error' => 'exception',
+                'message' => 'Lỗi xử lý: ' . $e->getMessage(),
+            ], JSON_UNESCAPED_UNICODE);
+        }
     }
 
     private function requireAdminRole(): void

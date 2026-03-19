@@ -273,7 +273,7 @@ final class AuthController
         $path = match ($role) {
             User::ROLE_ADMIN => '/admin/dashboard',
             User::ROLE_WORKER => $status !== User::STATUS_ACTIVE ? '/worker/pending' : '/worker/dashboard',
-            User::ROLE_CUSTOMER => '/customer/dashboard',
+            User::ROLE_CUSTOMER => '/',
             default => '/',
         };
 

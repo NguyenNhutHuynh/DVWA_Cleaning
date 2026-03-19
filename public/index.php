@@ -133,6 +133,7 @@ $router->post('/admin/bookings/confirm', [AdminController::class, 'confirmBookin
 $router->post('/admin/bookings/cancel', [AdminController::class, 'cancelBooking']);
 $router->post('/admin/bookings/assign', [AdminController::class, 'assignBooking']);
 $router->get('/admin/moderation', [AdminController::class, 'moderation']);
+$router->post('/admin/contact/reply', [AdminController::class, 'replyContact']);
 $router->get('/admin/users', [AdminController::class, 'users']);
 $router->get('/admin/user', [AdminController::class, 'userDetail']);
 $router->get('/admin/user/json', [AdminController::class, 'userDetailJson']);

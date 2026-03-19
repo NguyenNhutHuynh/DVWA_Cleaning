@@ -111,33 +111,31 @@ $isLoggedIn = isset($uid) && $uid;
 
 .hero-kicker {
     animation: fadeInDown 0.8s ease-out;
-    color: #e0f2e9;
-    font-size: 14px;
+    color: #1a1a1a;
+    font-size: 18px;
     letter-spacing: 3px;
     margin: 0 0 10px 0;
-    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    font-weight: 800;
 }
 
 .hero-title {
     animation: fadeInDown 1s ease-out 0.2s both;
-    color: white;
-    font-size: 52px;
+    color: #1a1a1a;
+    font-size: 68px;
     margin: 20px 0;
-    font-weight: 700;
-    text-shadow: 0 3px 10px rgba(0, 0, 0, 0.5);
+    font-weight: 900;
 }
 
 .hero-title strong {
-    font-weight: 700;
+    font-weight: 900;
 }
 
 .hero-subtitle {
     animation: fadeInUp 1s ease-out 0.4s both;
-    color: #e0f2e9;
-    font-size: 18px;
+    color: #2a2a2a;
+    font-size: 22px;
     margin-bottom: 30px;
-    font-weight: 500;
-    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    font-weight: 800;
 }
 
 .hero-actions {
@@ -227,6 +225,12 @@ $isLoggedIn = isset($uid) && $uid;
 .hero-content-wrapper {
     max-width: 900px;
     margin: 0 auto;
+    background: rgba(255, 255, 255, 0.5);
+    padding: 50px 45px;
+    border-radius: 20px;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15), 0 0 1px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(67, 197, 158, 0.2);
 }
 
 /* Stats Section */
@@ -240,15 +244,25 @@ $isLoggedIn = isset($uid) && $uid;
 .stat-card {
     background: linear-gradient(135deg, #ffffff 0%, #f8fbff 100%);
     border-radius: 16px;
-    padding: 32px 24px;
+    padding: 40px 28px;
     text-align: center;
-    box-shadow: 0 8px 24px rgba(67, 197, 158, 0.12);
-    border: 2px solid #e0f2e9;
-    border-top: 4px solid #43c59e;
+    box-shadow: 0 10px 30px rgba(67, 197, 158, 0.12), 0 1px 3px rgba(0, 0, 0, 0.08);
+    border: 1.5px solid #e0f2e9;
+    border-top: 5px solid #43c59e;
     animation: slideInUp 0.6s ease-out backwards;
     transition: all 0.3s ease;
     position: relative;
     overflow: hidden;
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 5px;
+    background: linear-gradient(90deg, #43c59e, #2eaf7d);
 }
 
 .stat-card:nth-child(1) {
@@ -264,27 +278,29 @@ $isLoggedIn = isset($uid) && $uid;
 }
 
 .stat-card:hover {
-    transform: translateY(-12px);
-    box-shadow: 0 16px 40px rgba(67, 197, 158, 0.25);
+    transform: translateY(-8px);
+    box-shadow: 0 20px 50px rgba(67, 197, 158, 0.2), 0 2px 8px rgba(0, 0, 0, 0.12);
     border-top-color: #2eaf7d;
 }
 
 .stat-card strong {
     display: block;
-    font-size: 2.8rem;
+    font-size: 3rem;
     background: linear-gradient(135deg, #43c59e, #2eaf7d);
     background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    margin-bottom: 12px;
+    margin-bottom: 16px;
     font-weight: 800;
+    letter-spacing: -1px;
 }
 
 .stat-card span {
     color: #546e7a;
-    font-size: 15px;
+    font-size: 16px;
     display: block;
     font-weight: 600;
+    line-height: 1.5;
 }
 
 /* Feature Section */
@@ -589,12 +605,30 @@ $isLoggedIn = isset($uid) && $uid;
 .process-steps li {
     background: linear-gradient(135deg, #f7fdf9, #e8f5e9);
     padding: 24px;
+    padding-right: 52px;
     border-radius: 12px;
     border-left: 4px solid #43c59e;
     color: #546e7a;
     line-height: 1.6;
     animation: slideInUp 0.6s ease-out backwards;
     transition: all 0.3s ease;
+    position: relative;
+}
+
+.process-steps li::after {
+    content: '➜';
+    position: absolute;
+    right: 18px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #43c59e;
+    font-size: 20px;
+    font-weight: 700;
+    opacity: 0.9;
+}
+
+.process-steps li:last-child::after {
+    content: '';
 }
 
 .process-steps li:nth-child(1) { animation-delay: 0.1s; }
@@ -626,7 +660,7 @@ $isLoggedIn = isset($uid) && $uid;
     padding: 0;
     margin: 0;
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 20px;
     max-width: 1200px;
     margin: 0 auto;
@@ -872,6 +906,20 @@ $isLoggedIn = isset($uid) && $uid;
     .faq-list {
         grid-template-columns: 1fr;
     }
+
+    .process-steps li {
+        padding-right: 24px;
+        padding-bottom: 54px;
+    }
+
+    .process-steps li::after {
+        content: '↓';
+        right: auto;
+        left: 50%;
+        top: auto;
+        bottom: 16px;
+        transform: translateX(-50%);
+    }
 }
 </style>
 
@@ -884,10 +932,10 @@ $isLoggedIn = isset($uid) && $uid;
             <p class="hero-subtitle">Dịch vụ dọn dẹp chuyên nghiệp, đặt lịch nhanh, theo dõi tiện lợi</p>
         <?php else: ?>
             <div class="hero-content-wrapper">
-                <img src="/assets/img/logo_nobg.png" alt="Logo" class="hero-logo">
+                <!-- <img src="/assets/img/logo_nobg.png" alt="Logo" class="hero-logo"> -->
                 <p class="hero-kicker">HOME CARE SOLUTIONS</p>
-                <h1 class="hero-title">Nhà sạch, sống khỏe<br>đặt lịch trong 1 phút</h1>
-                <p class="hero-subtitle">Đội ngũ chuyên nghiệp • Thiết bị an toàn • Giá minh bạch</p>
+                <h1 class="hero-title">Nhà sạch, sống khỏe<br><strong>đặt lịch trong 1 phút</strong></h1>
+                <p class="hero-subtitle"><strong>Đội ngũ chuyên nghiệp</strong> • <strong>Thiết bị an toàn</strong> • <strong>Giá minh bạch</strong></p>
             </div>
         <?php endif; ?>
         <div class="hero-actions">
@@ -901,9 +949,9 @@ $isLoggedIn = isset($uid) && $uid;
     </header>
 
     <section class="home-stats" aria-label="Số liệu nhanh">
-        <div class="stat-card"><strong><?= isset($totalBookings) ? number_format($totalBookings) : '0' ?>+</strong><span>Ca dọn thành công</span></div>
-        <div class="stat-card"><strong><?= isset($averageRating) ? $averageRating : '4.9' ?>/5</strong><span>Đánh giá khách hàng</span></div>
-        <div class="stat-card"><strong><?= isset($totalWorkers) ? $totalWorkers : '50' ?>+</strong><span>Nhân viên chuyên nghiệp</span></div>
+        <div class="stat-card"><strong><?= isset($totalBookings) ? number_format($totalBookings) : '0' ?>+</strong><span>✅ Ca dọn thành công</span></div>
+        <div class="stat-card"><strong><?= isset($averageRating) ? $averageRating : '4.9' ?>/5</strong><span>⭐ Đánh giá khách hàng</span></div>
+        <div class="stat-card"><strong><?= isset($totalWorkers) ? $totalWorkers : '50' ?>+</strong><span>👥 Nhân viên chuyên nghiệp</span></div>
     </section>
 
     <section class="home-feature" aria-label="Dịch vụ nổi bật">

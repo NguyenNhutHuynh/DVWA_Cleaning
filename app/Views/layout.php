@@ -32,6 +32,12 @@ use App\Core\Auth;
       </div>
       <?php unset($_SESSION['error']); ?>
     <?php endif; ?>
+    <?php if (!empty($_SESSION['error_alert'])): ?>
+      <script>
+        alert(<?= json_encode((string)$_SESSION['error_alert'], JSON_UNESCAPED_UNICODE) ?>);
+      </script>
+      <?php unset($_SESSION['error_alert']); ?>
+    <?php endif; ?>
     <?php require $viewFile; ?>
   </main>
 

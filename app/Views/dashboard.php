@@ -11,7 +11,7 @@ use App\Models\User;
         $role = Auth::role();
         if ($role === 'admin') $homeLink = '/admin/dashboard';
         elseif ($role === 'worker') $homeLink = '/worker/dashboard';
-        else $homeLink = '/customer/dashboard';
+        else $homeLink = '/';
       }
     ?>
     <a href="<?= View::e($homeLink) ?>" style="display:flex;align-items:center;text-decoration:none;">
@@ -34,8 +34,9 @@ use App\Models\User;
         <a href="/worker/progress" class="function-btn">Tiến độ</a>
         <a href="/worker/schedule" class="function-btn">Lịch làm</a>
       <?php else: ?>
-        <!-- <a href="/customer/dashboard" class="function-btn">Trang cá nhân</a> -->
+        <a href="/" class="function-btn">Trang chủ</a>
         <a href="/book" class="function-btn">Đặt lịch</a>
+        <a href="/contact" class="function-btn">Liên hệ</a>
         <a href="/bookings" class="function-btn">Lịch đã đặt</a>
         <a href="/services" class="function-btn">Dịch vụ</a>
       <?php endif; ?>

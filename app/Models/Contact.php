@@ -14,7 +14,7 @@ final class Contact
 {
     // Các trạng thái của tin nhắn liên hệ
     public const STATUS_PENDING = 'pending';
-    public const STATUS_RESPONDED = 'responded';
+    public const STATUS_RESPONDED = 'replied';
     public const STATUS_CLOSED = 'closed';
 
     /**
@@ -31,6 +31,7 @@ final class Contact
     /**
      * Tạo tin nhắn liên hệ mới trong cơ sở dữ liệu.
      *
+     * @param int $userId ID người dùng gửi tin nhắn
      * @param string $name Tên người gửi
      * @param string $email Email người gửi
      * @param string $phone Số điện thoại người gửi
@@ -39,13 +40,15 @@ final class Contact
      * @return int ID của tin nhắn liên hệ vừa tạo
      */
     public static function create(
+        int $userId,
         string $name,
         string $email,
         string $phone,
         string $subject,
         string $message
     ): int {
-        $stmt = DB::pdo()->prepare(
+        $pdo = DB::pdo();
+        $stmt = $pdo->prepare(
             "INSERT INTO contacts (name, email, phone, subject, message, status, created_at, updated_at)
              VALUES (:name, :email, :phone, :subject, :message, :status, NOW(), NOW())"
         );
@@ -57,7 +60,8 @@ final class Contact
             'message' => $message,
             'status' => self::STATUS_PENDING,
         ]);
-        return (int)DB::pdo()->lastInsertId();
+        
+        return (int)$pdo->lastInsertId();
     }
 
     /**
@@ -91,6 +95,28 @@ final class Contact
             'status' => $status,
             'adminId' => $adminId,
             'id' => $id,
+        ]);
+    }
+
+    /**
+     * Thêm phản hồi từ admin cho tin nhắn liên hệ.
+     *
+     * @param int $id ID tin nhắn liên hệ
+     * @param string $reply Nội dung phản hồi
+     * @param int $adminId ID admin trả lời
+     * @return bool True nếu cập nhật thành công
+     */
+    public static function addReply(int $id, string $reply, int $adminId): bool
+    {
+        $stmt = DB::pdo()->prepare(
+            "UPDATE contacts SET reply = :reply, replied_by = :adminId, replied_at = :repliedAt, status = :status WHERE id = :id"
+        );
+        return $stmt->execute([
+            'reply' => $reply,
+            'adminId' => $adminId,
+            'repliedAt' => date('Y-m-d H:i:s'),
+            'id' => $id,
+            'status' => self::STATUS_RESPONDED,
         ]);
     }
 }

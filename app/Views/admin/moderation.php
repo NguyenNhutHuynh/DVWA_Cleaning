@@ -4,6 +4,7 @@ use App\Core\View;
 /** @var array $reviews Danh sách đánh giá từ booking_reviews */
 /** @var array $bookingMessages Danh sách tin nhắn khiếu nại từ booking_messages */
 /** @var array $reports Danh sách báo cáo hoàn thành từ booking_reports */
+/** @var string $csrf CSRF token */
 
 $comments = [];
 $ratings = [];
@@ -62,6 +63,7 @@ $renderModerationList = static function (array $items, string $emptyText): void 
   }
 };
 ?>
+<meta name="csrf-token" content="<?= View::e($csrf ?? '') ?>">
 
 <style>
 .admin-moderation {
@@ -313,6 +315,56 @@ $renderModerationList = static function (array $items, string $emptyText): void 
   </header>
   
   <section class="home-feature">
+    <h2>📩 Tin nhắn từ form liên hệ</h2>
+    <div class="review-box">
+      <?php if (empty($contacts)): ?>
+        <p class="moderation-empty">Chưa có tin nhắn nào từ form liên hệ.</p>
+      <?php else: ?>
+        <?php foreach ($contacts as $contact): ?>
+          <article class="moderation-item" id="contact-<?= (int)($contact['id'] ?? 0) ?>">
+            <p class="moderation-meta">
+              <strong><?= View::e((string)($contact['subject'] ?? 'Không có tiêu đề')) ?></strong> • 
+              <?= View::e((string)($contact['name'] ?? 'Ẩn danh')) ?>
+            </p>
+            <p class="moderation-message" style="color:#546e7a;margin-bottom:8px;">
+              <strong>Email:</strong> <?= View::e((string)($contact['email'] ?? '')) ?>
+              <?php if (!empty($contact['phone'])): ?>
+                • <strong>Điện thoại:</strong> <?= View::e((string)$contact['phone']) ?>
+              <?php endif; ?>
+            </p>
+            <p class="moderation-message">"<?= View::e((string)($contact['message'] ?? '')) ?>"</p>
+            
+            <?php if (!empty($contact['reply'])): ?>
+              <div style="background:#e8f5e9;padding:12px;border-radius:8px;border-left:4px solid #4caf50;margin:12px 0;">
+                <p style="margin:0;color:#2e7d32;font-weight:600;">✅ Phản hồi từ Admin:</p>
+                <p style="margin:8px 0 0 0;color:#1b5e20;white-space:pre-wrap;"><?= View::e((string)$contact['reply']) ?></p>
+                <p style="margin:8px 0 0 0;font-size:12px;color:#558b2f;">Trả lời lúc: <?= View::e((string)($contact['replied_at'] ?? '')) ?></p>
+              </div>
+            <?php else: ?>
+              <form class="contact-reply-form" data-contact-id="<?= (int)($contact['id'] ?? 0) ?>" style="margin:12px 0;">
+                <textarea name="reply" placeholder="Nhập phản hồi cho khách..." style="width:100%;padding:10px;border:1px solid #ddd;border-radius:6px;font-family:inherit;font-size:14px;min-height:80px;" required></textarea>
+                <button type="submit" class="home-btn" style="margin-top:8px;padding:8px 16px;font-size:14px;">Gửi phản hồi</button>
+              </form>
+            <?php endif; ?>
+            
+            <p class="moderation-status">
+              Trạng thái: <span><?= View::e((string)($contact['status'] ?? 'pending')) ?></span>
+              <?php if (!empty($contact['created_at'])): ?>
+                • Gửi: <span><?= View::e((string)$contact['created_at']) ?></span>
+              <?php endif; ?>
+            </p>
+            <div class="hero-actions moderation-actions">
+              <a class="home-btn" href="mailto:<?= View::e((string)($contact['email'] ?? '')) ?>">Trả lời Email</a>
+              <a class="home-btn home-btn-outline" href="tel:<?= View::e((string)($contact['phone'] ?? '')) ?>">Gọi</a>
+              <a class="home-btn home-btn-outline" href="#">Đánh dấu</a>
+            </div>
+          </article>
+        <?php endforeach; ?>
+      <?php endif; ?>
+    </div>
+  </section>
+
+  <section class="home-feature">
     <h2>Đánh giá từ khách hàng (Reviews)</h2>
     <div class="review-box">
       <?php if (empty($reviews)): ?>
@@ -418,3 +470,57 @@ $renderModerationList = static function (array $items, string $emptyText): void 
     </div>
   </section>
 </section>
+
+<script>
+document.addEventListener('submit', function(event) {
+  const form = event.target;
+  if (!form.classList.contains('contact-reply-form')) return;
+  
+  event.preventDefault();
+  
+  const contactId = form.dataset.contactId;
+  const reply = form.querySelector('textarea[name="reply"]').value.trim();
+  
+  if (!reply) {
+    alert('Vui lòng nhập phản hồi');
+    return;
+  }
+  
+  const formData = new FormData();
+  formData.append('id', contactId);
+  formData.append('reply', reply);
+  formData.append('_csrf', getCsrfToken());
+  
+  fetch('/admin/contact/reply', {
+    method: 'POST',
+    body: formData
+  })
+  .then(response => {
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return response.json();
+  })
+  .then(data => {
+    if (data.success) {
+      // Reload the page to show the reply
+      location.reload();
+    } else {
+      alert('Lỗi: ' + (data.error || 'Không thể gửi phản hồi'));
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    alert('Lỗi kết nối: ' + error.message);
+  });
+});
+
+function getCsrfToken() {
+  // Get CSRF token from meta tag or from form
+  let token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+  if (!token) {
+    token = document.querySelector('input[name="_csrf"]')?.value;
+  }
+  return token || '';
+}
+</script>
