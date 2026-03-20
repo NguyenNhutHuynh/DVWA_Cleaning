@@ -380,30 +380,7 @@ final class WorkerController
      *
      * @return void
      */
-    public function schedule(): void
-    {
-        $this->requireApprovedWorkerRole();
-        $uid = Auth::id();
-        $allBookings = Booking::getAll();
-
-        $workerBookings = array_filter(
-            $allBookings,
-            static fn(array $b): bool => (int)($b['assigned_worker_id'] ?? 0) === $uid && ($b['status'] ?? '') !== 'cancelled'
-        );
-
-        $schedule = array_map(
-            static function(array $booking): array {
-                return [
-                    'time' => ($booking['date'] ?? '') . ' ' . ($booking['time'] ?? ''),
-                    'location' => $booking['location'] ?? '',
-                    'task' => ($booking['service_name'] ?? 'Công việc') . ' • Trạng thái: ' . ($booking['status'] ?? ''),
-                ];
-            },
-            $workerBookings
-        );
-
-        View::render('worker/schedule', ['schedule' => $schedule]);
-    }
+   
 
     /**
      * Tìm job theo id và kiểm tra worker sở hữu job đó.

@@ -32,7 +32,7 @@ use App\Models\User;
         <a href="/worker/dashboard" class="function-btn">Bảng điều khiển</a>
         <a href="/worker/jobs" class="function-btn">Nhận việc</a>
         <a href="/worker/progress" class="function-btn">Tiến độ</a>
-        <a href="/worker/schedule" class="function-btn">Lịch làm</a>
+        <!-- <a href="/worker/schedule" class="function-btn">Lịch làm</a> -->
       <?php else: ?>
         <a href="/" class="function-btn">Trang chủ</a>
         <a href="/book" class="function-btn">Đặt lịch</a>

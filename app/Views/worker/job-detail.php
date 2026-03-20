@@ -68,11 +68,11 @@ $status = $job['status'] ?? '';
       
       <div class="map-info">
         <div class="map-info-item">
-          <strong>Từ vị trí</strong>
-          <span id="workerAddress"><?= View::e($job['worker_address'] ?? 'Đang định vị...') ?></span>
+          <strong>Vị trí hiện tại</strong>
+          <span id="currentLocationStatus">Đang xác định...</span>
         </div>
         <div class="map-info-item">
-          <strong>Đến khách hàng</strong>
+          <strong>Vị trí khách hàng</strong>
           <span id="customerAddress"><?= View::e($job['location'] ?? 'Không xác định') ?></span>
         </div>
         <!-- <div class="map-info-item">
@@ -86,10 +86,10 @@ $status = $job['status'] ?? '';
       </div>
 
       <div style="display: flex; gap: 16px; margin-top: 20px; justify-content: center;">
-        <button type="button" onclick="toggleDirections()" style="width: 40px; height: 40px; border: none; border-radius: 50%; background: linear-gradient(135deg, #b5d8b8 0%, #a8c9a8 100%); color: white; font-weight: 600; cursor: pointer; font-size: 20px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(181, 216, 184, 0.3); transition: all 0.3s ease;" onmouseover="this.style.boxShadow='0 6px 16px rgba(181, 216, 184, 0.4)'; this.style.transform='scale(1.1)';" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 12px rgba(181, 216, 184, 0.3)';" title="Chỉ đường">
+        <button type="button" onclick="openGoogleDirections()" style="width: 40px; height: 40px; border: none; border-radius: 50%; background: linear-gradient(135deg, #b5d8b8 0%, #a8c9a8 100%); color: white; font-weight: 600; cursor: pointer; font-size: 20px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(181, 216, 184, 0.3); transition: all 0.3s ease;" onmouseover="this.style.boxShadow='0 6px 16px rgba(181, 216, 184, 0.4)'; this.style.transform='scale(1.1)';" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 12px rgba(181, 216, 184, 0.3)';" title="Mở chỉ đường trên Google Maps">
           📍
         </button>
-        <button type="button" onclick="toggleLocation()" style="width: 40px; height: 40px; border: none; border-radius: 50%; background: linear-gradient(135deg, #d4c5e8 0%, #c8b8dc 100%); color: white; font-weight: 600; cursor: pointer; font-size: 20px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(212, 197, 232, 0.3); transition: all 0.3s ease;" onmouseover="this.style.boxShadow='0 6px 16px rgba(212, 197, 232, 0.4)'; this.style.transform='scale(1.1)';" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 12px rgba(212, 197, 232, 0.3)';" title="Vị trí">
+        <button type="button" onclick="updateMap()" style="width: 40px; height: 40px; border: none; border-radius: 50%; background: linear-gradient(135deg, #d4c5e8 0%, #c8b8dc 100%); color: white; font-weight: 600; cursor: pointer; font-size: 20px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(212, 197, 232, 0.3); transition: all 0.3s ease;" onmouseover="this.style.boxShadow='0 6px 16px rgba(212, 197, 232, 0.4)'; this.style.transform='scale(1.1)';" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 12px rgba(212, 197, 232, 0.3)';" title="Làm mới bản đồ vị trí khách">
           🗺️
         </button>
       </div>
@@ -104,90 +104,97 @@ $status = $job['status'] ?? '';
       </div>
 
       <script>
-        var mapMode = 'directions';
-        
-        function toggleDirections() {
-          mapMode = 'directions';
-          updateMap();
+        var currentCoords = null;
+
+        function setCurrentLocationStatus(text) {
+          var node = document.getElementById('currentLocationStatus');
+          if (node) {
+            node.textContent = text;
+          }
         }
-        
-        function toggleLocation() {
-          mapMode = 'location';
-          updateMap();
+
+        function getCurrentCoords(callback) {
+          if (currentCoords && typeof currentCoords.lat === 'number' && typeof currentCoords.lng === 'number') {
+            callback(currentCoords);
+            return;
+          }
+
+          if (!window.isSecureContext) {
+            setCurrentLocationStatus('Trình duyệt chặn vị trí vì đang dùng HTTP (cần HTTPS).');
+            callback(null);
+            return;
+          }
+
+          if (!navigator.geolocation) {
+            setCurrentLocationStatus('Thiết bị không hỗ trợ định vị.');
+            callback(null);
+            return;
+          }
+
+          setCurrentLocationStatus('Đang lấy vị trí GPS...');
+          navigator.geolocation.getCurrentPosition(
+            function(position) {
+              currentCoords = {
+                lat: position.coords.latitude,
+                lng: position.coords.longitude
+              };
+              setCurrentLocationStatus(currentCoords.lat.toFixed(6) + ', ' + currentCoords.lng.toFixed(6));
+              callback(currentCoords);
+            },
+            function() {
+              setCurrentLocationStatus('Không lấy được vị trí hiện tại.');
+              callback(null);
+            },
+            { enableHighAccuracy: true, timeout: 12000, maximumAge: 10000 }
+          );
+        }
+
+        function openGoogleDirections() {
+          var customerAddr = document.getElementById('customerAddress')?.textContent?.trim() || '';
+
+          if (!customerAddr) {
+            return;
+          }
+
+          getCurrentCoords(function(coords) {
+            var origin = coords ? (coords.lat + ',' + coords.lng) : 'current location';
+            var directionsUrl = 'https://www.google.com/maps/dir/?api=1&origin=' + encodeURIComponent(origin) +
+              '&destination=' + encodeURIComponent(customerAddr) + '&travelmode=driving';
+            window.open(directionsUrl, '_blank', 'noopener,noreferrer');
+          });
         }
         
         function updateMap() {
-          var workerAddr = document.getElementById('workerAddress')?.textContent?.trim() || '';
           var customerAddr = document.getElementById('customerAddress')?.textContent?.trim() || '';
           var mapContainer = document.getElementById('worker-map');
           
-          if (!workerAddr || !customerAddr) {
+          if (!customerAddr) {
             mapContainer.innerHTML = '<p style="padding: 20px; color: #a8a8a8; text-align: center;">Chưa có địa chỉ</p>';
             return;
           }
-          
-          if (mapMode === 'directions') {
-            // Show Google Maps Directions
-            var directionsUrl = 'https://maps.google.com/maps?f=d&source=s_d&saddr=' + encodeURIComponent(workerAddr) + 
-              '&daddr=' + encodeURIComponent(customerAddr) + '&output=embed&z=14';
-            
-            mapContainer.innerHTML = '<iframe src="' + directionsUrl + '" ' +
-              'width="100%" height="100%" frameborder="0" style="border:none; border-radius: 20px;" ' +
-              'allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>';
-          } else {
-            // Show Google Maps Location
-            var locationUrl = 'https://maps.google.com/maps?q=' + encodeURIComponent(customerAddr) + 
-              '&t=m&z=16&ie=UTF8&iwloc=&output=embed';
-            
-            mapContainer.innerHTML = '<iframe src="' + locationUrl + '" ' +
-              'width="100%" height="100%" frameborder="0" style="border:none; border-radius: 20px;" ' +
-              'allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>';
-          }
-          
-          // Calculate distance and ETA
-          calculateDistance(workerAddr, customerAddr);
-        }
-        
-        function geocodeAddress(address, callback) {
-          fetch('https://nominatim.openstreetmap.org/search?q=' + encodeURIComponent(address) + 
-            '&format=json&limit=1', { headers: { 'Accept': 'application/json' } })
-          .then(r => r.json())
-          .then(data => {
-            if (data?.length > 0) {
-              callback({ lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) });
+
+          getCurrentCoords(function(coords) {
+            var embedUrl;
+            if (coords) {
+              embedUrl = 'https://maps.google.com/maps?f=d&source=s_d&saddr=' +
+                encodeURIComponent(coords.lat + ',' + coords.lng) + '&daddr=' +
+                encodeURIComponent(customerAddr) + '&output=embed&z=14';
             } else {
-              callback(null);
+              embedUrl = 'https://maps.google.com/maps?q=' + encodeURIComponent(customerAddr) +
+                '&t=m&z=16&ie=UTF8&iwloc=&output=embed';
             }
-          })
-          .catch(() => callback(null));
-        }
-        
-        function calculateDistance(workerAddr, customerAddr) {
-          geocodeAddress(workerAddr, function(w) {
-            if (!w) return;
-            geocodeAddress(customerAddr, function(c) {
-              if (!c) return;
-              
-              var toRad = deg => deg * Math.PI / 180;
-              var R = 6371;
-              var dLat = toRad(c.lat - w.lat);
-              var dLon = toRad(c.lng - w.lng);
-              var a = Math.sin(dLat/2)**2 + Math.cos(toRad(w.lat)) * Math.cos(toRad(c.lat)) * Math.sin(dLon/2)**2;
-              var distance = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-              var eta = Math.max(1, Math.round(distance / 30 * 60));
-              
-              document.getElementById('distanceResult').textContent = distance.toFixed(2) + ' km';
-              document.getElementById('etaResult').textContent = eta + ' phút';
-            });
+
+            mapContainer.innerHTML = '<iframe src="' + embedUrl + '" ' +
+              'width="100%" height="100%" frameborder="0" style="border:none; border-radius: 20px;" ' +
+              'allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>';
           });
         }
         
         // Initialize on page load
         (function() {
-          var workerAddr = document.getElementById('workerAddress')?.textContent?.trim() || '';
           var customerAddr = document.getElementById('customerAddress')?.textContent?.trim() || '';
           
-          if (workerAddr && customerAddr) {
+          if (customerAddr) {
             updateMap();
           }
         })();

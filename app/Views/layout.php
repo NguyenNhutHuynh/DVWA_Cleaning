@@ -66,10 +66,10 @@ use App\Core\Auth;
         <div>
           <h4 style="color: #1f2d3d; margin: 0 0 12px 0; font-size: 15px; font-weight: 700;">Ưu điểm</h4>
           <ul style="list-style: none; padding: 0; margin: 0;">
-            <li style="margin: 0 0 8px 0; font-size: 13px;"><span style="color: #43c59e;">✓</span> Nhân viên được kiểm duyệt</li>
-            <li style="margin: 0 0 8px 0; font-size: 13px;"><span style="color: #43c59e;">✓</span> Hóa chất an toàn</li>
-            <li style="margin: 0 0 8px 0; font-size: 13px;"><span style="color: #43c59e;">✓</span> Giá minh bạch</li>
-            <li style="margin: 0 0 0 0; font-size: 13px;"><span style="color: #43c59e;">✓</span> Hỗ trợ 24/7</li>
+            <li style="margin: 0 0 8px 0; font-size: 13px;"><span style="color: #43c59e;"></span> Nhân viên được kiểm duyệt</li>
+            <li style="margin: 0 0 8px 0; font-size: 13px;"><span style="color: #43c59e;"></span> Hóa chất an toàn</li>
+            <li style="margin: 0 0 8px 0; font-size: 13px;"><span style="color: #43c59e;"></span> Giá minh bạch</li>
+            <li style="margin: 0 0 0 0; font-size: 13px;"><span style="color: #43c59e;"></span> Hỗ trợ 24/7</li>
           </ul>
         </div>
         
