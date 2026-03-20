@@ -187,6 +187,43 @@ $renderModerationList = static function (array $items, string $emptyText): void 
   animation: fadeInUp 0.8s ease-out 0.2s both;
 }
 
+.moderation-tabs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.moderation-tab-btn {
+  border: 1px solid #d9ece3;
+  background: #f7fcf9;
+  color: #2a3a46;
+  border-radius: 12px;
+  padding: 12px 10px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.moderation-tab-btn:hover {
+  border-color: #43c59e;
+  transform: translateY(-2px);
+}
+
+.moderation-tab-btn.is-active {
+  color: #fff;
+  border-color: #2eaf7d;
+  background: linear-gradient(135deg, #2eaf7d 0%, #43c59e 60%, #8cdf94 100%);
+  box-shadow: 0 8px 20px rgba(46, 175, 125, 0.28);
+}
+
+.moderation-panel {
+  display: none;
+}
+
+.moderation-panel.is-active {
+  display: block;
+}
+
 .moderation-page .home-feature h2 {
   font-size: 1.45rem;
   margin-bottom: 16px;
@@ -304,6 +341,10 @@ $renderModerationList = static function (array $items, string $emptyText): void 
   .moderation-page .home-hero h1 {
     font-size: 2rem;
   }
+
+  .moderation-tabs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 </style>
 
@@ -313,8 +354,15 @@ $renderModerationList = static function (array $items, string $emptyText): void 
     <h1>Kiểm duyệt nội dung</h1>
     <p>Duyệt phản hồi, khiếu nại, nội dung gửi lên.</p>
   </header>
+
+  <nav class="moderation-tabs" aria-label="Danh mục kiểm duyệt">
+    <button type="button" class="moderation-tab-btn is-active" data-tab-target="contacts">📩 Form liên hệ</button>
+    <button type="button" class="moderation-tab-btn" data-tab-target="reviews">⭐ Reviews</button>
+    <button type="button" class="moderation-tab-btn" data-tab-target="complaints">⚠️ Khiếu nại</button>
+    <button type="button" class="moderation-tab-btn" data-tab-target="reports">📋 Báo cáo</button>
+  </nav>
   
-  <section class="home-feature">
+  <section class="home-feature moderation-panel is-active" data-tab-panel="contacts">
     <h2>📩 Tin nhắn từ form liên hệ</h2>
     <div class="review-box">
       <?php if (empty($contacts)): ?>
@@ -353,18 +401,18 @@ $renderModerationList = static function (array $items, string $emptyText): void 
                 • Gửi: <span><?= View::e((string)$contact['created_at']) ?></span>
               <?php endif; ?>
             </p>
-            <div class="hero-actions moderation-actions">
+            <!-- <div class="hero-actions moderation-actions">
               <a class="home-btn" href="mailto:<?= View::e((string)($contact['email'] ?? '')) ?>">Trả lời Email</a>
               <a class="home-btn home-btn-outline" href="tel:<?= View::e((string)($contact['phone'] ?? '')) ?>">Gọi</a>
               <a class="home-btn home-btn-outline" href="#">Đánh dấu</a>
-            </div>
+            </div> -->
           </article>
         <?php endforeach; ?>
       <?php endif; ?>
     </div>
   </section>
 
-  <section class="home-feature">
+  <section class="home-feature moderation-panel" data-tab-panel="reviews">
     <h2>Đánh giá từ khách hàng (Reviews)</h2>
     <div class="review-box">
       <?php if (empty($reviews)): ?>
@@ -399,7 +447,7 @@ $renderModerationList = static function (array $items, string $emptyText): void 
     </div>
   </section>
 
-  <section class="home-feature">
+  <section class="home-feature moderation-panel" data-tab-panel="complaints">
     <h2>Tin nhắn khiếu nại trong đơn hàng</h2>
     <div class="review-box">
       <?php if (empty($bookingMessages)): ?>
@@ -431,7 +479,7 @@ $renderModerationList = static function (array $items, string $emptyText): void 
     </div>
   </section>
 
-  <section class="home-feature">
+  <section class="home-feature moderation-panel" data-tab-panel="reports">
     <h2>📋 Báo cáo hoàn thành từ Worker</h2>
     <div class="review-box">
       <?php if (empty($reports)): ?>
@@ -472,6 +520,26 @@ $renderModerationList = static function (array $items, string $emptyText): void 
 </section>
 
 <script>
+function setActiveModerationTab(tabName) {
+  document.querySelectorAll('.moderation-tab-btn').forEach(function(btn) {
+    btn.classList.toggle('is-active', btn.dataset.tabTarget === tabName);
+  });
+
+  document.querySelectorAll('.moderation-panel').forEach(function(panel) {
+    panel.classList.toggle('is-active', panel.dataset.tabPanel === tabName);
+  });
+}
+
+document.addEventListener('click', function(event) {
+  const tabBtn = event.target.closest('.moderation-tab-btn');
+  if (!tabBtn) return;
+
+  const target = tabBtn.dataset.tabTarget || '';
+  if (!target) return;
+
+  setActiveModerationTab(target);
+});
+
 document.addEventListener('submit', function(event) {
   const form = event.target;
   if (!form.classList.contains('contact-reply-form')) return;
