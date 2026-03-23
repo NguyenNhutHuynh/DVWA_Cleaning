@@ -1,5 +1,6 @@
 <?php
 use App\Core\View;
+use App\Models\Service;
 /** @var array $services Danh sách dịch vụ */
 /** @var string $csrf Token CSRF */
 ?>
@@ -292,6 +293,7 @@ use App\Core\View;
     <?php else: ?>
       <div class="services-grid">
         <?php foreach ($services as $s): ?>
+          <?php $resolvedImagePath = Service::resolveImagePath($s); ?>
           <article class="service-card">
           <h3><?= View::e(($s['icon'] ?? '') . ' ' . $s['name']) ?></h3>
           <p class="service-desc"><?= View::e($s['description']) ?></p>
@@ -321,7 +323,7 @@ use App\Core\View;
               <?php if (!empty($s['image_path'])): ?>
                 <div style="margin-bottom: 10px; padding: 10px; background: #f0fff4; border-radius: 8px; border: 1px solid #d9efe5;">
                   <p style="margin: 0 0 8px 0; color: #1f2d3d; font-weight: 600;">Ảnh hiện tại:</p>
-                  <img src="<?= View::e($s['image_path']) ?>" alt="<?= View::e($s['name']) ?>" style="width: 120px; height: 120px; object-fit: cover; border-radius: 6px;">
+                  <img src="<?= View::e($resolvedImagePath) ?>" alt="<?= View::e($s['name']) ?>" style="width: 120px; height: 120px; object-fit: cover; border-radius: 6px;">
                 </div>
               <?php endif; ?>
               <div style="margin-bottom: 10px;">

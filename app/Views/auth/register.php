@@ -14,6 +14,10 @@ use App\Core\View;
     max-width: 900px;
     margin: 44px auto;
     padding: 0 16px;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    outline: none !important;
   }
 
   .auth-panel {

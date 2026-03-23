@@ -769,7 +769,7 @@ final class AdminController
         
         $uploadDir = $this->getServiceImageDirectory();
         $filename = $this->generateServiceImageFilename($serviceId, $extension);
-        $filePath = $uploadDir . $filename;
+        $filePath = $uploadDir . '/' . $filename;
         
         if (!@move_uploaded_file((string)$file['tmp_name'], $filePath)) {
             return 'Không thể lưu tệp ảnh dịch vụ.';
@@ -811,7 +811,7 @@ final class AdminController
         if (!is_dir($dir)) {
             @mkdir($dir, 0777, true);
         }
-        return $dir;
+        return rtrim($dir, '/\\');
     }
 
     private function extractServiceData(): array

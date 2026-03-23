@@ -243,7 +243,7 @@ final class Service
     {
         // Ưu tiên sử dụng image_path từ database
         if (!empty($service['image_path'])) {
-            return $service['image_path'];
+            return self::normalizeResolvedImagePath((string)$service['image_path']);
         }
 
         // Fallback: Tìm hình ảnh từ mảng mapping dựa trên tên dịch vụ
@@ -264,6 +264,56 @@ final class Service
 
         // Fallback cuối cùng: placeholder
         return '/assets/img/placeholder.png';
+    }
+
+    /**
+     * Chuẩn hóa đường dẫn ảnh và hỗ trợ tương thích ảnh cũ bị lưu sai thư mục.
+     */
+    private static function normalizeResolvedImagePath(string $imagePath): string
+    {
+        $normalized = str_replace('\\', '/', trim($imagePath));
+        if ($normalized === '') {
+            return '/assets/img/placeholder.png';
+        }
+
+        if ($normalized[0] !== '/') {
+            $normalized = '/' . ltrim($normalized, '/');
+        }
+
+        // Đường dẫn hiện tại hợp lệ thì dùng luôn.
+        if (self::webPathExists($normalized)) {
+            return $normalized;
+        }
+
+        // Tương thích với bug cũ: lưu nhầm vào /uploads/servicesservice_*.ext
+        if (str_starts_with($normalized, '/uploads/services/')) {
+            $filename = basename($normalized);
+            $legacyPath = '/uploads/services' . $filename;
+            if (self::webPathExists($legacyPath)) {
+                return $legacyPath;
+            }
+        }
+
+        return $normalized;
+    }
+
+    /**
+     * Kiểm tra web path có tồn tại thành file trong thư mục public hay không.
+     */
+    private static function webPathExists(string $webPath): bool
+    {
+        $path = parse_url($webPath, PHP_URL_PATH);
+        if (!is_string($path) || $path === '') {
+            return false;
+        }
+
+        $relativePath = ltrim($path, '/');
+        if ($relativePath === '') {
+            return false;
+        }
+
+        $absolutePath = dirname(__DIR__, 2) . '/public/' . $relativePath;
+        return is_file($absolutePath);
     }
 }
 

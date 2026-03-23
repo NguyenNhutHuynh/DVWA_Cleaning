@@ -14,6 +14,10 @@ use App\Core\View;
     max-width: 480px;
     margin: 46px auto;
     padding: 0 16px;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    outline: none !important;
   }
 
   .auth-panel {
@@ -42,14 +46,35 @@ use App\Core\View;
     line-height: 1.45;
   }
 
-  .auth-error {
-    background: #eef8f3;
-    border: 1px solid #bfe8d6;
-    color: #1f6f53;
+  .auth-alert {
+    display: grid;
+    gap: 6px;
+    background: #fff3e8;
+    border: 1px solid #ffd5b2;
+    color: #8c3a00;
     border-radius: 11px;
-    padding: 11px 13px;
+    padding: 12px 14px;
     margin-bottom: 14px;
     font-size: 14px;
+    line-height: 1.5;
+    text-align: center;
+  }
+
+  .auth-alert-title {
+    font-weight: 800;
+    letter-spacing: 0.2px;
+    text-align: center;
+  }
+
+  .auth-alert-body {
+    margin: 0;
+    text-align: center;
+  }
+
+  .auth-alert-danger {
+    background: #fff1f1;
+    border-color: #ffc7c7;
+    color: #8f1d1d;
   }
 
   .auth-form {
@@ -154,7 +179,11 @@ use App\Core\View;
     </header>
 
     <?php if ($error): ?>
-      <div class="auth-error"><?= View::e($error) ?></div>
+      <?php $isAccountLock = stripos((string)$error, 'tài khoản đã bị khóa') !== false; ?>
+      <div class="auth-alert <?= $isAccountLock ? 'auth-alert-danger' : '' ?>" role="alert" aria-live="assertive">
+        <div class="auth-alert-title"><?= $isAccountLock ? 'Cảnh báo tài khoản' : 'Thông báo đăng nhập' ?></div>
+        <p class="auth-alert-body"><?= nl2br(View::e((string)$error)) ?></p>
+      </div>
     <?php endif; ?>
 
     <form method="post" action="/login" aria-label="Form đăng nhập" class="auth-form">

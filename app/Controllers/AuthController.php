@@ -250,7 +250,7 @@ final class AuthController
                 $reason = 'Tài khoản đã bị khóa. Vui lòng liên hệ bộ phận hỗ trợ.';
             }
 
-            return "Tài khoản đã bị khóa. Lý do: {$reason}";
+            return "Tài khoản đã bị khóa.\nLý do: {$reason}";
         }
 
         if ($status === User::STATUS_DELETED) {
@@ -259,7 +259,7 @@ final class AuthController
                 $reason = 'Tài khoản đã bị xóa hoặc bị vô hiệu hóa.';
             }
 
-            return "Tài khoản đã bị vô hiệu hóa. Lý do: {$reason}";
+            return "Tài khoản đã bị vô hiệu hóa.\nLý do: {$reason}";
         }
 
         return null;
