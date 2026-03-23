@@ -245,13 +245,21 @@ final class AuthController
     private static function validateAccountStatus(string $status, array $user): ?string
     {
         if ($status === User::STATUS_LOCKED) {
-            $reason = (string)($user['reject_reason'] ?? 'Tài khoản đã bị khóa. Vui lòng liên hệ bộ phận hỗ trợ.');
-            return $reason;
+            $reason = trim((string)($user['reject_reason'] ?? ''));
+            if ($reason === '') {
+                $reason = 'Tài khoản đã bị khóa. Vui lòng liên hệ bộ phận hỗ trợ.';
+            }
+
+            return "Tài khoản đã bị khóa. Lý do: {$reason}";
         }
 
         if ($status === User::STATUS_DELETED) {
-            $reason = (string)($user['reject_reason'] ?? 'Tài khoản đã bị xóa hoặc bị vô hiệu hóa.');
-            return $reason;
+            $reason = trim((string)($user['reject_reason'] ?? ''));
+            if ($reason === '') {
+                $reason = 'Tài khoản đã bị xóa hoặc bị vô hiệu hóa.';
+            }
+
+            return "Tài khoản đã bị vô hiệu hóa. Lý do: {$reason}";
         }
 
         return null;

@@ -36,6 +36,7 @@ final class BookingController
 
         View::render('customer/bookings', [
             'bookings' => $bookings,
+            'csrf' => Csrf::token(),
         ]);
     }
 
@@ -140,12 +141,27 @@ final class BookingController
     public function cancel(int $id): void
     {
         $this->requireAuthentication();
+        $this->requirePostRequest();
+        $this->verifyCsrfToken();
 
         $booking = Booking::getById($id);
 
         // Kiểm tra đơn đặt tồn tại và thuộc về người dùng hiện tại
         if ($booking === null || (int)$booking['user_id'] !== Auth::id()) {
             $_SESSION['error'] = 'Không tìm thấy đơn đặt.';
+            $this->redirect('/bookings');
+            return;
+        }
+
+        $currentStatus = (string)($booking['status'] ?? '');
+        $cancellableStatuses = [
+            Booking::STATUS_PENDING,
+            Booking::STATUS_CONFIRMED,
+            Booking::STATUS_ACCEPTED,
+        ];
+
+        if (!in_array($currentStatus, $cancellableStatuses, true)) {
+            $_SESSION['error'] = 'Đơn này không thể hủy ở trạng thái hiện tại.';
             $this->redirect('/bookings');
             return;
         }

@@ -16,6 +16,7 @@ final class User
 {
     // Các cột dữ liệu dùng chung khi truy vấn người dùng
     private const BASE_USER_COLUMNS = 'id, name, email, phone, address, avatar, COALESCE(password_hash, password) AS password_hash, role, approval_status, approved_by, approved_at, reject_reason';
+    private static ?array $approvalStatusEnumCache = null;
 
     // Các trạng thái tài khoản người dùng
     public const STATUS_ACTIVE = 'active';
@@ -78,12 +79,14 @@ final class User
         ?string $phone = null,
         ?string $address = null
     ): int {
+        $resolvedApprovalStatus = self::resolveApprovalStatusForDatabase($approvalStatus);
+
         $payload = [
             'name' => $name,
             'email' => $email,
             'hash' => $passwordHash,
             'role' => $role,
-            'approval_status' => $approvalStatus,
+            'approval_status' => $resolvedApprovalStatus,
             'phone' => $phone,
             'address' => $address,
         ];
@@ -179,6 +182,8 @@ final class User
             return false;
         }
 
+        $resolvedApprovalStatus = self::resolveApprovalStatusForDatabase($approvalStatus);
+
         $stmt = DB::pdo()->prepare(
             "UPDATE users
              SET name = :name,
@@ -197,7 +202,7 @@ final class User
             'phone' => $phone,
             'address' => $address,
             'role' => $role,
-            'approval_status' => $approvalStatus,
+            'approval_status' => $resolvedApprovalStatus,
             'reject_reason' => $rejectReason,
             'id' => $id,
         ]);
@@ -332,6 +337,7 @@ final class User
      */
     public static function setStatus(int $userId, string $status): bool
     {
+        $status = self::resolveApprovalStatusForDatabase($status);
         $stmt = DB::pdo()->prepare("UPDATE users SET approval_status = :status WHERE id = :id");
         return $stmt->execute(['status' => $status, 'id' => $userId]);
     }
@@ -346,6 +352,7 @@ final class User
      */
     public static function setStatusAndReason(int $userId, string $status, ?string $reason): bool
     {
+        $status = self::resolveApprovalStatusForDatabase($status);
         $stmt = DB::pdo()->prepare(
             "UPDATE users SET approval_status = :status, reject_reason = :reason WHERE id = :id"
         );
@@ -405,6 +412,8 @@ final class User
         string $role,
         string $approvalStatus
     ): bool {
+        $approvalStatus = self::resolveApprovalStatusForDatabase($approvalStatus);
+
         $stmt = DB::pdo()->prepare(
             "UPDATE users SET name = :name, email = :email, role = :role, approval_status = :status WHERE id = :id"
         );
@@ -415,5 +424,69 @@ final class User
             'status' => $approvalStatus,
             'id' => $id,
         ]);
+    }
+
+    /**
+     * Chuyển trạng thái ứng dụng sang trạng thái hợp lệ theo enum hiện có trong DB.
+     * Giúp tương thích với schema cũ chưa có các trạng thái mở rộng.
+     */
+    private static function resolveApprovalStatusForDatabase(string $status): string
+    {
+        $supported = self::getSupportedApprovalStatuses();
+        if (in_array($status, $supported, true)) {
+            return $status;
+        }
+
+        $fallbacks = [
+            self::STATUS_LOCKED => self::STATUS_REJECTED,
+            self::STATUS_DELETED => self::STATUS_REJECTED,
+            self::STATUS_ACTIVE => self::STATUS_PENDING,
+        ];
+
+        $candidate = $fallbacks[$status] ?? self::STATUS_PENDING;
+        if (in_array($candidate, $supported, true)) {
+            return $candidate;
+        }
+
+        return $supported[0] ?? self::STATUS_PENDING;
+    }
+
+    /**
+     * Lấy danh sách giá trị enum cột users.approval_status từ DB.
+     */
+    private static function getSupportedApprovalStatuses(): array
+    {
+        if (self::$approvalStatusEnumCache !== null) {
+            return self::$approvalStatusEnumCache;
+        }
+
+        try {
+            $stmt = DB::pdo()->query("SHOW COLUMNS FROM users LIKE 'approval_status'");
+            $column = $stmt->fetch();
+            $type = (string)($column['Type'] ?? '');
+
+            if (preg_match('/^enum\\((.*)\\)$/i', $type, $matches) === 1) {
+                $values = str_getcsv($matches[1], ',', "'");
+                self::$approvalStatusEnumCache = array_values(array_filter(array_map('trim', $values)));
+            } else {
+                self::$approvalStatusEnumCache = [
+                    self::STATUS_ACTIVE,
+                    self::STATUS_PENDING,
+                    self::STATUS_REJECTED,
+                    self::STATUS_LOCKED,
+                    self::STATUS_DELETED,
+                ];
+            }
+        } catch (PDOException $exception) {
+            self::$approvalStatusEnumCache = [
+                self::STATUS_ACTIVE,
+                self::STATUS_PENDING,
+                self::STATUS_REJECTED,
+                self::STATUS_LOCKED,
+                self::STATUS_DELETED,
+            ];
+        }
+
+        return self::$approvalStatusEnumCache;
     }
 }

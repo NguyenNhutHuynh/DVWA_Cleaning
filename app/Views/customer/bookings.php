@@ -1,6 +1,7 @@
 <?php
 use App\Core\View;
 /** @var array $bookings Danh sách đơn đặt */
+/** @var string $csrf */
 ?>
 <section class="home-container">
   <header class="home-hero">
@@ -36,6 +37,19 @@ use App\Core\View;
             <?php endif; ?>
             <div class="hero-actions" style="justify-content:flex-start;margin-top:6px;gap:8px;">
               <a class="home-btn" href="/bookings/<?= (int)$b['id'] ?>">Theo dõi đơn</a>
+              <?php if (in_array(($b['status'] ?? ''), ['pending', 'confirmed', 'accepted'], true)): ?>
+                <form method="post" action="/bookings/<?= (int)$b['id'] ?>/cancel" style="display:inline;">
+                  <input type="hidden" name="_csrf" value="<?= View::e($csrf) ?>">
+                  <button
+                    type="submit"
+                    class="home-btn home-btn-outline"
+                    style="border-color:#dc2626;color:#dc2626;"
+                    onclick="return confirm('Bạn có chắc muốn hủy đơn này không?');"
+                  >
+                    Hủy đơn
+                  </button>
+                </form>
+              <?php endif; ?>
               <?php if (($b['status'] ?? '') === 'completed' && empty($b['has_review'])): ?>
                 <a class="home-btn home-btn-outline" href="/bookings/<?= (int)$b['id'] ?>/review">Đánh giá</a>
               <?php endif; ?>
