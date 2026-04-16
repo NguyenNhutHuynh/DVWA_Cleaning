@@ -2,6 +2,16 @@
 use App\Core\View;
 /** @var array $bookings Danh sách đơn đặt */
 /** @var string $csrf */
+
+// Từ điển dịch trạng thái sang Tiếng Việt có kèm icon
+$statusLabels = [
+    'pending'   => '<span style="color:#f59e0b;font-weight:600;">⏳ Chờ thanh toán</span>',
+    'paid'      => '<span style="color:#10b981;font-weight:600;">✅ Đã thanh toán</span>',
+    'confirmed' => '<span style="color:#10b981;font-weight:600;">✅ Đã xác nhận (Đã thanh toán)</span>',
+    'accepted'  => '<span style="color:#3b82f6;font-weight:600;">👷 Đang thực hiện</span>',
+    'completed' => '<span style="color:#8b5cf6;font-weight:600;">🌟 Đã hoàn thành</span>',
+    'cancelled' => '<span style="color:#ef4444;font-weight:600;">❌ Đã hủy</span>',
+];
 ?>
 <section class="home-container">
   <header class="home-hero">
@@ -20,11 +30,17 @@ use App\Core\View;
         <p>Bạn chưa có đơn đặt nào. <a href="/book">Đặt lịch ngay</a>.</p>
       <?php else: ?>
         <?php foreach ($bookings as $b): ?>
-          <div>
+          <?php 
+            $status = $b['status'] ?? ''; 
+            $isCancelled = ($status === 'cancelled');
+          ?>
+          <div style="<?= $isCancelled ? 'opacity: 0.6; background-color: #f9fafb; border-color: #e5e7eb;' : '' ?>">
             <strong>#<?= View::e($b['id']) ?></strong>
             • <?= View::e($b['date']) ?> <?= View::e($b['time']) ?>
             • <?= View::e($b['location']) ?>
-            • Trạng thái: <span style="color:#2eaf7d;font-weight:600;"><?= View::e($b['status']) ?></span>
+            
+            • Trạng thái: <?= $statusLabels[$status] ?? '<span style="color:#6b7280;font-weight:600;">' . View::e($status) . '</span>' ?>
+            
             <?php if (!empty($b['service_name'])): ?>
               <div style="margin-top:4px;color:#455a64;">Dịch vụ: <?= View::e($b['service_name']) ?></div>
             <?php endif; ?>
@@ -35,23 +51,41 @@ use App\Core\View;
             <?php if (!empty($b['description'])): ?>
               <p style="margin:6px 0;"><?= View::e($b['description']) ?></p>
             <?php endif; ?>
+            
             <div class="hero-actions" style="justify-content:flex-start;margin-top:6px;gap:8px;">
               <a class="home-btn" href="/bookings/<?= (int)$b['id'] ?>">Theo dõi đơn</a>
-              <?php if (in_array(($b['status'] ?? ''), ['pending', 'confirmed', 'accepted'], true)): ?>
-                <form method="post" action="/bookings/<?= (int)$b['id'] ?>/cancel" style="display:inline;">
+              
+              <?php if ($status === 'pending'): ?>
+                <form method="post" action="/bookings/<?= (int)$b['id'] ?>/repay" style="display:inline;">
                   <input type="hidden" name="_csrf" value="<?= View::e($csrf) ?>">
-                  <button
-                    type="submit"
-                    class="home-btn home-btn-outline"
-                    style="border-color:#dc2626;color:#dc2626;"
-                    onclick="return confirm('Bạn có chắc muốn hủy đơn này không?');"
-                  >
-                    Hủy đơn
+                  <button type="submit" class="home-btn" style="background-color: #2563eb; border: none; cursor: pointer;">
+                    💳 Thanh toán ngay
                   </button>
                 </form>
               <?php endif; ?>
-              <?php if (($b['status'] ?? '') === 'completed' && empty($b['has_review'])): ?>
-                <a class="home-btn home-btn-outline" href="/bookings/<?= (int)$b['id'] ?>/review">Đánh giá</a>
+              
+              <?php if ($status === 'paid' || $status === 'confirmed'): ?>
+                <span style="display:inline-flex; align-items:center; padding: 6px 12px; background-color: #d1fae5; color: #065f46; font-weight: 600; border-radius: 8px; border: 1px solid #34d399;">
+                  ✅ Đã thanh toán
+                </span>
+              <?php endif; ?>
+              
+              <?php if (in_array($status, ['pending', 'confirmed', 'accepted'], true)): ?>
+                <form method="post" action="/bookings/<?= (int)$b['id'] ?>/cancel" style="display:inline;">
+                  <input type="hidden" name="_csrf" value="<?= View::e($csrf) ?>">
+                  <button type="submit" class="home-btn" style="background-color: transparent; color: #dc2626; border: 2px solid #dc2626; cursor: pointer;" onclick="return confirm('Bạn có chắc muốn hủy đơn này không?');">
+                    🗑️ Hủy đơn
+                  </button>
+                </form>
+              <?php endif; ?>
+              
+              <?php if ($status === 'completed' && empty($b['has_review'])): ?>
+                <a 
+                  class="px-4 py-2 border-2 border-purple-600 text-purple-600 font-semibold rounded-lg hover:bg-purple-50 transition duration-200" 
+                  href="/bookings/<?= (int)$b['id'] ?>/review"
+                >
+                  ⭐ Đánh giá
+                </a>
               <?php endif; ?>
             </div>
           </div>

@@ -23,10 +23,10 @@ use App\Models\User;
  */
 final class AdminController
 {
-    private const MAX_AVATAR_SIZE = 2 * 1024 * 1024;
+    private const MAX_AVATAR_SIZE = 5 * 1024 * 1024;
     private const ALLOWED_AVATAR_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
     
-    private const MAX_SERVICE_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
+    private const MAX_SERVICE_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB
     private const ALLOWED_SERVICE_IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp'];
     private const SERVICE_IMAGE_UPLOAD_DIR = __DIR__ . '/../../public/uploads/services/';
 

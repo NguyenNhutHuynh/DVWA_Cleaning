@@ -12,6 +12,7 @@ use App\Models\BookingMessage;
 use App\Models\BookingPayment;
 use App\Models\BookingProgress;
 use App\Models\BookingReview;
+use App\Models\PaymentTransaction;
 use App\Models\Service;
 use App\Models\User;
 
@@ -26,6 +27,25 @@ final class BookingController
     public function index(): void
     {
         $this->requireAuthentication();
+
+        // ====================================================================
+        // BẮT TÍN HIỆU TỪ PAYOS VÀ LÀM SẠCH URL
+        // ====================================================================
+        if (isset($_GET['code']) || isset($_GET['cancel'])) {
+            $code = $_GET['code'] ?? null;
+            $cancel = $_GET['cancel'] ?? 'false';
+            
+            if ($code === '00' && $cancel === 'false') {
+                $_SESSION['success'] = '🎉 Thanh toán thành công! Vui lòng chờ hệ thống cập nhật trạng thái.';
+            } else {
+                $_SESSION['error'] = '❌ Giao dịch thanh toán thất bại hoặc đã bị hủy.';
+            }
+            
+            // Tự động lấy URL hiện tại và cắt bỏ phần đuôi ?code=...
+            $cleanUrl = strtok($_SERVER["REQUEST_URI"], '?');
+            header("Location: " . $cleanUrl);
+            exit;
+        }
 
         $userId = Auth::id();
         $bookings = Booking::getByUserId($userId);
@@ -128,8 +148,30 @@ final class BookingController
             $lineTotal
         );
 
-        $_SESSION['success'] = 'Đặt lịch thành công! Thành tiền tạm tính: ' . number_format((int)$lineTotal, 0, ',', '.') . 'đ. Chúng tôi sẽ xác nhận trong vòng 2 giờ.';
-        $this->redirect('/bookings');
+        // ====================================================================
+        // CHUYỂN HƯỚNG TỚI PAYOS CHECKOUT
+        // ====================================================================
+        // Sau khi tạo booking thành công, gọi API PayOS để lấy link thanh toán chính thức
+        
+        // Sinh mã đơn hàng (PayOS yêu cầu kiểu int)
+        // Sử dụng timestamp + booking ID để đảm bảo duy nhất
+        $orderCode = (int)(time() . $bookingId);
+        
+        // Lấy amount (tổng tiền thanh toán)
+        $amount = (int)$lineTotal;
+        
+        // Gọi API PayOS để tạo payment link
+        $checkoutUrl = $this->createPaymentLinkWithPayOS($bookingId, $orderCode, $amount);
+        
+        if ($checkoutUrl) {
+            // Chuyển hướng đến trang thanh toán chính thức của PayOS
+            header("Location: " . $checkoutUrl);
+            exit;
+        } else {
+            // Nếu gọi API thất bại, hiển thị lỗi
+            $_SESSION['error'] = 'Không thể tạo link thanh toán. Vui lòng thử lại.';
+            $this->redirect('/bookings');
+        }
     }
 
     /**
@@ -383,5 +425,241 @@ final class BookingController
         header("Location: $path");
         exit(0);
     }
-}
 
+    /**
+     * Gọi API PayOS để tạo payment link.
+     * 
+     * YÊU CẦU ĐẦU VÀO:
+     * - $orderCode PHẢI là int, được tính từ time() . $bookingId
+     * - $amount PHẢI là int (VNĐ, không thập phân)
+     * 
+     * QUY TRÌNH:
+     * 1. Kiểm tra config PayOS
+     * 2. Sinh signature HMAC_SHA256 theo chuẩn: amount, cancelUrl, description, orderCode, returnUrl
+     * 3. Gọi API: POST /v1/payment-requests
+     * 4. Bắt lỗi chi tiết và in ra response
+     * 
+     * @param int $bookingId ID của booking
+     * @param int $orderCode Mã đơn hàng (kiểu integer, bắt buộc)
+     * @param int $amount Số tiền thanh toán VNĐ (kiểu integer, bắt buộc)
+     * @return string|null URL checkout của PayOS hoặc null nếu thất bại
+     */
+    private function createPaymentLinkWithPayOS(int $bookingId, int $orderCode, int $amount): ?string
+    {
+        // ============================================================================
+        // BƯỚC 1: KIỂM TRA CONFIG PAYOS
+        // ============================================================================
+        
+        $config = require __DIR__ . '/../../config/app.php';
+        $clientId = $config['payos']['client_id'] ?? '';
+        $apiKey = $config['payos']['api_key'] ?? '';
+        $checksumKey = $config['payos']['checksum_key'] ?? '';
+        
+        if (empty($clientId) || empty($apiKey) || empty($checksumKey)) {
+            die('❌ LỖI CONFIG: Thiếu PayOS credentials (client_id, api_key, hoặc checksum_key)');
+        }
+        
+        // ============================================================================
+        // BƯỚC 2: EẤN KIỂU DỮ LIỆU NGHIÊM NGẶT (BẮT BUỘC)
+        // ============================================================================
+        
+        // Ép orderCode và amount về int (yêu cầu PayOS)
+        $orderCode = (int)$orderCode;
+        $amount = (int)$amount;
+        
+        if ($orderCode <= 0 || $amount <= 0) {
+            die("❌ LỖI DỮ LIỆU: orderCode ({$orderCode}) hoặc amount ({$amount}) phải > 0");
+        }
+        
+        // ============================================================================
+        // BƯỚC 3: CHUẨN BỊ DỮ LIỆU GỬI ĐẾN PAYOS
+        // ============================================================================
+        
+        //$baseUrl = 'http://localhost/DVWA_Cleaning/public';
+        $baseUrl = 'https://unthievish-unperpetuated-briella.ngrok-free.dev';
+        $description = "DVWA_" . $orderCode . "_" . $bookingId;
+        $cancelUrl = $baseUrl . '/bookings';
+        $returnUrl = $baseUrl . '/bookings?payment_success=1';
+        
+        $paymentData = [
+            'orderCode' => $orderCode,         // int
+            'amount' => $amount,               // int
+            'description' => $description,     // string
+            'cancelUrl' => $cancelUrl,         // string
+            'returnUrl' => $returnUrl,         // string
+            'signature' => '',                 // sẽ tính bên dưới
+        ];
+        
+        // ============================================================================
+        // BƯỚC 4: TÍNH TOÁN SIGNATURE (HMAC_SHA256) THEO CHUẨN PAYOS
+        // ============================================================================
+        
+        // QUAN TRỌNG: Phải sắp xếp theo thứ tự alphabet của key!
+        // Thứ tự: amount, cancelUrl, description, orderCode, returnUrl
+        
+        // Chuẩn bị dữ liệu cho signature (không bao gồm signature field)
+        $dataForSignature = [
+            'amount' => $paymentData['amount'],
+            'cancelUrl' => $paymentData['cancelUrl'],
+            'description' => $paymentData['description'],
+            'orderCode' => $paymentData['orderCode'],
+            'returnUrl' => $paymentData['returnUrl'],
+        ];
+        
+        // Sắp xếp theo key A-Z (ksort)
+        ksort($dataForSignature);
+        
+        // Nối thành chuỗi: key1=value1&key2=value2&...
+        $signatureString = '';
+        foreach ($dataForSignature as $key => $value) {
+            if (!empty($signatureString)) {
+                $signatureString .= '&';
+            }
+            $signatureString .= $key . '=' . $value;
+        }
+        
+        // Log signature string để debug
+        error_log("=== PAYOS SIGNATURE DEBUG ===");
+        error_log("Signature String: {$signatureString}");
+        
+        // Tính HMAC_SHA256 với checksum key
+        $paymentData['signature'] = hash_hmac('sha256', $signatureString, $checksumKey);
+        
+        error_log("Computed Signature: " . $paymentData['signature']);
+        error_log("Checksum Key: {$checksumKey}");
+        error_log("============================");
+        
+        // ============================================================================
+        // BƯỚC 5: CHUẨN BỊ REQUEST VÀ GỬI CURL
+        // ============================================================================
+        
+        $apiUrl = "https://api-merchant.payos.vn/v2/payment-requests";
+        $payload = json_encode($paymentData);
+        
+        error_log("Request Payload: {$payload}");
+        
+        // Khởi tạo cURL
+        $ch = curl_init($apiUrl);
+        
+        // Cấu hình cURL - BẮT BUỘC CÓ ĐỦ 3 HEADERS
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Content-Type: application/json',                    // ✅ Header 1
+            'x-client-id: ' . $clientId,                         // ✅ Header 2
+            'x-api-key: ' . $apiKey,                             // ✅ Header 3
+        ]);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+        
+        // ============================================================================
+        // BƯỚC 6: THỰC THI REQUEST VÀ LẤY RESPONSE
+        // ============================================================================
+        
+        $response = curl_exec($ch);
+        $curlError = curl_error($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        
+        // Nếu cURL lỗi (network error)
+        if ($response === false) {
+            die("❌ LỖI CURL: {$curlError}");
+        }
+        
+        // ============================================================================
+        // BƯỚC 7: BẮTLỖI CHI TIẾT - IN RESPONSE LỖI RA MÀYSN HÌ
+        // ============================================================================
+        
+        // Log response để debug
+        error_log("HTTP Code: {$httpCode}");
+        error_log("Response: {$response}");
+        
+        // Nếu HTTP code không phải 200, in ra lỗi
+        if ($httpCode !== 200) {
+            // Lỗi từ phía HTTP
+            die("❌ LỖI HTTP {$httpCode}:\n" . $response);
+        }
+        
+        // Parse JSON response
+        $result = json_decode($response, true);
+        
+        if ($result === null) {
+            die("❌ LỖI PARSE JSON:\n" . $response);
+        }
+        
+        // Kiểm tra response code từ PayOS (phải là '00')
+        $payosCode = $result['code'] ?? null;
+        $payosMessage = $result['message'] ?? 'Unknown';
+        
+        if ($payosCode !== '00') {
+            // PayOS trả về code lỗi
+            die("❌ LỖI PAYOS (Code: {$payosCode}):\n" . json_encode($result, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+        }
+        
+        // Kiểm tra checkoutUrl có tồn tại không
+        if (!isset($result['data']['checkoutUrl'])) {
+            die("❌ LỖI: PayOS không trả về checkoutUrl\n" . json_encode($result, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+        }
+        
+        // ============================================================================
+        // BƯỚC 8: THÀNH CÔNG - LƯU PAYMENT_TRANSACTION VÀ TRẢ VỀ CHECKOUTURL
+        // ============================================================================
+        
+        $checkoutUrl = $result['data']['checkoutUrl'];
+        
+        // Lưu payment_transaction record
+        PaymentTransaction::create(
+            $bookingId,
+            $orderCode,
+            $amount,
+            'pending',
+            $description
+        );
+        
+        error_log("✅ SUCCESS: Created payment link for booking #{$bookingId}");
+        
+        return $checkoutUrl;
+    }
+
+    /**
+     * Xử lý yêu cầu thanh toán lại từ danh sách đơn đặt.
+     * Route: POST /bookings/{id}/repay
+     */
+    public function repay(int $id): void
+    {
+        $this->requireAuthentication();
+        $this->requirePostRequest();
+        $this->verifyCsrfToken();
+        
+        // Kiểm tra booking tồn tại và thuộc người dùng
+        $booking = Booking::getDetailById($id);
+        if ($booking === null || (int)$booking['user_id'] !== Auth::id()) {
+            $_SESSION['error'] = 'Không tìm thấy đơn đặt.';
+            $this->redirect('/bookings');
+            return;
+        }
+        
+        // Chỉ cho phép trả tiền cho đơn đang chờ thanh toán
+        if (($booking['status'] ?? '') !== Booking::STATUS_PENDING) {
+            $_SESSION['error'] = 'Đơn này không cần thanh toán.';
+            $this->redirect('/bookings');
+            return;
+        }
+        
+        // Sinh order code và tạo payment link
+        $orderCode = (int)(time() . $id);
+        $amount = (int)($booking['service_price'] ?? 0);
+        
+        $checkoutUrl = $this->createPaymentLinkWithPayOS($id, $orderCode, $amount);
+        
+        if ($checkoutUrl) {
+            header("Location: " . $checkoutUrl);
+            exit;
+        } else {
+            $_SESSION['error'] = 'Không thể tạo link thanh toán. Vui lòng thử lại.';
+            $this->redirect('/bookings');
+        }
+    }
+
+}

@@ -109,6 +109,7 @@ $router->get('/bookings', [BookingController::class, 'index']);
 $router->get('/bookings/{id}', [BookingController::class, 'detail']);
 $router->post('/bookings/{id}/cancel', [BookingController::class, 'cancel']);
 $router->post('/bookings/{id}/message', [BookingController::class, 'sendMessage']);
+$router->post('/bookings/{id}/repay', [BookingController::class, 'repay']);
 $router->get('/bookings/{id}/review', [BookingController::class, 'review']);
 $router->post('/bookings/{id}/review', [BookingController::class, 'submitReview']);
 

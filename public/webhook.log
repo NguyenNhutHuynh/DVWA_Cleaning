@@ -1,0 +1,390 @@
+[2026-04-16 05:21:30] === NEW WEBHOOK REQUEST ===
+[2026-04-16 05:21:30] Raw Data Received
+[2026-04-16 05:21:30] Signature from Headers: 
+[2026-04-16 05:21:30] ERROR: Empty raw data
+[2026-04-16 05:23:22] === NEW WEBHOOK REQUEST ===
+[2026-04-16 05:23:22] Raw Data Received
+[2026-04-16 05:23:22] Signature from Headers: 
+[2026-04-16 05:23:22] ERROR: Empty raw data
+[2026-04-16 05:25:09] === NEW WEBHOOK REQUEST ===
+[2026-04-16 05:25:09] Raw Data Received
+[2026-04-16 05:25:09] Signature from Headers: 
+[2026-04-16 05:25:09] ERROR: Empty raw data
+[2026-04-16 05:25:43] === NEW WEBHOOK REQUEST ===
+[2026-04-16 05:25:43] Raw Data Received
+{
+    "code": "00",
+    "desc": "success",
+    "data": {
+        "orderCode": 123,
+        "amount": 3000,
+        "description": "VQRIO123",
+        "accountNumber": "12345678",
+        "reference": "TF230204212323",
+        "transactionDateTime": "2023-02-04 18:25:00",
+        "paymentLinkId": "124c33293c43417ab7879e14c8d9eb18",
+        "code": "00",
+        "desc": "Thành công",
+        "counterAccountBankId": "",
+        "counterAccountBankName": "",
+        "counterAccountName": "",
+        "counterAccountNumber": "",
+        "virtualAccountName": "",
+        "virtualAccountNumber": "",
+        "currency": "VND"
+    },
+    "signature": "c9930fd4020ca93506e7637a67cc3b85ad76873075c857697f166c9c148218a7"
+}
+
+[2026-04-16 05:25:43] Signature from Headers: 
+[2026-04-16 05:25:43] ERROR: Missing signature in request headers
+[2026-04-16 05:31:32] === NEW WEBHOOK REQUEST ===
+[2026-04-16 05:31:32] Raw Data Received
+[2026-04-16 05:31:32] Signature from Headers: 
+[2026-04-16 05:31:32] INFO: PayOS verification ping received
+[2026-04-16 05:31:39] === NEW WEBHOOK REQUEST ===
+[2026-04-16 05:31:39] Raw Data Received
+{
+    "code": "00",
+    "desc": "success",
+    "data": {
+        "orderCode": 123,
+        "amount": 3000,
+        "description": "VQRIO123",
+        "accountNumber": "12345678",
+        "reference": "TF230204212323",
+        "transactionDateTime": "2023-02-04 18:25:00",
+        "paymentLinkId": "124c33293c43417ab7879e14c8d9eb18",
+        "code": "00",
+        "desc": "Thành công",
+        "counterAccountBankId": "",
+        "counterAccountBankName": "",
+        "counterAccountName": "",
+        "counterAccountNumber": "",
+        "virtualAccountName": "",
+        "virtualAccountNumber": "",
+        "currency": "VND"
+    },
+    "signature": "c9930fd4020ca93506e7637a67cc3b85ad76873075c857697f166c9c148218a7"
+}
+
+[2026-04-16 05:31:39] Signature from Headers: 
+[2026-04-16 05:31:39] ERROR: Missing signature in request headers
+[2026-04-16 05:32:09] === NEW WEBHOOK REQUEST ===
+[2026-04-16 05:32:09] Raw Data Received
+{
+    "code": "00",
+    "desc": "success",
+    "data": {
+        "orderCode": 123,
+        "amount": 3000,
+        "description": "VQRIO123",
+        "accountNumber": "12345678",
+        "reference": "TF230204212323",
+        "transactionDateTime": "2023-02-04 18:25:00",
+        "paymentLinkId": "124c33293c43417ab7879e14c8d9eb18",
+        "code": "00",
+        "desc": "Thành công",
+        "counterAccountBankId": "",
+        "counterAccountBankName": "",
+        "counterAccountName": "",
+        "counterAccountNumber": "",
+        "virtualAccountName": "",
+        "virtualAccountNumber": "",
+        "currency": "VND"
+    },
+    "signature": "c9930fd4020ca93506e7637a67cc3b85ad76873075c857697f166c9c148218a7"
+}
+
+[2026-04-16 05:32:09] Signature from Headers: 
+[2026-04-16 05:32:09] ERROR: Missing signature in request headers
+[2026-04-16 05:32:19] === NEW WEBHOOK REQUEST ===
+[2026-04-16 05:32:19] Raw Data Received
+[2026-04-16 05:32:19] Signature from Headers: 
+[2026-04-16 05:32:19] INFO: PayOS verification ping received
+[2026-04-16 05:32:22] === NEW WEBHOOK REQUEST ===
+[2026-04-16 05:32:22] Raw Data Received
+[2026-04-16 05:32:22] Signature from Headers: 
+[2026-04-16 05:32:22] INFO: PayOS verification ping received
+[2026-04-16 05:32:30] === NEW WEBHOOK REQUEST ===
+[2026-04-16 05:32:30] Raw Data Received
+{
+    "code": "00",
+    "desc": "success",
+    "data": {
+        "orderCode": 123,
+        "amount": 3000,
+        "description": "VQRIO123",
+        "accountNumber": "12345678",
+        "reference": "TF230204212323",
+        "transactionDateTime": "2023-02-04 18:25:00",
+        "paymentLinkId": "124c33293c43417ab7879e14c8d9eb18",
+        "code": "00",
+        "desc": "Thành công",
+        "counterAccountBankId": "",
+        "counterAccountBankName": "",
+        "counterAccountName": "",
+        "counterAccountNumber": "",
+        "virtualAccountName": "",
+        "virtualAccountNumber": "",
+        "currency": "VND"
+    },
+    "signature": "c9930fd4020ca93506e7637a67cc3b85ad76873075c857697f166c9c148218a7"
+}
+
+[2026-04-16 05:32:30] Signature from Headers: 
+[2026-04-16 05:32:30] ERROR: Missing signature in request headers
+[2026-04-16 07:02:30] === NEW WEBHOOK REQUEST ===
+[2026-04-16 07:02:30] ERROR: Empty raw data
+[2026-04-16 07:06:15] === NEW WEBHOOK REQUEST ===
+[2026-04-16 07:06:15] ERROR: Empty raw data
+[2026-04-16 08:31:42] === NEW WEBHOOK REQUEST ===
+[2026-04-16 08:31:42] ERROR: Empty raw data
+[2026-04-16 08:33:33] === NEW WEBHOOK REQUEST ===
+[2026-04-16 08:33:33] ERROR: Empty raw data
+[2026-04-16 08:43:51] === NEW WEBHOOK REQUEST ===
+[2026-04-16 08:43:51] ERROR: Missing X-Payos-Signature header
+[2026-04-16 09:20:47] === NEW WEBHOOK REQUEST ===
+[2026-04-16 09:20:47] ERROR: Empty raw data
+[2026-04-16 10:18:51] === NEW WEBHOOK REQUEST ===
+[2026-04-16 10:18:51] ERROR: Missing X-Payos-Signature header
+[2026-04-16 10:34:57] === NEW WEBHOOK REQUEST ===
+[2026-04-16 10:34:57] ERROR: Missing X-Payos-Signature header
+[2026-04-16 10:54:49] === NEW WEBHOOK REQUEST ===
+[2026-04-16 10:54:49] ERROR: Missing X-Payos-Signature header
+[2026-04-16 11:09:45] === NEW WEBHOOK REQUEST ===
+[2026-04-16 11:09:45] ERROR: Missing X-Payos-Signature header
+[2026-04-16 11:18:03] === NEW WEBHOOK REQUEST ===
+[2026-04-16 11:18:03] ERROR: Missing X-Payos-Signature header
+[2026-04-16 11:19:17] === NEW WEBHOOK REQUEST ===
+[2026-04-16 11:19:17] ERROR: Missing X-Payos-Signature header
+[2026-04-16 11:22:26] === NEW WEBHOOK REQUEST ===
+[2026-04-16 11:22:26] ERROR: Missing X-Payos-Signature header
+[2026-04-16 11:30:34] === NEW WEBHOOK REQUEST ===
+[2026-04-16 11:30:34] ERROR: Missing X-Payos-Signature header
+[2026-04-16 11:31:45] === NEW WEBHOOK REQUEST ===
+[2026-04-16 11:31:45] ERROR: Missing X-Payos-Signature header
+[2026-04-16 13:56:46] === NEW WEBHOOK REQUEST ===
+[2026-04-16 13:56:46] ERROR: Missing X-Payos-Signature header
+[2026-04-16 14:00:33] === NEW WEBHOOK REQUEST ===
+[2026-04-16 14:00:33] ERROR: Missing X-Payos-Signature header
+[2026-04-16 14:01:13] === NEW WEBHOOK REQUEST ===
+[2026-04-16 14:01:13] ERROR: Missing X-Payos-Signature header
+[2026-04-16 14:12:59] === NEW WEBHOOK REQUEST ===
+[2026-04-16 14:12:59] ERROR: Missing X-Payos-Signature header
+[2026-04-16 15:45:01] === NEW WEBHOOK REQUEST ===
+[2026-04-16 15:45:01] ERROR: Missing X-Payos-Signature header
+[2026-04-16 15:59:43] === NEW WEBHOOK REQUEST ===
+[2026-04-16 15:59:43] Toàn bộ Headers nhận được:
+{
+    "Host": "DVWA_Cleaning.test",
+    "User-Agent": "axios\/1.8.4",
+    "Content-Length": "586",
+    "Accept": "application\/json, text\/plain, *\/*",
+    "Accept-Encoding": "gzip, compress, deflate, br",
+    "Content-Type": "application\/json",
+    "X-Forwarded-For": "203.171.29.218",
+    "X-Forwarded-Host": "unthievish-unperpetuated-briella.ngrok-free.dev",
+    "X-Forwarded-Proto": "https"
+}
+[2026-04-16 15:59:43] ERROR: Missing X-Payos-Signature header
+[2026-04-16 16:03:01] === NEW WEBHOOK REQUEST ===
+[2026-04-16 16:03:01] Received data:
+{
+    "code": "00",
+    "desc": "success",
+    "success": true,
+    "data": {
+        "accountNumber": "0385913461",
+        "amount": 2000,
+        "description": "CSJP8TNOXH6 DVWA17763553632828",
+        "reference": "FT26107550464207",
+        "transactionDateTime": "2026-04-16 23:03:00",
+        "virtualAccountNumber": "",
+        "counterAccountBankId": "",
+        "counterAccountBankName": "",
+        "counterAccountName": null,
+        "counterAccountNumber": "8855060603",
+        "virtualAccountName": "",
+        "currency": "VND",
+        "orderCode": 177635536328,
+        "paymentLinkId": "cbdd94929cb74d458f64cc7f1655a1fd",
+        "code": "00",
+        "desc": "success"
+    },
+    "signature": "641930f22f439bb31ce1321078d46bcceb185466c97e46f8e6731c3eb6e2ec90"
+}
+[2026-04-16 16:03:01] Đã bắt được chữ ký thành công!
+[2026-04-16 16:03:01] Signature string: 
+[2026-04-16 16:03:01] Computed signature: 82824cd21bbb8fd590f2de3ae990cd1af172dfd188b3d998febec4a59b360a3f
+[2026-04-16 16:03:01] Received signature: 641930f22f439bb31ce1321078d46bcceb185466c97e46f8e6731c3eb6e2ec90
+[2026-04-16 16:03:01] ERROR: Signature verification FAILED - UNAUTHORIZED
+[2026-04-16 16:07:32] === NEW WEBHOOK REQUEST ===
+[2026-04-16 16:07:32] Received data:
+{
+    "code": "00",
+    "desc": "success",
+    "success": true,
+    "data": {
+        "accountNumber": "0385913461",
+        "amount": 2000,
+        "description": "CSOYIC82YE6 DVWA17763556402828",
+        "reference": "FT26107104760269",
+        "transactionDateTime": "2026-04-16 23:07:00",
+        "virtualAccountNumber": "",
+        "counterAccountBankId": "",
+        "counterAccountBankName": "",
+        "counterAccountName": null,
+        "counterAccountNumber": "8855060603",
+        "virtualAccountName": "",
+        "currency": "VND",
+        "orderCode": 177635564028,
+        "paymentLinkId": "dbb879d1f9054b3f9a931e9f3c86acfc",
+        "code": "00",
+        "desc": "success"
+    },
+    "signature": "4e313082478997090177c7e3ef66b0c493eeec678e284abd55ecbc4ca4e02be2"
+}
+[2026-04-16 16:07:32] Đã bắt được chữ ký thành công!
+[2026-04-16 16:07:32] Signature string: accountNumber=0385913461&amount=2000&code=00&counterAccountBankId=&counterAccountBankName=&counterAccountNumber=8855060603&currency=VND&desc=success&description=CSOYIC82YE6 DVWA17763556402828&orderCode=177635564028&paymentLinkId=dbb879d1f9054b3f9a931e9f3c86acfc&reference=FT26107104760269&transactionDateTime=2026-04-16 23:07:00&virtualAccountName=&virtualAccountNumber=
+[2026-04-16 16:07:32] Computed signature: d31e8624644748530df110dfeea845426186b8c3905ca533f17cfea87348df00
+[2026-04-16 16:07:32] Received signature: 4e313082478997090177c7e3ef66b0c493eeec678e284abd55ecbc4ca4e02be2
+[2026-04-16 16:07:32] ERROR: Signature verification FAILED - UNAUTHORIZED
+[2026-04-16 16:09:24] === NEW WEBHOOK REQUEST ===
+[2026-04-16 16:09:24] Received data:
+{
+    "code": "00",
+    "desc": "success",
+    "success": true,
+    "data": {
+        "accountNumber": "0385913461",
+        "amount": 2000,
+        "description": "CSY13QOCFC1 DVWA17763557482929",
+        "reference": "FT26107987197779",
+        "transactionDateTime": "2026-04-16 23:09:00",
+        "virtualAccountNumber": "",
+        "counterAccountBankId": "",
+        "counterAccountBankName": "",
+        "counterAccountName": null,
+        "counterAccountNumber": "8855060603",
+        "virtualAccountName": "",
+        "currency": "VND",
+        "orderCode": 177635574829,
+        "paymentLinkId": "1e688ddf629e49c59412774eca6c901d",
+        "code": "00",
+        "desc": "success"
+    },
+    "signature": "41549755c857207fcb76a8b8002c5708144baec7e20c9edf13fc01029c8c5297"
+}
+[2026-04-16 16:09:24] Đã bắt được chữ ký thành công!
+[2026-04-16 16:09:24] Signature string: accountNumber=0385913461&amount=2000&code=00&counterAccountBankId=&counterAccountBankName=&counterAccountNumber=8855060603&currency=VND&desc=success&description=CSY13QOCFC1 DVWA17763557482929&orderCode=177635574829&paymentLinkId=1e688ddf629e49c59412774eca6c901d&reference=FT26107987197779&transactionDateTime=2026-04-16 23:09:00&virtualAccountName=&virtualAccountNumber=
+[2026-04-16 16:09:24] Computed signature: 05ef1402340a3f5850f6a95358f63383df318bde362336326be8045981c2a472
+[2026-04-16 16:09:24] Received signature: 41549755c857207fcb76a8b8002c5708144baec7e20c9edf13fc01029c8c5297
+[2026-04-16 16:09:24] ERROR: Signature verification FAILED - UNAUTHORIZED
+[2026-04-16 16:52:32] === NEW WEBHOOK REQUEST ===
+[2026-04-16 16:52:32] Received data:
+{
+    "code": "00",
+    "desc": "success",
+    "success": true,
+    "data": {
+        "accountNumber": "0385913461",
+        "amount": 2000,
+        "description": "CSAULJ0Z9G0 DVWA17763583373030",
+        "reference": "FT26107202718211",
+        "transactionDateTime": "2026-04-16 23:52:00",
+        "virtualAccountNumber": "",
+        "counterAccountBankId": "",
+        "counterAccountBankName": "",
+        "counterAccountName": null,
+        "counterAccountNumber": "8855060603",
+        "virtualAccountName": "",
+        "currency": "VND",
+        "orderCode": 177635833730,
+        "paymentLinkId": "bbf3c773a47544dbbb6e286f35718251",
+        "code": "00",
+        "desc": "success"
+    },
+    "signature": "c362d81129f0ce2fad4bc12bfdd0008125ac8f0a7942ab806ba5c6614cc7fe62"
+}
+[2026-04-16 16:52:32] Đã bắt được chữ ký thành công!
+[2026-04-16 16:52:32] Signature string: accountNumber=0385913461&amount=2000&code=00&counterAccountBankId=&counterAccountBankName=&counterAccountNumber=8855060603&currency=VND&desc=success&description=CSAULJ0Z9G0 DVWA17763583373030&orderCode=177635833730&paymentLinkId=bbf3c773a47544dbbb6e286f35718251&reference=FT26107202718211&transactionDateTime=2026-04-16 23:52:00&virtualAccountName=&virtualAccountNumber=
+[2026-04-16 16:52:32] Computed signature: 6d57d7af57cc9b8d56f4db15356164c1e12527e906fa8ae553c6ceae71f1b3d7
+[2026-04-16 16:52:32] Received signature: c362d81129f0ce2fad4bc12bfdd0008125ac8f0a7942ab806ba5c6614cc7fe62
+[2026-04-16 16:52:32] ERROR: Signature verification FAILED - UNAUTHORIZED
+[2026-04-16 16:55:20] === NEW WEBHOOK REQUEST ===
+[2026-04-16 16:55:20] Received data:
+{
+    "code": "00",
+    "desc": "success",
+    "success": true,
+    "data": {
+        "accountNumber": "0385913461",
+        "amount": 2000,
+        "description": "CSSW6L1ORQ1 DVWA17763585093131",
+        "reference": "FT26107774538835",
+        "transactionDateTime": "2026-04-16 23:55:00",
+        "virtualAccountNumber": "",
+        "counterAccountBankId": "",
+        "counterAccountBankName": "",
+        "counterAccountName": null,
+        "counterAccountNumber": "8855060603",
+        "virtualAccountName": "",
+        "currency": "VND",
+        "orderCode": 177635850931,
+        "paymentLinkId": "18df9f699dd544cda3d16fb4ecb27bb3",
+        "code": "00",
+        "desc": "success"
+    },
+    "signature": "8adc8120cc5588083d5111e494846c4e0fbe77b5a39ea892b97493be1020480b"
+}
+[2026-04-16 16:55:20] Đã bắt được chữ ký thành công!
+[2026-04-16 16:55:20] Signature string: accountNumber=0385913461&amount=2000&code=00&counterAccountBankId=&counterAccountBankName=&counterAccountNumber=8855060603&currency=VND&desc=success&description=CSSW6L1ORQ1 DVWA17763585093131&orderCode=177635850931&paymentLinkId=18df9f699dd544cda3d16fb4ecb27bb3&reference=FT26107774538835&transactionDateTime=2026-04-16 23:55:00&virtualAccountName=&virtualAccountNumber=
+[2026-04-16 16:55:20] Computed signature: d3bfdaa0cb678afb5ae745076a01d74145a643a6c555c9951d1d3c5dea2d21af
+[2026-04-16 16:55:20] Received signature: 8adc8120cc5588083d5111e494846c4e0fbe77b5a39ea892b97493be1020480b
+[2026-04-16 16:55:20] ERROR: Signature verification FAILED
+[2026-04-16 17:16:40] === NEW WEBHOOK REQUEST ===
+[2026-04-16 17:16:40] Received data:
+{
+    "code": "00",
+    "desc": "success",
+    "success": true,
+    "data": {
+        "accountNumber": "0385913461",
+        "amount": 2000,
+        "description": "CSDW8RD9170 DVWA17763597883434",
+        "reference": "FT26107435821661",
+        "transactionDateTime": "2026-04-17 00:16:00",
+        "virtualAccountNumber": "",
+        "counterAccountBankId": "",
+        "counterAccountBankName": "",
+        "counterAccountName": null,
+        "counterAccountNumber": "8855060603",
+        "virtualAccountName": "",
+        "currency": "VND",
+        "orderCode": 177635978834,
+        "paymentLinkId": "cf4665e9ace141c18a41eaf2b4f7aecd",
+        "code": "00",
+        "desc": "success"
+    },
+    "signature": "8d12a1e0ad4700d7ae3219d12dcbffefdc7a6d50cbc8043d43e7dad78dea3149"
+}
+[2026-04-16 17:16:40] Đã bắt được chữ ký thành công!
+[2026-04-16 17:16:40] Signature string chuẩn PayOS: accountNumber=0385913461&amount=2000&code=00&counterAccountBankId=&counterAccountBankName=&counterAccountName=&counterAccountNumber=8855060603&currency=VND&desc=success&description=CSDW8RD9170 DVWA17763597883434&orderCode=177635978834&paymentLinkId=cf4665e9ace141c18a41eaf2b4f7aecd&reference=FT26107435821661&transactionDateTime=2026-04-17 00:16:00&virtualAccountName=&virtualAccountNumber=
+[2026-04-16 17:16:40] Computed signature: 8d12a1e0ad4700d7ae3219d12dcbffefdc7a6d50cbc8043d43e7dad78dea3149
+[2026-04-16 17:16:40] Received signature: 8d12a1e0ad4700d7ae3219d12dcbffefdc7a6d50cbc8043d43e7dad78dea3149
+[2026-04-16 17:16:40] ✓ Signature verification passed
+[2026-04-16 17:16:40] Đã nhận Webhook cho Order Code: 177635978834
+[2026-04-16 17:16:40] Extracted data - Order: 177635978834, Amount: 2000, Code: 00
+[2026-04-16 17:16:40] Starting database update for order: 177635978834
+[2026-04-16 17:16:40] Found payment record:
+{
+    "id": 28,
+    "booking_id": 34,
+    "status": "pending"
+}
+[2026-04-16 17:16:40] ✓ Updated payment_transactions: 1 row(s)
+[2026-04-16 17:16:40] ✓ Updated bookings (ID 34): 1 row(s)
+[2026-04-16 17:16:40] ✓ Transaction committed successfully
+[2026-04-16 17:16:40] ✓ Webhook processed successfully
+[2026-04-16 17:16:40] === END WEBHOOK PROCESSING ===
