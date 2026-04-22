@@ -179,7 +179,7 @@ try {
     writeLog("Starting database update for order: {$orderCode}");
     
     // === 5A: Kiểm tra payment_transactions tồn tại ===
-    $checkStmt = $db->prepare("SELECT id, booking_id, status FROM payment_transactions WHERE order_code = :order_code LIMIT 1");
+        $checkStmt = $db->prepare("SELECT id, booking_id, status, payment_method FROM payment_transactions WHERE order_code = :order_code LIMIT 1");
     $checkStmt->execute([':order_code' => $orderCode]);
     $paymentRecord = $checkStmt->fetch(\PDO::FETCH_ASSOC);
     
@@ -193,6 +193,7 @@ try {
     
     $bookingId = (int)$paymentRecord['booking_id'];
     $currentStatus = $paymentRecord['status'] ?? '';
+        $paymentMethod = (string)($paymentRecord['payment_method'] ?? '');
     
     // Nếu đã paid rồi, bỏ qua (idempotent)
     if ($currentStatus === 'paid') {
@@ -218,20 +219,60 @@ try {
     writeLog("✓ Updated payment_transactions: {$affectedRows1} row(s)");
     
     // === 5C: Cập nhật bookings status = 'paid' (hoặc 'confirmed') ===
-    $updateBooking = $db->prepare("
-        UPDATE bookings 
-        SET status = 'confirmed', updated_at = NOW()
-        WHERE id = :booking_id
-    ");
-    
-    $result2 = $updateBooking->execute([':booking_id' => $bookingId]);
-    $affectedRows2 = $updateBooking->rowCount();
-    
-    if (!$result2) {
-        throw new Exception("Failed to update bookings");
-    }
-    
-    writeLog("✓ Updated bookings (ID {$bookingId}): {$affectedRows2} row(s)");
+        if ($paymentMethod === 'worker_payout') {
+            // === 5C: Giao dịch trả lương worker -> cập nhật booking_payments ===
+            $statusColumn = null;
+            $updatedAtColumn = null;
+
+            $columnStmt = $db->query('SHOW COLUMNS FROM booking_payments');
+            $columns = $columnStmt ? ($columnStmt->fetchAll(\PDO::FETCH_ASSOC) ?: []) : [];
+
+            foreach ($columns as $column) {
+                $field = (string)($column['Field'] ?? '');
+                if ($field === 'status' || $field === 'payment_status') {
+                    $statusColumn = $field;
+                }
+                if ($field === 'updated_at') {
+                    $updatedAtColumn = $field;
+                }
+            }
+
+            if ($statusColumn !== null) {
+                $sql = "UPDATE booking_payments SET `{$statusColumn}` = 'payout_paid'";
+                if ($updatedAtColumn !== null) {
+                    $sql .= ", `{$updatedAtColumn}` = NOW()";
+                }
+                $sql .= " WHERE booking_id = :booking_id";
+
+                $updatePayroll = $db->prepare($sql);
+                $result2 = $updatePayroll->execute([':booking_id' => $bookingId]);
+                $affectedRows2 = $updatePayroll->rowCount();
+
+                if (!$result2) {
+                    throw new Exception('Failed to update booking_payments payout status');
+                }
+
+                writeLog("✓ Updated booking_payments payout (booking {$bookingId}): {$affectedRows2} row(s)");
+            } else {
+                writeLog("WARNING: booking_payments has no status/payment_status column for booking {$bookingId}");
+            }
+        } else {
+            // === 5C: Thanh toán của khách -> xác nhận booking ===
+            $updateBooking = $db->prepare("
+                UPDATE bookings 
+                SET status = 'confirmed', updated_at = NOW()
+                WHERE id = :booking_id
+            ");
+
+            $result2 = $updateBooking->execute([':booking_id' => $bookingId]);
+            $affectedRows2 = $updateBooking->rowCount();
+
+            if (!$result2) {
+                throw new Exception("Failed to update bookings");
+            }
+
+            writeLog("✓ Updated bookings (ID {$bookingId}): {$affectedRows2} row(s)");
+        }
     
     // Commit transaction
     $db->commit();

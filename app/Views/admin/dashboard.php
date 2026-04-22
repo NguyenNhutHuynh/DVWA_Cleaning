@@ -379,5 +379,10 @@ use App\Core\View;
       <h3>📈 Báo cáo thống kê</h3>
       <p>Phân tích doanh thu, hiệu suất và xu hướng hệ thống</p>
     </a>
+
+    <a href="/admin/worker-payroll" class="action-card">
+      <h3>💵 Duyệt lương worker</h3>
+      <p>Nhập lương và tạo phiên thanh toán qua PayOS cho worker</p>
+    </a>
   </div>
 </div>

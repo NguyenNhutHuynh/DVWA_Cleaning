@@ -14,6 +14,7 @@ use App\Models\BookingProgress;
 use App\Models\BookingReport;
 use App\Models\BookingReview;
 use App\Models\Contact;
+use App\Models\PaymentTransaction;
 use App\Models\Service;
 use App\Models\User;
 
@@ -48,8 +49,7 @@ final class AdminController
         $totalServices = count($services);
         $pendingBookings = count(array_filter($bookings, fn($b) => $b['status'] === 'pending'));
         $completedBookings = count(array_filter($bookings, fn($b) => $b['status'] === 'completed'));
-        $totalRevenue = array_sum(array_map(fn($b) => $b['service_price'] ?? 0, 
-            array_filter($bookings, fn($b) => $b['status'] === 'completed')));
+        $totalRevenue = PaymentTransaction::getTotalPaidCustomerRevenue();
         $unreadContacts = count(array_filter($contacts, fn($c) => $c['status'] === 'pending'));
         
         View::render('admin/dashboard', [
@@ -82,8 +82,10 @@ final class AdminController
     {
         $this->requireAdminRole();
 
+        $bookings = $this->enrichBookingsWithPaymentStatus(Booking::getAll());
+
         View::render('admin/bookings', [
-            'bookings' => Booking::getAll(),
+            'bookings' => $bookings,
             'workers' => $this->getActiveWorkers(),
             'csrf' => Csrf::token(),
         ]);
@@ -101,9 +103,11 @@ final class AdminController
 
         View::render('admin/booking-detail', [
             'booking' => $booking,
+            'workers' => $this->getActiveWorkers(),
             'progress' => BookingProgress::byBookingId($id),
             'messages' => BookingMessage::byBookingId($id),
             'payment' => BookingPayment::byBookingId($id),
+            'customerPayment' => PaymentTransaction::getLatestCustomerByBookingId($id),
             'report' => BookingReport::getByBookingId($id),
             'review' => BookingReview::getByBookingId($id),
             'csrf' => Csrf::token(),
@@ -317,7 +321,16 @@ final class AdminController
 
         $bookings = Booking::getAll();
         $users = User::listAll();
-        $paymentTotals = BookingPayment::totals();
+        $customerPaidRevenue = PaymentTransaction::getTotalPaidCustomerRevenue();
+        $monthlyPaidRevenue = PaymentTransaction::getPaidCustomerRevenueByMonth();
+        $workerPayoutTotals = BookingPayment::workerPayoutTotals();
+        $paidBookingsCount = count(array_filter(
+            $bookings,
+            static fn(array $booking): bool => PaymentTransaction::hasSuccessfulCustomerPayment((int)($booking['id'] ?? 0))
+        ));
+        $averagePaidOrderValue = $paidBookingsCount > 0
+            ? round($customerPaidRevenue / $paidBookingsCount, 0)
+            : 0.0;
         
         $stats = [
             'service_count' => count(Service::all()),
@@ -330,15 +343,89 @@ final class AdminController
             'monthly_bookings' => $this->getMonthlyBookings($bookings),
             'user_role_distribution' => $this->getUserRoleDistribution($users),
             // Doanh thu và conversion
-            'total_revenue' => $this->calculateTotalRevenue($bookings),
-            'monthly_revenue' => $this->getMonthlyRevenue($bookings),
-            'average_order_value' => $this->calculateAverageOrderValue($bookings),
+            'total_revenue' => $customerPaidRevenue,
+            'monthly_revenue' => $monthlyPaidRevenue,
+            'average_order_value' => $averagePaidOrderValue,
             'conversion_rate' => $this->calculateConversionRate($bookings),
             'completion_rate' => $this->calculateCompletionRate($bookings),
-            'payment_totals' => $paymentTotals,
+            'worker_payout_totals' => $workerPayoutTotals,
         ];
 
         View::render('admin/stats', ['stats' => $stats]);
+    }
+
+    public function workerPayroll(): void
+    {
+        $this->requireAdminRole();
+
+        if (isset($_GET['code']) || isset($_GET['cancel'])) {
+            $code = (string)($_GET['code'] ?? '');
+            $cancel = (string)($_GET['cancel'] ?? 'false');
+            if ($code === '00' && $cancel === 'false') {
+                $this->setSessionMessage('success', 'Giao dịch trả lương đã được tạo. Vui lòng chờ webhook xác nhận trạng thái paid.');
+            } else {
+                $this->setSessionMessage('error', 'Phiên thanh toán lương chưa thành công hoặc đã bị hủy.');
+            }
+
+            $this->redirect('/admin/worker-payroll');
+        }
+
+        View::render('admin/worker-payroll', [
+            'bookings' => $this->getWorkerPayrollBookings(),
+            'csrf' => Csrf::token(),
+        ]);
+    }
+
+    public function payWorkerSalary(): void
+    {
+        $this->requireAdminRole();
+        $this->verifyCsrfToken();
+
+        $bookingId = (int)($_POST['booking_id'] ?? 0);
+        $workerId = (int)($_POST['worker_id'] ?? 0);
+        $salary = (float)($_POST['worker_salary'] ?? 0);
+
+        if ($bookingId <= 0 || $workerId <= 0 || $salary <= 0) {
+            $this->setSessionMessage('error', 'Dữ liệu trả lương không hợp lệ.');
+            $this->redirect('/admin/worker-payroll');
+        }
+
+        $booking = Booking::getDetailById($bookingId);
+        if ($booking === null) {
+            $this->setSessionMessage('error', 'Không tìm thấy booking cần trả lương.');
+            $this->redirect('/admin/worker-payroll');
+        }
+
+        if ((int)($booking['assigned_worker_id'] ?? 0) !== $workerId) {
+            $this->setSessionMessage('error', 'Worker của booking không khớp.');
+            $this->redirect('/admin/worker-payroll');
+        }
+
+        if (!PaymentTransaction::hasSuccessfulCustomerPayment($bookingId)) {
+            $this->setSessionMessage('error', 'Booking chưa thanh toán, không thể trả lương worker.');
+            $this->redirect('/admin/worker-payroll');
+        }
+
+        BookingPayment::upsertWorkerSalary(
+            $bookingId,
+            (int)($booking['user_id'] ?? 0),
+            $workerId,
+            (float)($booking['service_price'] ?? 0),
+            $salary,
+            'payout_processing'
+        );
+
+        $orderCode = (int)(time() . $bookingId . $workerId);
+        $checkoutUrl = $this->createPayOSPaymentLinkForWorkerPayout($bookingId, $workerId, $salary, $orderCode);
+
+        if ($checkoutUrl === null) {
+            BookingPayment::updateWorkerPayoutStatus($bookingId, 'pending_payout');
+            $this->setSessionMessage('error', 'Không thể tạo link PayOS để trả lương worker.');
+            $this->redirect('/admin/worker-payroll');
+        }
+
+        header('Location: ' . $checkoutUrl);
+        exit(0);
     }
 
     public function approveWorker(): void
@@ -483,6 +570,11 @@ final class AdminController
             $this->redirect('/admin/bookings');
         }
 
+        if (!PaymentTransaction::hasSuccessfulCustomerPayment($bookingId)) {
+            $this->setSessionMessage('error', 'Đơn chưa được khách thanh toán, chưa thể xác nhận.');
+            $this->redirect('/admin/bookings');
+        }
+
         Booking::updateStatus($bookingId, Booking::STATUS_CONFIRMED);
         $this->setSessionMessage('success', 'Đã xác nhận đơn đặt #' . $bookingId . '.');
         $this->redirect('/admin/bookings');
@@ -510,8 +602,19 @@ final class AdminController
 
         $bookingId = (int)($_POST['id'] ?? 0);
         $workerId = (int)($_POST['worker_id'] ?? 0);
+        $returnTo = trim((string)($_POST['return_to'] ?? ''));
+        $redirectTo = ($returnTo !== '' && str_starts_with($returnTo, '/admin/bookings'))
+            ? $returnTo
+            : '/admin/bookings';
+
         if ($bookingId <= 0 || $workerId <= 0) {
-            $this->redirect('/admin/bookings');
+            $this->redirect($redirectTo);
+        }
+
+        $booking = Booking::getById($bookingId);
+        if ($booking === null) {
+            $this->setSessionMessage('error', 'Không tìm thấy đơn đặt cần phân công.');
+            $this->redirect($redirectTo);
         }
 
         $worker = User::findById($workerId);
@@ -521,12 +624,27 @@ final class AdminController
             || ($worker['approval_status'] ?? '') !== User::STATUS_ACTIVE
         ) {
             $this->setSessionMessage('error', 'Worker được chọn để phân công không hợp lệ.');
-            $this->redirect('/admin/bookings');
+            $this->redirect($redirectTo);
         }
 
-        Booking::assignWorker($bookingId, $workerId);
-        $this->setSessionMessage('success', 'Đã phân công worker #' . $workerId . '. Hãy xác nhận đơn khi sẵn sàng.');
-        $this->redirect('/admin/bookings');
+        if (!PaymentTransaction::hasSuccessfulCustomerPayment($bookingId)) {
+            $this->setSessionMessage('error', 'Khách hàng chưa thanh toán đơn này. Chỉ được gán worker sau khi thanh toán thành công.');
+            $this->redirect($redirectTo);
+        }
+
+        $assigned = Booking::assignWorker($bookingId, $workerId);
+        if (!$assigned) {
+            $this->setSessionMessage('error', 'Không thể phân công worker cho đơn này.');
+            $this->redirect($redirectTo);
+        }
+
+        $currentStatus = (string)($booking['status'] ?? Booking::STATUS_PENDING);
+        if (in_array($currentStatus, [Booking::STATUS_PENDING, Booking::STATUS_CONFIRMED], true)) {
+            Booking::updateStatus($bookingId, Booking::STATUS_CONFIRMED);
+        }
+
+        $this->setSessionMessage('success', 'Đã phân công worker #' . $workerId . '. Đơn đã sẵn sàng để worker nhận việc.');
+        $this->redirect($redirectTo);
     }
 
     public function replyContact(): void
@@ -627,6 +745,155 @@ final class AdminController
         ));
     }
 
+
+    private function enrichBookingsWithPaymentStatus(array $bookings): array
+    {
+        foreach ($bookings as &$booking) {
+            $bookingId = (int)($booking['id'] ?? 0);
+            $payment = PaymentTransaction::getLatestCustomerByBookingId($bookingId);
+
+            $booking['is_customer_paid'] = PaymentTransaction::hasSuccessfulCustomerPayment($bookingId);
+            $booking['customer_payment_status'] = $payment['status'] ?? 'pending';
+            $booking['customer_paid_amount'] = (float)($payment['amount'] ?? 0);
+            $booking['customer_paid_at'] = $payment['paid_at'] ?? null;
+        }
+        unset($booking);
+
+        return $bookings;
+    }
+
+    private function getWorkerPayrollBookings(): array
+    {
+        $bookings = $this->enrichBookingsWithPaymentStatus(Booking::getAll());
+        $rows = [];
+
+        foreach ($bookings as $booking) {
+            if (empty($booking['is_customer_paid'])) {
+                continue;
+            }
+
+            $workerId = (int)($booking['assigned_worker_id'] ?? 0);
+            if ($workerId <= 0) {
+                continue;
+            }
+
+            $payment = BookingPayment::byBookingId((int)$booking['id']);
+            $workerSalary = (float)(
+                $payment['worker_salary']
+                ?? $payment['worker_amount']
+                ?? $payment['payout_amount']
+                ?? 0
+            );
+            $payoutStatus = (string)($payment['status'] ?? $payment['payment_status'] ?? 'pending_payout');
+
+            $rows[] = [
+                'id' => (int)$booking['id'],
+                'date' => (string)($booking['date'] ?? ''),
+                'time' => (string)($booking['time'] ?? ''),
+                'service_name' => (string)($booking['service_name'] ?? ''),
+                'worker_id' => $workerId,
+                'worker_name' => (string)($booking['worker_name'] ?? ('Worker #' . $workerId)),
+                'service_price' => (float)($booking['service_price'] ?? 0),
+                'worker_salary' => $workerSalary,
+                'payout_status' => $payoutStatus,
+            ];
+        }
+
+        return $rows;
+    }
+
+    private function createPayOSPaymentLinkForWorkerPayout(int $bookingId, int $workerId, float $salary, int $orderCode): ?string
+    {
+        $amount = (int)round($salary);
+        if ($amount <= 0) {
+            return null;
+        }
+
+        $description = 'PAY_WORKER_' . $bookingId . '_' . $workerId;
+        $cancelUrl = '/admin/worker-payroll';
+        $returnUrl = '/admin/worker-payroll?payment_success=1';
+
+        $checkoutUrl = $this->buildPayOsPaymentLink($orderCode, $amount, $description, $cancelUrl, $returnUrl);
+        if ($checkoutUrl === null) {
+            return null;
+        }
+
+        $created = PaymentTransaction::create(
+            $bookingId,
+            $orderCode,
+            $amount,
+            'pending',
+            $description,
+            PaymentTransaction::METHOD_WORKER_PAYOUT
+        );
+
+        if (!$created) {
+            return null;
+        }
+
+        return $checkoutUrl;
+    }
+
+    private function buildPayOsPaymentLink(int $orderCode, int $amount, string $description, string $cancelPath, string $returnPath): ?string
+    {
+        $config = require __DIR__ . '/../../config/app.php';
+        $clientId = $config['payos']['client_id'] ?? '';
+        $apiKey = $config['payos']['api_key'] ?? '';
+        $checksumKey = $config['payos']['checksum_key'] ?? '';
+        $baseUrl = (string)($config['app']['base_url'] ?? $config['app']['url'] ?? '');
+
+        if ($clientId === '' || $apiKey === '' || $checksumKey === '' || $baseUrl === '') {
+            return null;
+        }
+
+        $cancelUrl = rtrim($baseUrl, '/') . $cancelPath;
+        $returnUrl = rtrim($baseUrl, '/') . $returnPath;
+
+        $paymentData = [
+            'orderCode' => $orderCode,
+            'amount' => $amount,
+            'description' => $description,
+            'cancelUrl' => $cancelUrl,
+            'returnUrl' => $returnUrl,
+        ];
+
+        $signatureData = $paymentData;
+        ksort($signatureData);
+
+        $signatureParts = [];
+        foreach ($signatureData as $key => $value) {
+            $signatureParts[] = $key . '=' . $value;
+        }
+        $paymentData['signature'] = hash_hmac('sha256', implode('&', $signatureParts), $checksumKey);
+
+        $ch = curl_init('https://api-merchant.payos.vn/v2/payment-requests');
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($paymentData));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Content-Type: application/json',
+            'x-client-id: ' . $clientId,
+            'x-api-key: ' . $apiKey,
+        ]);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if ($response === false || $httpCode !== 200) {
+            return null;
+        }
+
+        $result = json_decode($response, true);
+        if (!is_array($result) || ($result['code'] ?? '') !== '00') {
+            return null;
+        }
+
+        $checkoutUrl = $result['data']['checkoutUrl'] ?? null;
+        return is_string($checkoutUrl) && $checkoutUrl !== '' ? $checkoutUrl : null;
+    }
     private function getApproverName(?array $user): ?string
     {
         if ($user === null || empty($user['approved_by'])) {

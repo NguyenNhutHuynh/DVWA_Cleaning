@@ -122,15 +122,54 @@ use App\Core\View;
   color: #2eaf7d;
 }
 
+.payment-chip {
+  display: inline-block;
+  margin-top: 6px;
+  margin-left: 8px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.payment-chip.paid {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.payment-chip.unpaid {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
 .booking-actions {
+  display: flex;
   justify-content: flex-start;
+  align-items: center;
   margin-top: 10px;
   gap: 8px;
   flex-wrap: wrap;
 }
 
 .booking-actions form {
-  display: inline-block;
+  display: flex;
+  align-items: center;
+  margin: 0;
+}
+
+.booking-actions .home-btn {
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.2;
+  box-sizing: border-box;
+  white-space: nowrap;
+}
+
+.booking-actions button.home-btn {
+  appearance: none;
+  -webkit-appearance: none;
 }
 
 .assign-form {
@@ -227,7 +266,7 @@ use App\Core\View;
   <header class="home-hero bookings-hero">
     <p class="home-kicker">ADMIN • ĐƠN ĐẶT</p>
     <h1>Quản lý đơn đặt</h1>
-    <p>Xác nhận, hủy, cập nhật trạng thái.</p>
+    <p>Gán worker ngay khi đơn đã thanh toán, theo dõi và hủy khi cần.</p>
   </header>
 
   <section class="bookings-section" aria-label="Danh sách đơn đặt">
@@ -237,6 +276,10 @@ use App\Core\View;
         <p class="empty-bookings">Chưa có đơn đặt nào.</p>
       <?php else: ?>
         <?php foreach ($bookings as $b): ?>
+          <?php
+            $isCustomerPaid = !empty($b['is_customer_paid']);
+            $paidAmount = (float)($b['customer_paid_amount'] ?? 0);
+          ?>
           <article class="booking-card">
             <p class="booking-main">
               <strong>#<?= View::e($b['id']) ?></strong>
@@ -248,15 +291,15 @@ use App\Core\View;
             <?php if (!empty($b['assigned_worker_id'])): ?>
               <span class="worker-chip">Đã gán cho Worker #<?= View::e($b['assigned_worker_id']) ?></span>
             <?php endif; ?>
+            <span class="payment-chip <?= $isCustomerPaid ? 'paid' : 'unpaid' ?>">
+              <?= $isCustomerPaid ? 'Đã thanh toán' : 'Chưa thanh toán' ?>
+            </span>
+            <?php if ($isCustomerPaid): ?>
+              <p style="margin:8px 0 0;font-size:13px;color:#065f46;">Khách đã thanh toán: <?= number_format($paidAmount, 0, ',', '.') ?>đ</p>
+            <?php endif; ?>
 
             <div class="hero-actions booking-actions">
               <a class="home-btn home-btn-outline" href="/admin/bookings/<?= (int)$b['id'] ?>">Xem chi tiết</a>
-
-              <form method="POST" action="/admin/bookings/confirm">
-                <input type="hidden" name="_csrf" value="<?= View::e($csrf) ?>">
-                <input type="hidden" name="id" value="<?= (int)$b['id'] ?>">
-                <button class="home-btn" type="submit" <?= empty($b['assigned_worker_id']) ? 'disabled' : '' ?>>Xác nhận</button>
-              </form>
 
               <form method="POST" action="/admin/bookings/cancel">
                 <input type="hidden" name="_csrf" value="<?= View::e($csrf) ?>">
@@ -267,17 +310,21 @@ use App\Core\View;
               <form method="POST" action="/admin/bookings/assign" class="assign-form">
                 <input type="hidden" name="_csrf" value="<?= View::e($csrf) ?>">
                 <input type="hidden" name="id" value="<?= (int)$b['id'] ?>">
-                <select name="worker_id" required class="worker-select">
+                <select name="worker_id" required class="worker-select" <?= $isCustomerPaid ? '' : 'disabled' ?>>
                   <option value="">-- Chọn worker --</option>
                   <?php foreach (($workers ?? []) as $w): ?>
                     <option value="<?= (int)$w['id'] ?>" <?= (int)($b['assigned_worker_id'] ?? 0) === (int)$w['id'] ? 'selected' : '' ?>>Worker #<?= (int)$w['id'] ?> · <?= View::e($w['name']) ?></option>
                   <?php endforeach; ?>
                 </select>
-                <button class="home-btn home-btn-outline" type="submit">Gán worker</button>
+                <button class="home-btn home-btn-outline" type="submit" <?= $isCustomerPaid ? '' : 'disabled' ?>>Gán worker</button>
               </form>
             </div>
             <?php if (empty($b['assigned_worker_id'])): ?>
-              <p style="margin-top:8px;color:#b26a00;font-size:13px;">Cần gán worker trước khi xác nhận đơn.</p>
+              <?php if (!$isCustomerPaid): ?>
+                <p style="margin-top:8px;color:#991b1b;font-size:13px;">Chưa thanh toán: chưa thể gán worker.</p>
+              <?php else: ?>
+                <p style="margin-top:8px;color:#b26a00;font-size:13px;">Đơn đã thanh toán: bạn có thể gán worker ngay.</p>
+              <?php endif; ?>
             <?php endif; ?>
           </article>
         <?php endforeach; ?>

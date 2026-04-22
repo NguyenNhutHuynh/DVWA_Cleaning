@@ -110,6 +110,130 @@ final class BookingPayment
         }
     }
 
+    /**
+     * Admin nhập/cập nhật lương worker cho một booking.
+     */
+    public static function upsertWorkerSalary(
+        int $bookingId,
+        int $customerId,
+        int $workerId,
+        float $servicePrice,
+        float $workerSalary,
+        string $status = 'pending_payout'
+    ): void {
+        self::createIfNotExists($bookingId, $customerId, $workerId, $servicePrice);
+
+        $workerSalaryColumn = self::resolveColumn(['worker_salary', 'worker_amount', 'payout_amount']);
+        $statusColumn = self::resolveColumn(['status', 'payment_status']);
+        $updatedAtColumn = self::resolveColumn(['updated_at']);
+
+        $updates = [];
+        $params = ['booking_id' => $bookingId];
+
+        if ($workerSalaryColumn !== null) {
+            $updates[] = self::quoteIdentifier($workerSalaryColumn) . ' = :worker_salary';
+            $params['worker_salary'] = $workerSalary;
+        }
+
+        if ($statusColumn !== null) {
+            $updates[] = self::quoteIdentifier($statusColumn) . ' = :status';
+            $params['status'] = $status;
+        }
+
+        if ($updatedAtColumn !== null) {
+            $updates[] = self::quoteIdentifier($updatedAtColumn) . ' = NOW()';
+        }
+
+        if (empty($updates)) {
+            return;
+        }
+
+        $sql = 'UPDATE booking_payments SET ' . implode(', ', $updates) . ' WHERE booking_id = :booking_id';
+
+        try {
+            $stmt = DB::pdo()->prepare($sql);
+            $stmt->execute($params);
+        } catch (PDOException $exception) {
+            // Không chặn luồng chính nếu schema chưa đồng bộ.
+        }
+    }
+
+    /**
+     * Cập nhật trạng thái chi lương worker của booking.
+     */
+    public static function updateWorkerPayoutStatus(int $bookingId, string $status): void
+    {
+        $statusColumn = self::resolveColumn(['status', 'payment_status']);
+        $updatedAtColumn = self::resolveColumn(['updated_at']);
+
+        if ($statusColumn === null) {
+            return;
+        }
+
+        $sql = 'UPDATE booking_payments SET ' . self::quoteIdentifier($statusColumn) . ' = :status';
+        if ($updatedAtColumn !== null) {
+            $sql .= ', ' . self::quoteIdentifier($updatedAtColumn) . ' = NOW()';
+        }
+        $sql .= ' WHERE booking_id = :booking_id';
+
+        try {
+            $stmt = DB::pdo()->prepare($sql);
+            $stmt->execute([
+                'status' => $status,
+                'booking_id' => $bookingId,
+            ]);
+        } catch (PDOException $exception) {
+            // Không chặn luồng chính nếu schema chưa đồng bộ.
+        }
+    }
+
+    /**
+     * Tổng hợp lương worker để theo dõi trả lương theo luồng mới.
+     */
+    public static function workerPayoutTotals(): array
+    {
+        $workerSalaryColumn = self::resolveColumn(['worker_salary', 'worker_amount', 'payout_amount']);
+        $statusColumn = self::resolveColumn(['status', 'payment_status']);
+
+        if ($workerSalaryColumn === null) {
+            return [
+                'total_salary_entered' => 0.0,
+                'total_salary_paid' => 0.0,
+                'total_salary_pending' => 0.0,
+            ];
+        }
+
+        $salaryExpr = self::quoteIdentifier($workerSalaryColumn);
+        $paidCase = $statusColumn !== null
+            ? "CASE WHEN LOWER(" . self::quoteIdentifier($statusColumn) . ") = 'payout_paid' THEN {$salaryExpr} ELSE 0 END"
+            : '0';
+        $pendingCase = $statusColumn !== null
+            ? "CASE WHEN LOWER(" . self::quoteIdentifier($statusColumn) . ") IN ('pending_payout', 'payout_processing', 'ready') THEN {$salaryExpr} ELSE 0 END"
+            : '0';
+
+        $sql = "SELECT
+                    COALESCE(SUM({$salaryExpr}), 0) AS total_salary_entered,
+                    COALESCE(SUM({$paidCase}), 0) AS total_salary_paid,
+                    COALESCE(SUM({$pendingCase}), 0) AS total_salary_pending
+                FROM booking_payments";
+
+        try {
+            $stmt = DB::pdo()->query($sql);
+            $result = $stmt->fetch() ?: [];
+            return [
+                'total_salary_entered' => (float)($result['total_salary_entered'] ?? 0),
+                'total_salary_paid' => (float)($result['total_salary_paid'] ?? 0),
+                'total_salary_pending' => (float)($result['total_salary_pending'] ?? 0),
+            ];
+        } catch (PDOException $exception) {
+            return [
+                'total_salary_entered' => 0.0,
+                'total_salary_paid' => 0.0,
+                'total_salary_pending' => 0.0,
+            ];
+        }
+    }
+
     private static function getPaymentColumns(): array
     {
         if (self::$paymentColumnsCache !== null) {

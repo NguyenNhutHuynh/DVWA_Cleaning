@@ -36,6 +36,9 @@ use PDOException;
  */
 final class PaymentTransaction
 {
+    public const METHOD_CUSTOMER_PAYMENT = 'customer_payment';
+    public const METHOD_WORKER_PAYOUT = 'worker_payout';
+
     public static function create(int $bookingId, int $orderCode, float $amount, ?string $status = null, ?string $description = null, ?string $paymentMethod = null): bool
     {
         try {
@@ -50,7 +53,7 @@ final class PaymentTransaction
                 ':order_code' => (string)$orderCode,
                 ':amount' => $amount,
                 ':status' => $status ?? 'pending',
-                ':payment_method' => $paymentMethod ?? 'bank_transfer',
+                ':payment_method' => $paymentMethod ?? self::METHOD_CUSTOMER_PAYMENT,
             ]);
         } catch (PDOException $e) {
             error_log('PaymentTransaction::create error: ' . $e->getMessage());
@@ -101,6 +104,142 @@ final class PaymentTransaction
             error_log('PaymentTransaction::getByBookingId error: ' . $e->getMessage());
             return null;
         }
+    }
+
+    /**
+     * Lấy giao dịch thanh toán của khách hàng theo booking.
+     */
+    public static function getLatestCustomerByBookingId(int $bookingId): ?array
+    {
+        try {
+            $stmt = DB::pdo()->prepare(
+                "SELECT * FROM payment_transactions
+                 WHERE booking_id = :booking_id
+                   AND (
+                        payment_method IS NULL
+                        OR payment_method IN (:customer_method, :legacy_method)
+                   )
+                 ORDER BY created_at DESC
+                 LIMIT 1"
+            );
+
+            $stmt->execute([
+                ':booking_id' => $bookingId,
+                ':customer_method' => self::METHOD_CUSTOMER_PAYMENT,
+                ':legacy_method' => 'bank_transfer',
+            ]);
+
+            $result = $stmt->fetch();
+            return $result ?: null;
+        } catch (PDOException $e) {
+            error_log('PaymentTransaction::getLatestCustomerByBookingId error: ' . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Kiểm tra booking đã có giao dịch khách thanh toán thành công chưa.
+     */
+    public static function hasSuccessfulCustomerPayment(int $bookingId): bool
+    {
+        try {
+            $stmt = DB::pdo()->prepare(
+                "SELECT COUNT(*) AS total
+                 FROM payment_transactions
+                 WHERE booking_id = :booking_id
+                   AND status = 'paid'
+                   AND (
+                        payment_method IS NULL
+                        OR payment_method IN (:customer_method, :legacy_method)
+                   )"
+            );
+
+            $stmt->execute([
+                ':booking_id' => $bookingId,
+                ':customer_method' => self::METHOD_CUSTOMER_PAYMENT,
+                ':legacy_method' => 'bank_transfer',
+            ]);
+
+            $result = $stmt->fetch();
+            return (int)($result['total'] ?? 0) > 0;
+        } catch (PDOException $e) {
+            error_log('PaymentTransaction::hasSuccessfulCustomerPayment error: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Tổng tiền khách đã thanh toán thành công.
+     */
+    public static function getTotalPaidCustomerRevenue(): float
+    {
+        try {
+            $stmt = DB::pdo()->prepare(
+                "SELECT COALESCE(SUM(amount), 0) AS total
+                 FROM payment_transactions
+                 WHERE status = 'paid'
+                   AND (
+                        payment_method IS NULL
+                        OR payment_method IN (:customer_method, :legacy_method)
+                   )"
+            );
+
+            $stmt->execute([
+                ':customer_method' => self::METHOD_CUSTOMER_PAYMENT,
+                ':legacy_method' => 'bank_transfer',
+            ]);
+
+            $result = $stmt->fetch();
+            return (float)($result['total'] ?? 0);
+        } catch (PDOException $e) {
+            error_log('PaymentTransaction::getTotalPaidCustomerRevenue error: ' . $e->getMessage());
+            return 0.0;
+        }
+    }
+
+    /**
+     * Doanh thu khách thanh toán theo từng tháng gần nhất.
+     */
+    public static function getPaidCustomerRevenueByMonth(int $monthCount = 6): array
+    {
+        $monthCount = max(1, $monthCount);
+        $monthlyData = [];
+
+        for ($i = $monthCount - 1; $i >= 0; $i--) {
+            $month = date('Y-m', strtotime("-{$i} months"));
+            $monthlyData[$month] = 0.0;
+        }
+
+        try {
+            $stmt = DB::pdo()->prepare(
+                "SELECT DATE_FORMAT(paid_at, '%Y-%m') AS month_key, COALESCE(SUM(amount), 0) AS month_total
+                 FROM payment_transactions
+                 WHERE status = 'paid'
+                   AND paid_at IS NOT NULL
+                   AND (
+                        payment_method IS NULL
+                        OR payment_method IN (:customer_method, :legacy_method)
+                   )
+                 GROUP BY month_key"
+            );
+
+            $stmt->execute([
+                ':customer_method' => self::METHOD_CUSTOMER_PAYMENT,
+                ':legacy_method' => 'bank_transfer',
+            ]);
+
+            $rows = $stmt->fetchAll() ?: [];
+            foreach ($rows as $row) {
+                $monthKey = (string)($row['month_key'] ?? '');
+                if (isset($monthlyData[$monthKey])) {
+                    $monthlyData[$monthKey] = (float)($row['month_total'] ?? 0);
+                }
+            }
+        } catch (PDOException $e) {
+            error_log('PaymentTransaction::getPaidCustomerRevenueByMonth error: ' . $e->getMessage());
+        }
+
+        return $monthlyData;
     }
 
     /**

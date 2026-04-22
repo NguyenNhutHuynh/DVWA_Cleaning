@@ -5,8 +5,13 @@ use App\Models\BookingProgress;
 /** @var array $progress */
 /** @var array $messages */
 /** @var array|null $payment */
+/** @var array|null $customerPayment */
 /** @var array|null $report */
 /** @var array|null $review */
+/** @var array $workers */
+
+$isCustomerPaid = $customerPayment !== null && (($customerPayment['status'] ?? '') === 'paid');
+$assignedWorkerId = (int)($booking['assigned_worker_id'] ?? 0);
 ?>
 
 <style>
@@ -167,10 +172,42 @@ use App\Models\BookingProgress;
         <p><strong>Trạng thái:</strong> <span class="status-chip"><?= View::e((string)($booking['status'] ?? '')) ?></span></p>
       </div>
       <hr style="margin: 4px 0 2px; border: none; border-top: 1px solid #e8f2ed;">
-      <?php if ($payment !== null): ?>
+      <?php if ($customerPayment !== null && ($customerPayment['status'] ?? '') === 'paid'): ?>
+        <p><strong>Thanh toán khách:</strong> <span style="color:#065f46;font-weight:700;">Đã thanh toán</span></p>
+        <p><strong>Số tiền đã trả:</strong> <?= number_format((float)($customerPayment['amount'] ?? 0), 0, ',', '.') ?>đ</p>
+        <p><strong>Thời gian thanh toán:</strong> <?= View::e((string)($customerPayment['paid_at'] ?? '')) ?></p>
+      <?php elseif ($customerPayment !== null): ?>
+        <p><strong>Thanh toán khách:</strong> <span style="color:#991b1b;font-weight:700;">Chưa thanh toán</span></p>
+        <p><strong>Số tiền cần thanh toán:</strong> <?= number_format((float)($customerPayment['amount'] ?? ($booking['service_price'] ?? 0)), 0, ',', '.') ?>đ</p>
+      <?php elseif ($payment !== null): ?>
         <p><strong>Thanh toán:</strong> <?= number_format((float)($payment['service_price'] ?? 0), 0, ',', '.') ?>đ</p>
       <?php else: ?>
-        <p><strong>Thanh toán:</strong> <?= number_format((float)($booking['service_price'] ?? 0), 0, ',', '.') ?>đ</p>
+        <p><strong>Thanh toán khách:</strong> <span style="color:#991b1b;font-weight:700;">Chưa thanh toán</span></p>
+        <p><strong>Số tiền cần thanh toán:</strong> <?= number_format((float)($booking['service_price'] ?? 0), 0, ',', '.') ?>đ</p>
+      <?php endif; ?>
+
+      <hr style="margin: 8px 0 2px; border: none; border-top: 1px solid #e8f2ed;">
+      <p><strong>Phân công worker:</strong></p>
+      <form method="POST" action="/admin/bookings/assign" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+        <input type="hidden" name="_csrf" value="<?= View::e($csrf) ?>">
+        <input type="hidden" name="id" value="<?= (int)($booking['id'] ?? 0) ?>">
+        <input type="hidden" name="return_to" value="/admin/bookings/<?= (int)($booking['id'] ?? 0) ?>">
+        <select name="worker_id" required style="min-width:260px;padding:8px 10px;border:1px solid #cfe9dc;border-radius:10px;" <?= $isCustomerPaid ? '' : 'disabled' ?>>
+          <option value="">-- Chọn worker --</option>
+          <?php foreach (($workers ?? []) as $worker): ?>
+            <option value="<?= (int)$worker['id'] ?>" <?= $assignedWorkerId === (int)$worker['id'] ? 'selected' : '' ?>>
+              Worker #<?= (int)$worker['id'] ?> · <?= View::e((string)$worker['name']) ?>
+            </option>
+          <?php endforeach; ?>
+        </select>
+        <button class="home-btn home-btn-outline" type="submit" <?= $isCustomerPaid ? '' : 'disabled' ?>>Gán worker</button>
+      </form>
+      <?php if (!$isCustomerPaid): ?>
+        <p style="margin:6px 0 0;color:#991b1b;font-size:13px;">Chỉ gán được worker sau khi khách thanh toán thành công.</p>
+      <?php elseif ($assignedWorkerId > 0): ?>
+        <p style="margin:6px 0 0;color:#065f46;font-size:13px;">Đơn đã có worker, bạn có thể đổi sang worker khác nếu cần.</p>
+      <?php else: ?>
+        <p style="margin:6px 0 0;color:#b26a00;font-size:13px;">Đơn đã thanh toán, bạn có thể phân công worker ngay tại đây.</p>
       <?php endif; ?>
     </div>
   </section>

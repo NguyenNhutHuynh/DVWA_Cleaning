@@ -53,23 +53,23 @@ use App\Core\View;
     </div>
   </section>
 
-  <?php $paymentTotals = $stats['payment_totals'] ?? []; ?>
+  <?php $workerPayoutTotals = $stats['worker_payout_totals'] ?? []; ?>
   <section class="home-stats revenue-stats stats-section-gap">
     <div class="stat-card stat-revenue">
-      <strong><?= number_format((float)($paymentTotals['total_service_price'] ?? 0), 0, ',', '.') ?>đ</strong>
-      <span>💳 Tổng tiền thu khách</span>
+      <strong><?= number_format((float)($stats['total_revenue'] ?? 0), 0, ',', '.') ?>đ</strong>
+      <span>💳 Tổng khách đã thanh toán</span>
     </div>
     <div class="stat-card stat-aov">
-      <strong><?= number_format((float)($paymentTotals['total_worker_salary'] ?? 0), 0, ',', '.') ?>đ</strong>
-      <span>👷 Tổng lương worker</span>
+      <strong><?= number_format((float)($workerPayoutTotals['total_salary_entered'] ?? 0), 0, ',', '.') ?>đ</strong>
+      <span>👷 Tổng lương đã duyệt</span>
     </div>
     <div class="stat-card stat-conversion">
-      <strong><?= number_format((float)($paymentTotals['total_company_fee'] ?? 0), 0, ',', '.') ?>đ</strong>
-      <span>🏢 Tổng phí công ty</span>
+      <strong><?= number_format((float)($workerPayoutTotals['total_salary_paid'] ?? 0), 0, ',', '.') ?>đ</strong>
+      <span>🏦 Tổng lương đã chi</span>
     </div>
     <div class="stat-card stat-completion">
-      <strong><?= number_format((float)($paymentTotals['total_tax'] ?? 0), 0, ',', '.') ?>đ</strong>
-      <span>🧾 Tổng thuế</span>
+      <strong><?= number_format((float)($workerPayoutTotals['total_salary_pending'] ?? 0), 0, ',', '.') ?>đ</strong>
+      <span>⏳ Lương chờ chi</span>
     </div>
   </section>
 

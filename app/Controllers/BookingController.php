@@ -476,7 +476,7 @@ final class BookingController
         // ============================================================================
         
         //$baseUrl = 'http://localhost/DVWA_Cleaning/public';
-        $baseUrl = 'https://unthievish-unperpetuated-briella.ngrok-free.dev';
+        $baseUrl = 'https://suasively-metaphoric-gearldine.ngrok-free.dev';
         $description = "DVWA_" . $orderCode . "_" . $bookingId;
         $cancelUrl = $baseUrl . '/bookings';
         $returnUrl = $baseUrl . '/bookings?payment_success=1';
@@ -614,7 +614,8 @@ final class BookingController
             $orderCode,
             $amount,
             'pending',
-            $description
+            $description,
+            PaymentTransaction::METHOD_CUSTOMER_PAYMENT
         );
         
         error_log("✅ SUCCESS: Created payment link for booking #{$bookingId}");

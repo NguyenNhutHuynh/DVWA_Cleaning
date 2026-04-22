@@ -139,6 +139,8 @@ $router->get('/admin/users', [AdminController::class, 'users']);
 $router->get('/admin/user', [AdminController::class, 'userDetail']);
 $router->get('/admin/user/json', [AdminController::class, 'userDetailJson']);
 $router->get('/admin/stats', [AdminController::class, 'stats']);
+$router->get('/admin/worker-payroll', [AdminController::class, 'workerPayroll']);
+$router->post('/admin/worker-payroll/pay', [AdminController::class, 'payWorkerSalary']);
 // Phê duyệt người dùng Admin
 $router->post('/admin/users/approve', [AdminController::class, 'approveWorker']);
 $router->post('/admin/users/reject', [AdminController::class, 'rejectWorker']);

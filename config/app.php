@@ -9,16 +9,16 @@
     'charset' => 'utf8mb4',
   ],
   'app' => [
-    'base_url' => 'http://cleaning.test', 'http://localhost/DVWA_Cleaning/public',
+    'base_url' => 'http://cleaning.test',
     'session_name' => 'CLEANINGSESSID',
   ],
   'payos' => [
-    'client_id' => 'aa49a1e1-57f9-4bf7-b3d7-bfa6be17f6b6',
-    'api_key' => '987fe9c4-36d1-408a-8996-c292fedd4868',
-    'checksum_key' => '2b41b8e02f670cdf6a85702f28219daacb844085c20d4b0d72fd2a35f0862185',
-    'webhook_url' => 'https://unthievish-unperpetuated-briella.ngrok-free.dev/webhook.php',
-    'bank_account_number' => '0385913461',
-    'bank_account_name' => 'NGUYEN ANH KIET',
+    'client_id' => '88c5c667-369b-4187-903f-0aa0d9f34359',
+    'api_key' => 'd9aadaf3-4e7d-4987-9c75-5457731d9a64',
+    'checksum_key' => '922b18544e809831a8bad56ec78d47e161ae9306a0e8386f7eb494b7d86d8f29',
+    'webhook_url' => 'https://suasively-metaphoric-gearldine.ngrok-free.dev/webhook.php',
+    'bank_account_number' => '0382583013',
+    'bank_account_name' => 'NGUYEN NHUT HUYNH',
   ],
 ];
 ?>
