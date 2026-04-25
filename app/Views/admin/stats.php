@@ -150,7 +150,7 @@ use App\Core\View;
   <section class="home-feature stats-group">
     <div class="stats-group-head">
       <h2>📋 Chi tiết thống kê</h2>
-      <p>Số lượng và tỷ lệ.</p>
+      <!-- <p>Số lượng và tỷ lệ.</p> -->
       <button type="button" class="stats-toggle-btn" data-target="detailGroup" aria-expanded="true">Thu gọn</button>
     </div>
     <div class="stats-group-content" id="detailGroup">
@@ -485,7 +485,7 @@ use App\Core\View;
           }
         }, 360);
 
-        btn.textContent = 'Xổ ra';
+        btn.textContent = 'Mở rộng';
         btn.setAttribute('aria-expanded', 'false');
         return;
       }
