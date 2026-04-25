@@ -512,3 +512,49 @@
 [2026-04-21 17:35:21] ✓ Transaction committed successfully
 [2026-04-21 17:35:21] ✓ Webhook processed successfully
 [2026-04-21 17:35:21] === END WEBHOOK PROCESSING ===
+[2026-04-24 08:36:56] === NEW WEBHOOK REQUEST ===
+[2026-04-24 08:36:56] Received data:
+{
+    "code": "00",
+    "desc": "success",
+    "success": true,
+    "data": {
+        "accountNumber": "0382583013",
+        "amount": 30000,
+        "description": "CS5WUDAT959 DVWA17770197851717",
+        "reference": "FT26114850804904",
+        "transactionDateTime": "2026-04-24 15:36:00",
+        "virtualAccountNumber": "",
+        "counterAccountBankId": "01203001",
+        "counterAccountBankName": "",
+        "counterAccountName": null,
+        "counterAccountNumber": "1063212595",
+        "virtualAccountName": "",
+        "currency": "VND",
+        "orderCode": 177701978517,
+        "paymentLinkId": "92953862e9834dcb9e29f1a3e8e30549",
+        "code": "00",
+        "desc": "success"
+    },
+    "signature": "60dfdd56c78730951151dbb6df94a965f13673f012dc76871591c4a288c9a3cb"
+}
+[2026-04-24 08:36:56] Đã bắt được chữ ký thành công!
+[2026-04-24 08:36:56] Signature string chuẩn PayOS: accountNumber=0382583013&amount=30000&code=00&counterAccountBankId=01203001&counterAccountBankName=&counterAccountName=&counterAccountNumber=1063212595&currency=VND&desc=success&description=CS5WUDAT959 DVWA17770197851717&orderCode=177701978517&paymentLinkId=92953862e9834dcb9e29f1a3e8e30549&reference=FT26114850804904&transactionDateTime=2026-04-24 15:36:00&virtualAccountName=&virtualAccountNumber=
+[2026-04-24 08:36:56] Computed signature: 60dfdd56c78730951151dbb6df94a965f13673f012dc76871591c4a288c9a3cb
+[2026-04-24 08:36:56] Received signature: 60dfdd56c78730951151dbb6df94a965f13673f012dc76871591c4a288c9a3cb
+[2026-04-24 08:36:56] ✓ Signature verification passed
+[2026-04-24 08:36:56] Đã nhận Webhook cho Order Code: 177701978517
+[2026-04-24 08:36:56] Extracted data - Order: 177701978517, Amount: 30000, Code: 00
+[2026-04-24 08:36:56] Starting database update for order: 177701978517
+[2026-04-24 08:36:56] Found payment record:
+{
+    "id": 12,
+    "booking_id": 17,
+    "status": "pending",
+    "payment_method": "customer_payment"
+}
+[2026-04-24 08:36:56] ✓ Updated payment_transactions: 1 row(s)
+[2026-04-24 08:36:56] ✓ Updated bookings (ID 17): 1 row(s)
+[2026-04-24 08:36:56] ✓ Transaction committed successfully
+[2026-04-24 08:36:56] ✓ Webhook processed successfully
+[2026-04-24 08:36:56] === END WEBHOOK PROCESSING ===

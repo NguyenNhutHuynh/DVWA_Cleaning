@@ -3,145 +3,157 @@ use App\Core\View;
 /** @var array $stats Dữ liệu thống kê */
 ?>
 
-<section class="home-container">
+<section class="home-container admin-stats">
   <header class="home-hero">
     <p class="home-kicker">ADMIN • THỐNG KÊ</p>
-    <h1>Thống kê & Báo cáo hệ thống</h1>
-    <p>Phân tích trực quan về dịch vụ, đơn đặt, người dùng và xu hướng.</p>
+    <h1>Thống kê hệ thống</h1>
+    <p>Tổng quan nhanh về dịch vụ, đơn đặt và người dùng.</p>
   </header>
   <div class="hero-actions">
       <button class="home-btn" id="exportPdfBtn">📥 Tải xuống PDF</button>
       <button class="home-btn home-btn-outline" id="refreshBtn">🔄 Làm mới</button>
   </div>
-  <!-- Thống kê tổng quan -->
-  <section class="home-stats" id="statsOverview">
-    <div class="stat-card">
-      <strong><?= View::e($stats['service_count']) ?></strong>
-      <span>Dịch vụ</span>
+  <section class="stats-group">
+    <div class="stats-group-head stats-group-head-overview">
+      <h2>Tổng quan hệ thống</h2>
+      <!-- <p>Tổng quan nhanh.</p> -->
+      <button type="button" class="stats-toggle-btn" data-target="overviewGroup" aria-expanded="true">Thu gọn</button>
     </div>
-    <div class="stat-card">
-      <strong><?= View::e($stats['booking_count']) ?></strong>
-      <span>Đơn đặt</span>
-    </div>
-    <div class="stat-card">
-      <strong><?= View::e($stats['user_count']) ?></strong>
-      <span>Người dùng</span>
-    </div>
-    <div class="stat-card">
-      <strong><?= View::e($stats['contact_count']) ?></strong>
-      <span>Tin nhắn</span>
-    </div>
-  </section>
-
-  <!-- Thống kê Doanh thu & Chuyển đổi -->
-  <section class="home-stats revenue-stats stats-section-gap">
-    <div class="stat-card stat-revenue">
-      <strong><?= number_format($stats['total_revenue'], 0, ',', '.') ?>đ</strong>
-      <span>💰 Tổng doanh thu</span>
-    </div>
-    <div class="stat-card stat-aov">
-      <strong><?= number_format($stats['average_order_value'], 0, ',', '.') ?>đ</strong>
-      <span>📊 Giá trị đơn TB</span>
-    </div>
-    <div class="stat-card stat-conversion">
-      <strong><?= View::e($stats['conversion_rate']) ?>%</strong>
-      <span>🎯 Tỷ lệ chuyển đổi</span>
-    </div>
-    <div class="stat-card stat-completion">
-      <strong><?= View::e($stats['completion_rate']) ?>%</strong>
-      <span>✅ Tỷ lệ hoàn thành</span>
-    </div>
-  </section>
-
-  <?php $workerPayoutTotals = $stats['worker_payout_totals'] ?? []; ?>
-  <section class="home-stats revenue-stats stats-section-gap">
-    <div class="stat-card stat-revenue">
-      <strong><?= number_format((float)($stats['total_revenue'] ?? 0), 0, ',', '.') ?>đ</strong>
-      <span>💳 Tổng khách đã thanh toán</span>
-    </div>
-    <div class="stat-card stat-aov">
-      <strong><?= number_format((float)($workerPayoutTotals['total_salary_entered'] ?? 0), 0, ',', '.') ?>đ</strong>
-      <span>👷 Tổng lương đã duyệt</span>
-    </div>
-    <div class="stat-card stat-conversion">
-      <strong><?= number_format((float)($workerPayoutTotals['total_salary_paid'] ?? 0), 0, ',', '.') ?>đ</strong>
-      <span>🏦 Tổng lương đã chi</span>
-    </div>
-    <div class="stat-card stat-completion">
-      <strong><?= number_format((float)($workerPayoutTotals['total_salary_pending'] ?? 0), 0, ',', '.') ?>đ</strong>
-      <span>⏳ Lương chờ chi</span>
-    </div>
-  </section>
-
-  <!-- Biểu đồ Doanh thu theo tháng -->
-  <section class="chart-section">
-    <div class="chart-header">
-      <h2>💰 Doanh thu 6 tháng gần nhất</h2>
-      <div class="chart-controls">
-        <select id="revenueChartType" class="chart-select">
-          <option value="bar">Biểu đồ cột</option>
-          <option value="line">Biểu đồ đường</option>
-        </select>
+    <div class="stats-group-content" id="overviewGroup">
+    <section class="home-stats" id="statsOverview">
+      <div class="stat-card">
+        <strong><?= View::e($stats['service_count']) ?></strong>
+        <span>Dịch vụ</span>
       </div>
-    </div>
-    <div class="chart-container">
-      <canvas id="monthlyRevenueChart"></canvas>
+      <div class="stat-card">
+        <strong><?= View::e($stats['booking_count']) ?></strong>
+        <span>Đơn đặt</span>
+      </div>
+      <div class="stat-card">
+        <strong><?= View::e($stats['user_count']) ?></strong>
+        <span>Người dùng</span>
+      </div>
+      <div class="stat-card">
+        <strong><?= View::e($stats['contact_count']) ?></strong>
+        <span>Tin nhắn</span>
+      </div>
+    </section>
     </div>
   </section>
 
-  <!-- Biểu đồ Xu hướng đơn đặt theo tháng -->
-  <section class="chart-section">
-    <div class="chart-header">
-      <h2>📈 Xu hướng đơn đặt 6 tháng gần nhất</h2>
-      <div class="chart-controls">
-        <select id="lineChartType" class="chart-select">
-          <option value="line">Biểu đồ đường</option>
-          <option value="bar">Biểu đồ cột</option>
-        </select>
-      </div>
+  <section class="stats-group">
+    <div class="stats-group-head">
+      <h2>Doanh thu và hiệu suất</h2>
+      <!-- <p>Doanh thu và tỷ lệ chính.</p> -->
+      <button type="button" class="stats-toggle-btn" data-target="revenueGroup" aria-expanded="true">Thu gọn</button>
     </div>
-    <div class="chart-container">
-      <canvas id="monthlyBookingsChart"></canvas>
+    <div class="stats-group-content" id="revenueGroup">
+    <section class="home-stats revenue-stats">
+      <div class="stat-card stat-revenue">
+        <strong><?= number_format($stats['total_revenue'], 0, ',', '.') ?>đ</strong>
+        <span>💰 Tổng doanh thu</span>
+      </div>
+      <div class="stat-card stat-aov">
+        <strong><?= number_format($stats['average_order_value'], 0, ',', '.') ?>đ</strong>
+        <span>📊 Giá trị đơn TB</span>
+      </div>
+      <div class="stat-card stat-conversion">
+        <strong><?= View::e($stats['conversion_rate']) ?>%</strong>
+        <span>🎯 Tỷ lệ chuyển đổi</span>
+      </div>
+      <div class="stat-card stat-completion">
+        <strong><?= View::e($stats['completion_rate']) ?>%</strong>
+        <span>✅ Tỷ lệ hoàn thành</span>
+      </div>
+    </section>
     </div>
   </section>
 
-  <!-- Biểu đồ Trạng thái đơn đặt -->
-  <section class="chart-section">
-    <div class="chart-header">
-      <h2>📊 Phân bố trạng thái đơn đặt</h2>
-      <div class="chart-controls">
-        <select id="statusChartType" class="chart-select">
-          <option value="pie">Biểu đồ tròn</option>
-          <option value="doughnut">Biểu đồ vành khuyên</option>
-          <option value="bar">Biểu đồ cột</option>
-        </select>
-      </div>
+  <section class="stats-group">
+    <div class="stats-group-head">
+      <h2>Biểu đồ phân tích</h2>
+      <!-- <p>Xu hướng và phân bố dữ liệu.</p> -->
+      <button type="button" class="stats-toggle-btn" data-target="chartsGroup" aria-expanded="true">Thu gọn</button>
     </div>
-    <div class="chart-container">
-      <canvas id="bookingStatusChart"></canvas>
-    </div>
-  </section>
+    <div class="stats-group-content" id="chartsGroup">
+    <div class="charts-grid">
+      <!-- Biểu đồ Doanh thu theo tháng -->
+      <section class="chart-section">
+        <div class="chart-header">
+          <h2>💰 Doanh thu 6 tháng gần nhất</h2>
+          <div class="chart-controls">
+            <select id="revenueChartType" class="chart-select">
+              <option value="bar">Biểu đồ cột</option>
+              <option value="line">Biểu đồ đường</option>
+            </select>
+          </div>
+        </div>
+        <div class="chart-container">
+          <canvas id="monthlyRevenueChart"></canvas>
+        </div>
+      </section>
 
-  <!-- Biểu đồ Phân bố vai trò người dùng -->
-  <section class="chart-section">
-    <div class="chart-header">
-      <h2>👥 Phân bố vai trò người dùng</h2>
-      <div class="chart-controls">
-        <select id="roleChartType" class="chart-select">
-          <option value="doughnut">Biểu đồ vành khuyên</option>
-          <option value="pie">Biểu đồ tròn</option>
-          <option value="bar">Biểu đồ cột</option>
-        </select>
-      </div>
+      <!-- Biểu đồ Xu hướng đơn đặt theo tháng -->
+      <section class="chart-section">
+        <div class="chart-header">
+          <h2>📈 Xu hướng đơn đặt 6 tháng gần nhất</h2>
+          <div class="chart-controls">
+            <select id="lineChartType" class="chart-select">
+              <option value="line">Biểu đồ đường</option>
+              <option value="bar">Biểu đồ cột</option>
+            </select>
+          </div>
+        </div>
+        <div class="chart-container">
+          <canvas id="monthlyBookingsChart"></canvas>
+        </div>
+      </section>
+
+      <!-- Biểu đồ Trạng thái đơn đặt -->
+      <section class="chart-section">
+        <div class="chart-header">
+          <h2>📊 Phân bố trạng thái đơn đặt</h2>
+          <div class="chart-controls">
+            <select id="statusChartType" class="chart-select">
+              <option value="pie">Biểu đồ tròn</option>
+              <option value="doughnut">Biểu đồ vành khuyên</option>
+              <option value="bar">Biểu đồ cột</option>
+            </select>
+          </div>
+        </div>
+        <div class="chart-container">
+          <canvas id="bookingStatusChart"></canvas>
+        </div>
+      </section>
+
+      <!-- Biểu đồ Phân bố vai trò người dùng -->
+      <section class="chart-section">
+        <div class="chart-header">
+          <h2>👥 Phân bố vai trò người dùng</h2>
+          <div class="chart-controls">
+            <select id="roleChartType" class="chart-select">
+              <option value="doughnut">Biểu đồ vành khuyên</option>
+              <option value="pie">Biểu đồ tròn</option>
+              <option value="bar">Biểu đồ cột</option>
+            </select>
+          </div>
+        </div>
+        <div class="chart-container">
+          <canvas id="userRoleChart"></canvas>
+        </div>
+      </section>
     </div>
-    <div class="chart-container">
-      <canvas id="userRoleChart"></canvas>
     </div>
   </section>
 
   <!-- Bảng chi tiết -->
-  <section class="home-feature" style="margin-top:24px;">
-    <h2>📋 Chi tiết thống kê</h2>
+  <section class="home-feature stats-group">
+    <div class="stats-group-head">
+      <h2>📋 Chi tiết thống kê</h2>
+      <p>Số lượng và tỷ lệ.</p>
+      <button type="button" class="stats-toggle-btn" data-target="detailGroup" aria-expanded="true">Thu gọn</button>
+    </div>
+    <div class="stats-group-content" id="detailGroup">
     <div class="stats-table-container">
       <table class="stats-table">
         <thead>
@@ -193,6 +205,7 @@ use App\Core\View;
           </tr>
         </tbody>
       </table>
+    </div>
     </div>
   </section>
 </section>
@@ -455,6 +468,49 @@ use App\Core\View;
     location.reload();
   });
 
+  // Thu gọn / xổ ra theo từng mục
+  document.querySelectorAll('.stats-toggle-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const targetId = btn.getAttribute('data-target');
+      const target = targetId ? document.getElementById(targetId) : null;
+      if (!target) return;
+
+      const isExpanded = btn.getAttribute('aria-expanded') === 'true';
+
+      if (isExpanded) {
+        target.classList.add('is-collapsed');
+        window.setTimeout(() => {
+          if (target.classList.contains('is-collapsed')) {
+            target.classList.add('is-hidden');
+          }
+        }, 360);
+
+        btn.textContent = 'Xổ ra';
+        btn.setAttribute('aria-expanded', 'false');
+        return;
+      }
+
+      target.classList.remove('is-hidden');
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          target.classList.remove('is-collapsed');
+        });
+      });
+
+      btn.textContent = 'Thu gọn';
+      btn.setAttribute('aria-expanded', 'true');
+
+      if (targetId === 'chartsGroup') {
+        setTimeout(() => {
+          revenueChart?.resize();
+          monthlyChart?.resize();
+          statusChart?.resize();
+          roleChart?.resize();
+        }, 220);
+      }
+    });
+  });
+
   // Xử lý xuất PDF
   document.getElementById('exportPdfBtn')?.addEventListener('click', async () => {
     const btn = document.getElementById('exportPdfBtn');
@@ -624,6 +680,8 @@ use App\Core\View;
   max-width: 1200px;
   margin: 0 auto 70px;
   padding: 0 16px;
+  display: grid;
+  gap: 16px;
 }
 
 .home-hero {
@@ -678,28 +736,114 @@ use App\Core\View;
   position: relative;
   z-index: 1;
   animation: fadeInUp 0.6s ease-out 0.3s both;
+  margin-bottom: 4px;
 }
 
 .stats-section-gap {
   margin-top: 20px;
 }
 
+.stats-group {
+  margin-top: 0;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid #d8e6ef;
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.06);
+}
+
+.stats-group-head {
+  position: relative;
+  margin: 0;
+  min-height: 40px;
+  padding-bottom: 10px;
+  border-bottom: 1px dashed #dce8f1;
+}
+
+.stats-group-head-overview {
+  /* Keep class for backward compatibility with existing markup. */
+}
+
+.stats-group-head h2 {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: calc(100% - 150px);
+  margin: 0;
+  font-size: 1.2rem;
+  color: #0f172a;
+  text-align: center;
+}
+
+.stats-group-head p {
+  margin: 44px 0 0;
+  color: #475569;
+  font-size: 0.92rem;
+  text-align: center;
+}
+
+.stats-toggle-btn {
+  position: absolute;
+  right: 0;
+  top: 0;
+  border: 1px solid #cfe3d9;
+  background: #ffffff;
+  color: #1f3b31;
+  border-radius: 10px;
+  padding: 8px 14px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.stats-toggle-btn:hover {
+  border-color: #8ecfb3;
+  background: #f2fbf7;
+}
+
+.stats-group-content {
+  margin-top: 12px;
+  overflow: hidden;
+  opacity: 1;
+  transform: scaleX(1);
+  transform-origin: left center;
+  transition: transform 0.35s ease, opacity 0.25s ease;
+}
+
+.stats-group-content.is-collapsed {
+  transform: scaleX(0);
+  opacity: 0;
+}
+
+.stats-group-content.is-hidden {
+  display: none;
+}
+
 .home-stats {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 14px;
+  gap: 12px;
+}
+
+.charts-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
 }
 
 .home-stats .stat-card {
   background: #ffffff;
   border: 1px solid #e5e7eb;
   border-radius: 14px;
-  padding: 16px;
-  min-height: 94px;
+  padding: 14px;
+  min-height: 88px;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 6px;
+  gap: 4px;
   box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
   transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
 }
@@ -734,9 +878,10 @@ use App\Core\View;
 .chart-section {
   background: #fff;
   border-radius: 12px;
-  padding: 20px;
-  margin: 20px 0;
+  padding: 16px;
+  margin: 0;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e7eef5;
 }
 
 .chart-header {
@@ -782,7 +927,7 @@ use App\Core\View;
 
 .chart-container {
   position: relative;
-  height: 350px;
+  height: 320px;
   max-height: 400px;
 }
 
@@ -942,8 +1087,16 @@ use App\Core\View;
 }
 
 @media (max-width: 768px) {
+  .stats-group {
+    padding: 14px;
+  }
+
   .home-stats {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .charts-grid {
+    grid-template-columns: 1fr;
   }
 
   .chart-header {
@@ -952,11 +1105,31 @@ use App\Core\View;
   }
   
   .chart-container {
-    height: 300px;
+    height: 280px;
   }
 }
 
 @media (max-width: 520px) {
+  .stats-group-head {
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .stats-group-head h2,
+  .stats-group-head p,
+  .stats-toggle-btn {
+    position: static;
+    transform: none;
+    max-width: 100%;
+  }
+
+  .stats-group-head p {
+    margin-top: 0;
+  }
+
   .home-stats {
     grid-template-columns: 1fr;
   }

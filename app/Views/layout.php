@@ -86,6 +86,18 @@ use App\Core\Auth;
             <strong>📍</strong> 12 Nguyễn Văn Bảo<br>
             Gò Vấp, TP.HCM
           </p>
+          <div style="margin-top: 12px; border: 1px solid #d9efe5; border-radius: 10px; overflow: hidden; background: #ffffff;">
+            <iframe
+              title="Bản đồ văn phòng Đại học IUH"
+              src="https://maps.google.com/maps?q=10.82192,106.68688%20(12%20Nguy%E1%BB%85n%20V%C4%83n%20B%E1%BA%A3o,%20G%C3%B2%20V%E1%BA%A5p,%20TP.HCM)&t=&z=17&ie=UTF8&iwloc=B&output=embed"
+              width="100%"
+              height="170"
+              style="border:0; display:block;"
+              loading="lazy"
+              referrerpolicy="no-referrer-when-downgrade"
+            ></iframe>
+          </div>
+          <p id="footer-company-map-status" style="color: #546e7a; font-size: 12px; margin: 8px 0 0 0;">Vị trí văn phòng: 12 Nguyễn Văn Bảo, Phường 4, Gò Vấp, TP.HCM (Đại học IUH).</p>
         </div>
       </div>
       
@@ -124,5 +136,6 @@ use App\Core\Auth;
   
   <!-- Map Handler Script -->
   <script src="/assets/js/map-handler.js" defer></script>
+
 </body>
 </html>

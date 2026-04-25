@@ -75,23 +75,9 @@ use App\Models\BookingProgress;
           <p><strong>Worker sẽ đến lúc:</strong> <span style="color:#2eaf7d;font-weight:700;"><?= View::e($booking['estimated_arrival_time']) ?></span></p>
           <p style="font-size:14px;color:#666;margin:8px 0 0;">Worker đã cập nhật thời gian dự kiến đến</p>
         <?php else: ?>
-          <p><strong>Thời gian ước tính:</strong> <span id="etaResult">Đang tính...</span></p>
-          <p style="font-size:14px;color:#666;margin:8px 0 0;">Tính toán dựa trên vị trí hiện tại của worker</p>
+          <p><strong>Thời gian ước tính:</strong> Chưa có</p>
+          <p style="font-size:14px;color:#666;margin:8px 0 0;">Worker chưa cập nhật thời gian dự kiến đến.</p>
         <?php endif; ?>
-      </div>
-    </section>
-  <?php endif; ?>
-
-  <?php if (!empty($booking['assigned_worker_id']) && in_array($booking['status'] ?? '', ['accepted', 'confirmed', 'in_progress'], true)): ?>
-    <section class="home-feature">
-      <h2>Bản đồ di chuyển</h2>
-      <div class="review-box">
-        <p><strong>Địa chỉ worker:</strong> <span id="workerAddress"><?= View::e($booking['worker_address'] ?? '') ?></span></p>
-        <p><strong>Khoảng cách ước tính:</strong> <span id="distanceResult">Đang tính...</span></p>
-        <?php if (empty($booking['estimated_arrival_time'])): ?>
-          <p><strong>Thời gian đến (tự động tính):</strong> <span id="autoEtaResult">Đang tính...</span></p>
-        <?php endif; ?>
-        <iframe id="mapFrame" title="Map" style="width:100%;height:360px;border:0;border-radius:10px;"></iframe>
       </div>
     </section>
   <?php endif; ?>
@@ -155,105 +141,4 @@ use App\Models\BookingProgress;
     </script>
   <?php endif; ?>
 </section>
-
-<script>
-(async function () {
-  const workerAddress = (document.getElementById('workerAddress')?.textContent || '').trim();
-  const customerAddress = (document.getElementById('customerAddress')?.textContent || '').trim();
-  const distanceEl = document.getElementById('distanceResult');
-  const autoEtaEl = document.getElementById('autoEtaResult');
-  const map = document.getElementById('mapFrame');
-
-  if (!workerAddress || !customerAddress) {
-    if (distanceEl) distanceEl.textContent = 'Thiếu địa chỉ để tính.';
-    if (autoEtaEl) autoEtaEl.textContent = 'Thiếu địa chỉ để tính.';
-    return;
-  }
-
-  const geocode = async (address) => {
-    try {
-      const url = 'https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(address) + '&limit=1';
-      const response = await fetch(url, { 
-        headers: { 'Accept': 'application/json' }
-      });
-      if (!response.ok) throw new Error('API error');
-      const data = await response.json();
-      if (!Array.isArray(data) || data.length === 0) return null;
-      return { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon), name: data[0].display_name };
-    } catch (e) {
-      console.error('Geocode error for:', address, e);
-      try {
-        const simplified = address.split(',').slice(0, 2).join(',').trim();
-        if (simplified && simplified !== address) {
-          const retryUrl = 'https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(simplified) + '&limit=1&countrycodes=vn';
-          const retryResponse = await fetch(retryUrl, { 
-            headers: { 'Accept': 'application/json' }
-          });
-          if (retryResponse.ok) {
-            const retryData = await retryResponse.json();
-            if (Array.isArray(retryData) && retryData.length > 0) {
-              return { lat: parseFloat(retryData[0].lat), lon: parseFloat(retryData[0].lon), name: retryData[0].display_name };
-            }
-          }
-        }
-      } catch (retryErr) {
-        console.error('Retry geocode error:', retryErr);
-      }
-      return null;
-    }
-  };
-
-  const haversineKm = (a, b) => {
-    const toRad = (d) => d * Math.PI / 180;
-    const R = 6371;
-    const dLat = toRad(b.lat - a.lat);
-    const dLon = toRad(b.lon - a.lon);
-    const lat1 = toRad(a.lat);
-    const lat2 = toRad(b.lat);
-    const h = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) ** 2;
-    return 2 * R * Math.asin(Math.sqrt(h));
-  };
-
-  try {
-    const [workerPoint, customerPoint] = await Promise.all([geocode(workerAddress), geocode(customerAddress)]);
-    
-    if (!workerPoint) {
-      console.warn('Worker address not geocoded:', workerAddress);
-      if (distanceEl) distanceEl.textContent = 'Không thể xác định vị trí worker.';
-      if (autoEtaEl) autoEtaEl.textContent = 'Không thể xác định vị trí worker.';
-      return;
-    }
-    
-    if (!customerPoint) {
-      console.warn('Customer address not geocoded:', customerAddress);
-      if (distanceEl) distanceEl.textContent = 'Không thể xác định vị trí khách hàng.';
-      if (autoEtaEl) autoEtaEl.textContent = 'Không thể xác định vị trí khách hàng.';
-      return;
-    }
-
-    const distance = haversineKm(workerPoint, customerPoint);
-    const averageSpeedKmPerHour = 30;
-    const etaMinutes = Math.max(1, Math.round((distance / averageSpeedKmPerHour) * 60));
-
-    if (distanceEl) distanceEl.textContent = distance.toFixed(2) + ' km';
-    if (autoEtaEl) autoEtaEl.textContent = etaMinutes + ' phút';
-
-    if (map) {
-      const south = Math.min(customerPoint.lat, workerPoint.lat) - 0.03;
-      const north = Math.max(customerPoint.lat, workerPoint.lat) + 0.03;
-      const west = Math.min(customerPoint.lon, workerPoint.lon) - 0.03;
-      const east = Math.max(customerPoint.lon, workerPoint.lon) + 0.03;
-
-      map.src = 'https://www.openstreetmap.org/export/embed.html?bbox=' +
-        west + '%2C' + south + '%2C' + east + '%2C' + north +
-        '&layer=mapnik&marker=' + customerPoint.lat + '%2C' + customerPoint.lon + 
-        '&marker=' + workerPoint.lat + '%2C' + workerPoint.lon;
-    }
-  } catch (error) {
-    console.error('Map error:', error);
-    if (distanceEl) distanceEl.textContent = 'Lỗi khi tính toán bản đồ.';
-    if (autoEtaEl) autoEtaEl.textContent = 'Lỗi khi tính toán bản đồ.';
-  }
-})();
-</script>
 

@@ -13,6 +13,39 @@ $statusLabels = [
     'cancelled' => '<span style="color:#ef4444;font-weight:600;">❌ Đã hủy</span>',
 ];
 ?>
+<style>
+.booking-actions {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+
+.booking-actions > * {
+  display: inline-flex;
+  align-items: center;
+}
+
+.booking-actions .home-btn {
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  white-space: nowrap;
+}
+
+.booking-actions form {
+  margin: 0;
+}
+
+.booking-actions button.home-btn {
+  appearance: none;
+  -webkit-appearance: none;
+}
+</style>
 <section class="home-container">
   <header class="home-hero">
     <p class="home-kicker">TÀI KHOẢN • KHÁCH HÀNG</p>
@@ -52,11 +85,11 @@ $statusLabels = [
               <p style="margin:6px 0;"><?= View::e($b['description']) ?></p>
             <?php endif; ?>
             
-            <div class="hero-actions" style="justify-content:flex-start;margin-top:6px;gap:8px;">
+            <div class="booking-actions">
               <a class="home-btn" href="/bookings/<?= (int)$b['id'] ?>">Theo dõi đơn</a>
               
               <?php if ($status === 'pending'): ?>
-                <form method="post" action="/bookings/<?= (int)$b['id'] ?>/repay" style="display:inline;">
+                <form method="post" action="/bookings/<?= (int)$b['id'] ?>/repay">
                   <input type="hidden" name="_csrf" value="<?= View::e($csrf) ?>">
                   <button type="submit" class="home-btn" style="background-color: #2563eb; border: none; cursor: pointer;">
                     💳 Thanh toán ngay
@@ -71,7 +104,7 @@ $statusLabels = [
               <?php endif; ?>
               
               <?php if (in_array($status, ['pending', 'confirmed', 'accepted'], true)): ?>
-                <form method="post" action="/bookings/<?= (int)$b['id'] ?>/cancel" style="display:inline;">
+                <form method="post" action="/bookings/<?= (int)$b['id'] ?>/cancel">
                   <input type="hidden" name="_csrf" value="<?= View::e($csrf) ?>">
                   <button type="submit" class="home-btn" style="background-color: transparent; color: #dc2626; border: 2px solid #dc2626; cursor: pointer;" onclick="return confirm('Bạn có chắc muốn hủy đơn này không?');">
                     🗑️ Hủy đơn
@@ -80,10 +113,7 @@ $statusLabels = [
               <?php endif; ?>
               
               <?php if ($status === 'completed' && empty($b['has_review'])): ?>
-                <a 
-                  class="px-4 py-2 border-2 border-purple-600 text-purple-600 font-semibold rounded-lg hover:bg-purple-50 transition duration-200" 
-                  href="/bookings/<?= (int)$b['id'] ?>/review"
-                >
+                <a class="home-btn home-btn-outline" href="/bookings/<?= (int)$b['id'] ?>/review">
                   ⭐ Đánh giá
                 </a>
               <?php endif; ?>
