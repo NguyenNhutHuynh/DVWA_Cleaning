@@ -20,7 +20,11 @@ use App\Models\User;
   </div>
   <div class="functions">
     <?php if (Auth::id()): ?>
-      <?php $role = Auth::role(); $user = User::findById((int)Auth::id()); $initial = strtoupper(substr($user['name'] ?? 'U', 0, 1)); ?>
+      <?php
+        $role = Auth::role();
+        $user = User::findById((int)Auth::id());
+        $initial = strtoupper(substr($user['name'] ?? 'U', 0, 1));
+      ?>
       <?php if ($role === 'admin'): ?>
         <a href="/admin/dashboard" class="function-btn">Trang quản trị</a>
         <a href="/admin/services" class="function-btn">Dịch vụ</a>
@@ -36,6 +40,7 @@ use App\Models\User;
       <?php else: ?>
         <a href="/" class="function-btn">Trang chủ</a>
         <a href="/book" class="function-btn">Đặt lịch</a>
+        <a href="/pricing" class="function-btn">Bảng giá</a>
         <a href="/contact" class="function-btn">Liên hệ</a>
         <a href="/bookings" class="function-btn">Lịch đã đặt</a>
         <a href="/services" class="function-btn">Dịch vụ</a>
@@ -53,6 +58,9 @@ use App\Models\User;
           <a href="/account" role="menuitem">Thông tin cá nhân</a>
           <a href="/account/edit" role="menuitem">Cập nhật thông tin</a>
           <a href="/account/change-password" role="menuitem">Đổi mật khẩu</a>
+          <?php if ($role === 'worker'): ?>
+            <a href="/worker/messages" role="menuitem">Tin nhắn</a>
+          <?php endif; ?>
           <a href="/logout" role="menuitem">Đăng xuất</a>
         </div>
       </div>

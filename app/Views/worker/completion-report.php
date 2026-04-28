@@ -17,7 +17,13 @@ use App\Core\View;
       <p><strong>Khách hàng:</strong> <?= View::e($job['user_name'] ?? '') ?></p>
       <p><strong>Địa chỉ:</strong> <?= View::e($job['location'] ?? '') ?></p>
       <p><strong>Dịch vụ:</strong> <?= View::e($job['service_name'] ?? '') ?></p>
-      <p><strong>Tiền thu khách:</strong> <?= number_format((float)($job['service_price'] ?? 0), 0, ',', '.') ?>đ</p>
+      <p><strong>Tiền thu khách:</strong>
+        <?php if (in_array($job['status'] ?? '', ['confirmed', 'accepted', 'in_progress', 'completed'], true)): ?>
+          Đã thanh toán
+        <?php else: ?>
+          <?= number_format((float)($job['service_price'] ?? 0), 0, ',', '.') ?>đ
+        <?php endif; ?>
+      </p>
     </div>
   </section>
 

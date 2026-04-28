@@ -55,6 +55,7 @@ final class AuthController
         $role = trim((string)($_POST['role'] ?? User::ROLE_CUSTOMER));
         $phone = trim((string)($_POST['phone'] ?? ''));
         $city = trim((string)($_POST['city'] ?? ''));
+        $district = trim((string)($_POST['district'] ?? ''));
         $ward = trim((string)($_POST['ward'] ?? ''));
         $addressDetail = trim((string)($_POST['address_detail'] ?? ''));
 
@@ -66,6 +67,7 @@ final class AuthController
             $role,
             $phone,
             $city,
+            $district,
             $ward,
             $addressDetail
         );
@@ -77,7 +79,7 @@ final class AuthController
             return;
         }
 
-        $fullAddress = $addressDetail . ', ' . $ward . ', ' . $city;
+        $fullAddress = $addressDetail . ', ' . $ward . ', ' . $district . ', ' . $city;
 
         // Tạo tài khoản người dùng
         $passwordHash = password_hash($password, PASSWORD_DEFAULT);
@@ -182,6 +184,7 @@ final class AuthController
         string $role,
         string $phone,
         string $city,
+        string $district,
         string $ward,
         string $addressDetail
     ): ?string {
@@ -192,6 +195,7 @@ final class AuthController
             || empty($password)
             || empty($phone)
             || empty($city)
+            || empty($district)
             || empty($ward)
             || empty($addressDetail)
         ) {

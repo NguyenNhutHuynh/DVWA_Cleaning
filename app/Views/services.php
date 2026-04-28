@@ -13,6 +13,7 @@ use App\Core\View;
             <span class="services-count"><?= count($services) ?> dịch vụ</span>
             <span class="services-hint">Cập nhật mới nhất</span>
         </div>
+
         <form method="GET" action="/services" class="services-search-form">
             <div class="services-search-field">
                 <label for="searchInput">Tìm kiếm dịch vụ</label>
@@ -26,10 +27,11 @@ use App\Core\View;
                     minlength="2"
                 />
             </div>
+
             <div class="services-search-actions">
-                <button type="submit" class="home-btn services-search-btn">Tìm kiếm</button>
+                <button type="submit" class="services-btn services-btn-primary">Tìm kiếm</button>
                 <?php if (!empty($searchQuery)): ?>
-                    <a href="/services" class="home-btn home-btn-outline services-clear-btn">Xóa</a>
+                    <a href="/services" class="services-btn services-btn-outline">Xóa</a>
                 <?php endif; ?>
             </div>
         </form>
@@ -61,25 +63,29 @@ use App\Core\View;
                             </div>
                         <?php endif; ?>
                     </a>
+
                     <div class="services-content">
                         <div class="services-title-row">
                             <h3>
                                 <a href="/service?id=<?= (int)$s['id'] ?>">
-                                <?= View::e($s['name']) ?>
+                                    <?= View::e($s['name']) ?>
                                 </a>
                             </h3>
+
                             <span class="services-price-badge">
                                 <?= number_format((int)$s['price'], 0, ',', '.') ?><?= $s['unit'] ? 'đ/' . View::e($s['unit']) : 'đ' ?>
                             </span>
                         </div>
+
                         <?php if (!empty($s['description'])): ?>
                             <p class="services-desc"><?= View::e($s['description']) ?></p>
                         <?php else: ?>
                             <p class="services-desc">Dịch vụ tiêu chuẩn với quy trình làm sạch bài bản, trang thiết bị hiện đại và đội ngũ chuyên nghiệp.</p>
                         <?php endif; ?>
+
                         <div class="services-card-actions">
-                            <a href="/service?id=<?= (int)$s['id'] ?>" class="home-btn home-btn-outline">Xem chi tiết</a>
-                            <a href="/book" class="home-btn">Đặt lịch</a>
+                            <a href="/service?id=<?= (int)$s['id'] ?>" class="services-btn services-btn-outline">Xem chi tiết</a>
+                            <a href="/book" class="services-btn services-btn-primary">Đặt lịch</a>
                         </div>
                     </div>
                 </article>
@@ -95,50 +101,79 @@ use App\Core\View;
         <?php endif; ?>
     </section>
 
-        <section class="services-combo-section">
-                <h2>Gói combo được yêu thích</h2>
-                <div class="services-combo-grid">
-                        <div class="services-combo-card">
-                                <h3>Combo Hàng tuần</h3>
-                                <p>Tổng vệ sinh 2 lần/tuần</p>
-                                <strong>1.299.000đ</strong><br>
-                                <small>/tháng</small>
+    <section class="services-combo-section">
+        <h2>Gói combo được yêu thích</h2>
+
+        <div class="services-combo-grid">
+            <div class="services-combo-card">
+                <h3>Combo Hàng tuần</h3>
+                <p>Tổng vệ sinh 2 lần/tuần</p>
+                <div class="services-combo-price">
+                    <strong>1.299.000đ</strong>
+                    <small>/tháng</small>
+                </div>
             </div>
-                        <div class="services-combo-card">
-                                <h3>Combo Văn phòng</h3>
-                                <p>Làm sạch 5 ngày/tuần</p>
-                                <strong>3.900.000đ</strong><br>
-                                <small>/tháng</small>
+
+            <div class="services-combo-card">
+                <h3>Combo Văn phòng</h3>
+                <p>Làm sạch 5 ngày/tuần</p>
+                <div class="services-combo-price">
+                    <strong>3.900.000đ</strong>
+                    <small>/tháng</small>
+                </div>
             </div>
-                        <div class="services-combo-card">
-                                <h3>Combo Sâu</h3>
-                                <p>Lên kế hoạch tùy chỉnh</p>
-                                <strong>Liên hệ</strong><br>
-                                <small>báo giá</small>
+
+            <div class="services-combo-card">
+                <h3>Combo Sâu</h3>
+                <p>Lên kế hoạch tùy chỉnh</p>
+                <div class="services-combo-price">
+                    <strong>Liên hệ</strong>
+                    <small>báo giá</small>
+                </div>
             </div>
         </div>
     </section>
 
-        <section class="services-final-cta">
-                <h2>Sẵn sàng đặt lịch?</h2>
-                <div class="services-final-actions">
-                        <a href="/book" class="home-btn">Đặt lịch ngay</a>
-                        <a href="/contact" class="home-btn home-btn-outline">Liên hệ tư vấn</a>
+    <section class="services-final-cta">
+        <h2>Sẵn sàng đặt lịch?</h2>
+
+        <div class="services-final-actions">
+            <a href="/book" class="services-btn services-btn-light">Đặt lịch ngay</a>
+            <a href="/contact" class="services-btn services-btn-glass">Liên hệ tư vấn</a>
         </div>
     </section>
 </section>
 
 <style>
 .services-page {
+    --primary: #2eaf7d;
+    --primary-dark: #16805a;
+    --primary-soft: #e8f7f0;
+    --bg-soft: #f7fdf9;
+    --text-dark: #1f2d3d;
+    --text-muted: #546e7a;
+    --border: #dcefe6;
+    --white: #ffffff;
+    --shadow-sm: 0 8px 24px rgba(31,45,61,0.08);
+    --shadow-md: 0 16px 40px rgba(31,45,61,0.12);
+
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 24px 16px 60px;
+    color: var(--text-dark);
     position: relative;
+}
+
+.services-page * {
+    box-sizing: border-box;
 }
 
 .services-page::before {
     content: '';
     position: absolute;
     inset: 180px 0 auto;
-    height: 300px;
-    background: radial-gradient(ellipse at center, rgba(67, 197, 158, 0.14) 0%, rgba(67, 197, 158, 0) 70%);
+    height: 320px;
+    background: radial-gradient(ellipse at center, rgba(46,175,125,0.14) 0%, rgba(46,175,125,0) 70%);
     pointer-events: none;
     z-index: 0;
 }
@@ -149,44 +184,82 @@ use App\Core\View;
 }
 
 .services-page-hero {
-    margin-bottom: 18px;
+    position: relative;
+    overflow: hidden;
+    padding: 56px 28px;
+    border-radius: 28px;
+    text-align: center;
+    background:
+        radial-gradient(circle at top left, rgba(46,175,125,0.20), transparent 34%),
+        linear-gradient(135deg, #f7fdf9 0%, #ffffff 48%, #e8f7f0 100%);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-sm);
+}
+
+.services-page-hero::after {
+    content: "";
+    position: absolute;
+    right: -80px;
+    bottom: -80px;
+    width: 220px;
+    height: 220px;
+    border-radius: 50%;
+    background: rgba(46,175,125,0.13);
+}
+
+.services-page-hero h1 {
+    position: relative;
+    margin: 0 0 12px;
+    font-size: clamp(32px, 5vw, 52px);
+    line-height: 1.1;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    color: var(--text-dark);
+}
+
+.services-page-hero p {
+    position: relative;
+    margin: 0;
+    font-size: 17px;
+    color: var(--text-muted);
 }
 
 .services-search-wrap {
-    margin-top: 24px;
-    background: #f7fdf9;
-    border: 1px solid #d9eee3;
-    border-radius: 14px;
-    padding: 18px;
+    margin-top: 34px;
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 24px;
+    box-shadow: var(--shadow-sm);
 }
 
 .services-search-head {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 12px;
-    margin-bottom: 12px;
+    gap: 14px;
+    margin-bottom: 16px;
 }
 
 .services-count {
     display: inline-flex;
     align-items: center;
-    padding: 6px 12px;
+    padding: 8px 14px;
     border-radius: 999px;
-    background: #e2f7ec;
-    color: #1f8b64;
-    font-weight: 700;
-    font-size: 0.87rem;
+    background: var(--primary-soft);
+    color: var(--primary-dark);
+    font-weight: 800;
+    font-size: 14px;
 }
 
 .services-hint {
-    color: #5f7684;
-    font-size: 0.9rem;
+    color: var(--text-muted);
+    font-size: 14px;
 }
 
 .services-search-form {
     display: flex;
-    gap: 12px;
+    gap: 14px;
     flex-wrap: wrap;
     align-items: flex-end;
 }
@@ -199,80 +272,125 @@ use App\Core\View;
 .services-search-field label {
     display: block;
     margin-bottom: 8px;
-    color: #1f2d3d;
-    font-weight: 600;
+    color: var(--text-dark);
+    font-weight: 800;
+    font-size: 14px;
 }
 
 .services-search-input {
     width: 100%;
-    padding: 12px 16px;
-    border: 1.5px solid #d4eade;
-    border-radius: 10px;
-    font-size: 14px;
+    padding: 14px 16px;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    font-size: 15px;
     font-family: inherit;
-    box-sizing: border-box;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    background: #fcfffd;
+    color: var(--text-dark);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
 
 .services-search-input:focus {
     outline: none;
-    border-color: #43c59e;
-    box-shadow: 0 0 0 3px rgba(67, 197, 158, 0.16);
+    background: white;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 4px rgba(46,175,125,0.12);
 }
 
-.services-search-actions {
+.services-search-actions,
+.services-card-actions,
+.services-final-actions {
     display: flex;
-    gap: 8px;
+    gap: 12px;
+    flex-wrap: wrap;
 }
 
-.services-search-btn,
-.services-clear-btn {
-    min-height: 44px;
+.services-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    min-height: 46px;
+    padding: 12px 24px;
+    border-radius: 999px;
+    border: none;
     text-decoration: none;
+    font-size: 15px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.services-btn:hover {
+    transform: translateY(-2px);
+}
+
+.services-btn-primary {
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: white;
+    box-shadow: 0 10px 22px rgba(46,175,125,0.22);
+}
+
+.services-btn-outline {
+    background: white;
+    color: var(--primary);
+    border: 1.5px solid var(--primary);
+}
+
+.services-btn-outline:hover {
+    background: var(--primary-soft);
+}
+
+.services-btn-light {
+    background: white;
+    color: var(--primary-dark);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+}
+
+.services-btn-glass {
+    color: white;
+    border: 1.5px solid rgba(255,255,255,0.75);
+    background: rgba(255,255,255,0.08);
 }
 
 .services-search-result {
-    margin-top: 16px;
-    padding: 14px 16px;
-    background: #e8f5e9;
-    border-left: 4px solid #43c59e;
-    border-radius: 8px;
+    margin-top: 18px;
+    padding: 16px 18px;
+    background: var(--primary-soft);
+    border-left: 4px solid var(--primary);
+    border-radius: 16px;
 }
 
 .services-search-result p {
     margin: 0;
-    color: #1b5e20;
+    color: var(--primary-dark);
 }
 
 .services-page-grid {
-    margin-top: 22px;
+    margin-top: 26px;
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
-    gap: 18px;
+    gap: 22px;
 }
 
 .services-page-card {
-    border: 1px solid #d8eadd;
-    border-radius: 14px;
+    border: 1px solid var(--border);
+    border-radius: 24px;
     padding: 0;
-    background: #ffffff;
-    box-shadow: 0 8px 22px rgba(31, 45, 61, 0.08);
+    background: var(--white);
+    box-shadow: var(--shadow-sm);
     overflow: hidden;
-    transition: transform 0.25s ease, box-shadow 0.25s ease;
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
 }
 
 .services-page-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 16px 30px rgba(31, 45, 61, 0.12);
+    transform: translateY(-6px);
+    border-color: rgba(46,175,125,0.45);
+    box-shadow: var(--shadow-md);
 }
 
 .services-thumb {
     display: block;
     width: 100%;
-    height: 210px;
+    height: 220px;
     overflow: hidden;
     background: #f4f9f6;
 }
@@ -296,24 +414,26 @@ use App\Core\View;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 62px;
+    font-size: 64px;
 }
 
 .services-content {
-    padding: 16px;
+    padding: 22px;
 }
 
 .services-title-row {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    gap: 10px;
+    gap: 12px;
 }
 
 .services-content h3 {
     margin: 0;
-    color: #1f2d3d;
-    font-size: 1.28rem;
+    color: var(--text-dark);
+    font-size: 21px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
 }
 
 .services-content h3 a {
@@ -322,20 +442,20 @@ use App\Core\View;
 }
 
 .services-price-badge {
-    background: #e0f2e9;
-    padding: 6px 10px;
+    background: var(--primary-soft);
+    padding: 7px 12px;
     border-radius: 999px;
-    font-size: 0.82rem;
-    color: #2eaf7d;
-    font-weight: 700;
+    font-size: 13px;
+    color: var(--primary);
+    font-weight: 800;
     white-space: nowrap;
 }
 
 .services-desc {
-    margin: 10px 0 0;
-    color: #4e6370;
-    line-height: 1.55;
-    min-height: 48px;
+    margin: 12px 0 0;
+    color: var(--text-muted);
+    line-height: 1.6;
+    min-height: 50px;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
@@ -343,154 +463,145 @@ use App\Core\View;
 }
 
 .services-card-actions {
-    margin-top: 14px;
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
+    margin-top: 18px;
 }
 
-.services-card-actions .home-btn {
-  flex: 1;
-  min-width: 110px;
-  background: var(--ui-primary) !important;
-  color: #ffffff !important;
-  border: none !important;
-  padding: 11px 16px !important;
-  font-size: 15px !important;
-  font-weight: 700 !important;
-  text-decoration: none;
-  text-align: center;
-  border-radius: var(--ui-radius-sm) !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
-}
-
-.services-card-actions .home-btn-outline {
-  flex: 1;
-  min-width: 110px;
-  background: var(--ui-surface) !important;
-  color: var(--ui-primary) !important;
-  border: 1.5px solid var(--ui-primary) !important;
-  padding: 11px 16px !important;
-  font-size: 15px !important;
-  font-weight: 700 !important;
-  text-decoration: none;
-  text-align: center;
-  border-radius: var(--ui-radius-sm) !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+.services-card-actions .services-btn {
+    flex: 1;
+    min-width: 120px;
 }
 
 .services-empty-state {
-  grid-column: 1/-1;
-  color: #546e7a;
-  text-align: center;
-  padding: 44px 20px;
-  background: #f6fbf8;
-  border: 1px dashed #cfe3d8;
-  border-radius: 12px;
+    grid-column: 1/-1;
+    color: var(--text-muted);
+    text-align: center;
+    padding: 50px 24px;
+    background: var(--bg-soft);
+    border: 1px dashed #cfe3d8;
+    border-radius: 22px;
 }
 
 .services-combo-section {
-  margin-top: 34px;
-  background: #f7fdf9;
-  border: 1px solid #d8ece1;
-  border-radius: 14px;
-  padding: 24px;
-  text-align: center;
+    margin-top: 44px;
+    padding: 34px;
+    border-radius: 26px;
+    background: linear-gradient(135deg, #f7fdf9, #ffffff);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-sm);
+    text-align: center;
+}
+
+.services-combo-section h2,
+.services-final-cta h2 {
+    margin: 0;
+    color: var(--text-dark);
+    font-size: clamp(24px, 3vw, 34px);
+    font-weight: 800;
+    letter-spacing: -0.03em;
 }
 
 .services-combo-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-    gap: 14px;
-    margin-top: 16px;
-}
-
-.services-combo-section h2 {
-  color: #1f2d3d;
-  margin: 0 0 16px;
-  font-size: 1.32rem;
-  font-weight: 700;
+    gap: 18px;
+    margin-top: 24px;
 }
 
 .services-combo-card {
-    background: #ffffff;
-    padding: 18px;
-    border-radius: 12px;
-    border: 1px solid #deefe6;
+    background: white;
+    padding: 24px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.services-combo-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-sm);
 }
 
 .services-combo-card h3 {
-    color: #2eaf7d;
+    color: var(--text-dark);
     margin: 0 0 8px;
+    font-size: 20px;
+    font-weight: 800;
 }
 
 .services-combo-card p {
-    margin: 0 0 8px;
-    color: #455a64;
+    margin: 0;
+    color: var(--text-muted);
+}
+
+.services-combo-price {
+    margin-top: 18px;
+    padding: 18px;
+    border-radius: 16px;
+    background: var(--primary-soft);
 }
 
 .services-combo-card strong {
-    font-size: 1.1rem;
-    color: #1f2d3d;
+    display: block;
+    font-size: 24px;
+    color: var(--primary);
+    font-weight: 900;
 }
 
 .services-combo-card small {
-    color: #546e7a;
+    display: block;
+    margin-top: 5px;
+    color: var(--text-muted);
 }
 
 .services-final-cta {
-    margin-top: 34px;
-    border-radius: 14px;
+    margin-top: 44px;
+    padding: 38px 24px;
+    border-radius: 26px;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
     text-align: center;
-    padding: 22px 18px;
-    background: linear-gradient(135deg, rgba(67, 197, 158, 0.16), rgba(141, 223, 148, 0.18));
-    border: 1px solid #cfe8db;
+    box-shadow: var(--shadow-md);
 }
 
 .services-final-cta h2 {
-    color: #1f2d3d;
-    margin: 0;
+    color: white;
+    margin-bottom: 22px;
 }
 
 .services-final-actions {
-    display: flex;
-  gap: 12px;
-  justify-content: center;
-  flex-wrap: wrap;
-  margin-top: 14px;
+    justify-content: center;
 }
 
-.services-final-actions .home-btn,
-.services-final-actions .home-btn-outline {
-  text-decoration: none;
-  min-width: 140px;
-  padding: 11px 24px;
-  font-size: 15px !important;
-  font-weight: 700 !important;
-  color: #ffffff;
-}
-
-.services-final-actions .home-btn-outline {
-  color: var(--ui-primary) !important;
-}
-
-@media (max-width: 700px) {
-    .services-search-wrap {
-        padding: 14px;
+@media (max-width: 768px) {
+    .services-page {
+        padding: 16px 12px 44px;
     }
 
+    .services-page-hero {
+        padding: 42px 18px;
+        border-radius: 22px;
+    }
+
+    .services-search-wrap,
+    .services-page-card,
+    .services-combo-section,
+    .services-final-cta {
+        border-radius: 20px;
+    }
+
+    .services-search-head,
     .services-title-row {
         flex-direction: column;
+        align-items: flex-start;
     }
 
-    .services-price-badge {
-        align-self: flex-start;
+    .services-search-actions,
+    .services-card-actions,
+    .services-final-actions,
+    .services-btn {
+        width: 100%;
+    }
+
+    .services-thumb {
+        height: 190px;
     }
 }
 </style>

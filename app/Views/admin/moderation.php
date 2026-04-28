@@ -470,7 +470,11 @@ $renderModerationList = static function (array $items, string $emptyText): void 
             </p>
             <div class="hero-actions moderation-actions">
               <a class="home-btn" href="/admin/bookings/<?= (int)($msg['booking_id'] ?? 0) ?>">Xem đơn hàng</a>
-              <a class="home-btn home-btn-outline" href="#">Liên hệ<?= ($msg['sender_role'] ?? '') === 'worker' ? ' Worker' : ' Khách' ?></a>
+              <?php if (($msg['sender_role'] ?? '') === 'worker'): ?>
+                <a class="home-btn home-btn-outline" href="/admin/bookings/<?= (int)($msg['booking_id'] ?? 0) ?>#admin-worker-messages">Liên hệ Worker</a>
+              <?php else: ?>
+                <a class="home-btn home-btn-outline" href="/admin/bookings/<?= (int)($msg['booking_id'] ?? 0) ?>#booking-messages">Xem hội thoại khách</a>
+              <?php endif; ?>
               <a class="home-btn home-btn-outline" href="#">Xử lý</a>
             </div>
           </article>
@@ -509,7 +513,7 @@ $renderModerationList = static function (array $items, string $emptyText): void 
             </p>
             <div class="hero-actions moderation-actions">
               <a class="home-btn" href="/admin/bookings/<?= (int)($rep['booking_id'] ?? 0) ?>">Xem đơn hàng</a>
-              <a class="home-btn home-btn-outline" href="#">Liên hệ Worker</a>
+              <a class="home-btn home-btn-outline" href="/admin/bookings/<?= (int)($rep['booking_id'] ?? 0) ?>#admin-worker-messages">Liên hệ Worker</a>
               <a class="home-btn home-btn-outline" href="#">Gắn cờ</a>
             </div>
           </article>

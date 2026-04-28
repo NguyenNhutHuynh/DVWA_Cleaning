@@ -16,30 +16,26 @@ final class ContactController
 {
     /**
      * Hiển thị biểu mẫu liên hệ.
-     * Yêu cầu người dùng phải đã đăng nhập.
      */
     public function index(): void
     {
-        // Kiểm tra xem người dùng đã đăng nhập hay chưa
-        if (!Auth::isAuthenticated()) {
-            $_SESSION['error_alert'] = 'Vui lòng đăng nhập trước khi liên hệ với chúng tôi.';
-            $this->redirect('/login');
-            return;
+        $userContacts = [];
+
+        if (Auth::isAuthenticated()) {
+            // Lấy email của người dùng hiện tại
+            $currentUser = User::findById((int)Auth::id());
+            $userEmail = $currentUser['email'] ?? '';
+
+            // Lấy các tin nhắn liên hệ trước đó của người dùng (dựa trên email)
+            $allContacts = Contact::getAll();
+            $userContacts = array_filter(
+                $allContacts,
+                fn($c) => (string)($c['email'] ?? '') === $userEmail
+            );
+
+            // Sắp xếp theo thời gian mới nhất trước
+            usort($userContacts, fn($a, $b) => strtotime($b['created_at'] ?? 0) - strtotime($a['created_at'] ?? 0));
         }
-        
-        // Lấy email của người dùng hiện tại
-        $currentUser = User::findById((int)Auth::id());
-        $userEmail = $currentUser['email'] ?? '';
-        
-        // Lấy các tin nhắn liên hệ trước đó của người dùng (dựa trên email)
-        $allContacts = Contact::getAll();
-        $userContacts = array_filter(
-            $allContacts,
-            fn($c) => (string)($c['email'] ?? '') === $userEmail
-        );
-        
-        // Sắp xếp theo thời gian mới nhất trước
-        usort($userContacts, fn($a, $b) => strtotime($b['created_at'] ?? 0) - strtotime($a['created_at'] ?? 0));
         
         View::render('contact', [
             'previousContacts' => array_values($userContacts),
@@ -52,13 +48,6 @@ final class ContactController
      */
     public function store(): void
     {
-        // Kiểm tra xem người dùng đã đăng nhập hay chưa
-        if (!Auth::isAuthenticated()) {
-            $_SESSION['error_alert'] = 'Vui lòng đăng nhập để gửi tin nhắn.';
-            $this->redirect('/login');
-            return;
-        }
-
         // Chỉ chấp nhận request POST
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             $this->handleInvalidMethod();

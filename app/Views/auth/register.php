@@ -3,68 +3,101 @@ use App\Core\View;
 /** @var string $csrf Token CSRF */
 /** @var ?string $error Thông báo lỗi */
 ?>
+
 <style>
   .auth-container {
-    --auth-primary: #2ea77f;
-    --auth-primary-dark: #248a69;
-    --auth-text: #1f3f35;
-    --auth-muted: #4f7668;
-    --auth-border: #d9e5df;
-    --auth-surface: #ffffff;
-    max-width: 900px;
+    --primary: #2eaf7d;
+    --primary-dark: #16805a;
+    --primary-soft: #e8f7f0;
+    --bg-soft: #f7fdf9;
+    --text-dark: #1f2d3d;
+    --text-muted: #546e7a;
+    --border: #dcefe6;
+    --white: #ffffff;
+    --shadow-sm: 0 8px 24px rgba(31,45,61,0.08);
+    --shadow-md: 0 16px 40px rgba(31,45,61,0.12);
+
+    max-width: 920px;
     margin: 44px auto;
     padding: 0 16px;
+    color: var(--text-dark);
     background: transparent !important;
     border: none !important;
     box-shadow: none !important;
     outline: none !important;
   }
 
+  .auth-container * {
+    box-sizing: border-box;
+  }
+
   .auth-panel {
-    background: #ffffff;
-    border: 1px solid var(--auth-border);
-    border-radius: 18px;
-    box-shadow: 0 10px 18px rgba(23, 50, 77, 0.06);
-    padding: 30px;
+    position: relative;
+    overflow: hidden;
+    background:
+      radial-gradient(circle at top left, rgba(46,175,125,0.16), transparent 34%),
+      linear-gradient(135deg, #ffffff 0%, #f7fdf9 100%);
+    border: 1px solid var(--border);
+    border-radius: 28px;
+    box-shadow: var(--shadow-md);
+    padding: 38px;
+  }
+
+  .auth-panel::after {
+    content: "";
+    position: absolute;
+    right: -80px;
+    bottom: -80px;
+    width: 220px;
+    height: 220px;
+    border-radius: 50%;
+    background: rgba(46,175,125,0.10);
+  }
+
+  .auth-panel > * {
+    position: relative;
+    z-index: 1;
   }
 
   .auth-title {
     margin: 0;
-    color: var(--auth-text);
-    font-size: 40px;
+    color: var(--text-dark);
+    font-size: clamp(34px, 5vw, 46px);
     font-weight: 900;
     text-align: center;
-    letter-spacing: 0.2px;
+    letter-spacing: -0.04em;
     line-height: 1.08;
   }
 
   .auth-subtitle {
-    margin: 10px 0 22px;
+    margin: 12px 0 28px;
     text-align: center;
-    color: var(--auth-muted);
-    font-size: 17px;
-    line-height: 1.45;
+    color: var(--text-muted);
+    font-size: 16px;
+    line-height: 1.55;
   }
 
   .auth-error {
-    background: #eef8f3;
-    border: 1px solid #bfe8d6;
-    color: #1f6f53;
-    border-radius: 11px;
-    padding: 11px 13px;
-    margin-bottom: 14px;
+    background: #fff1f1;
+    border: 1px solid #ffd1d1;
+    color: #b42318;
+    border-radius: 18px;
+    padding: 14px 16px;
+    margin-bottom: 18px;
     font-size: 14px;
+    font-weight: 700;
+    box-shadow: var(--shadow-sm);
   }
 
   .auth-form {
     display: grid;
-    gap: 14px;
+    gap: 18px;
   }
 
   .auth-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 14px;
+    gap: 16px;
   }
 
   .auth-form-group {
@@ -77,94 +110,96 @@ use App\Core\View;
   }
 
   .auth-form-group label {
-    color: #2b5347;
-    font-weight: 700;
-    font-size: 15px;
+    color: var(--text-dark);
+    font-weight: 800;
+    font-size: 14px;
   }
 
   .auth-required {
-    color: var(--auth-primary-dark);
+    color: #e74c3c;
   }
 
   .auth-input {
     width: 100%;
-    height: 48px;
-    border: 1px solid #c4d7cf;
-    border-radius: 12px;
-    padding: 0 14px;
-    color: #24473c;
-    background: var(--auth-surface);
-    font-size: 16px;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
-    box-sizing: border-box;
+    height: 52px;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 0 15px;
+    color: var(--text-dark);
+    background: #fcfffd;
+    font-size: 15px;
+    font-family: inherit;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, transform 0.2s ease;
+  }
+
+  select.auth-input {
+    cursor: pointer;
   }
 
   .auth-input::placeholder {
-    color: #7aa292;
+    color: #8aa79b;
   }
 
   .auth-input:focus {
     outline: none;
-    border-color: var(--auth-primary);
-    box-shadow: 0 0 0 4px rgba(45, 165, 127, 0.14);
+    background: white;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 4px rgba(46,175,125,0.12);
     transform: translateY(-1px);
   }
 
   .auth-btn {
     width: 100%;
-    height: 50px;
+    height: 52px;
     border: none;
-    border-radius: 12px;
-    background: var(--auth-primary);
+    border-radius: 999px;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
     color: #fff;
-    font-weight: 800;
-    font-size: 17px;
+    font-weight: 900;
+    font-size: 16px;
     cursor: pointer;
-    transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+    box-shadow: 0 10px 22px rgba(46,175,125,0.22);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
   }
 
   .auth-btn:hover {
-    background: var(--auth-primary-dark);
-    transform: translateY(-1px);
-    box-shadow: 0 12px 20px rgba(45, 165, 127, 0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 14px 30px rgba(46,175,125,0.28);
   }
 
   .auth-link {
-    margin-top: 16px;
-    padding-top: 16px;
-    border-top: 1px solid var(--auth-border);
+    margin-top: 18px;
+    padding-top: 18px;
+    border-top: 1px solid var(--border);
     text-align: center;
-    color: #54786c;
-    font-size: 16px;
+    color: var(--text-muted);
+    font-size: 15px;
   }
 
   .auth-link a {
-    color: var(--auth-primary);
+    color: var(--primary);
     text-decoration: none;
-    font-weight: 800;
+    font-weight: 900;
   }
 
   .auth-link a:hover {
-    color: var(--auth-primary-dark);
+    color: var(--primary-dark);
     text-decoration: underline;
   }
 
   @media (max-width: 760px) {
-    .auth-grid {
-      grid-template-columns: 1fr;
+    .auth-container {
+      margin: 28px auto;
+      padding: 0 12px;
     }
 
     .auth-panel {
-      padding: 22px 16px;
-      border-radius: 14px;
+      padding: 28px 20px;
+      border-radius: 22px;
     }
 
-    .auth-title {
-      font-size: 32px;
-    }
-
-    .auth-subtitle {
-      font-size: 15px;
+    .auth-grid {
+      grid-template-columns: 1fr;
     }
   }
 </style>
@@ -188,14 +223,17 @@ use App\Core\View;
           <label for="name">Họ tên</label>
           <input id="name" name="name" required class="auth-input" placeholder="Nguyen Van A">
         </div>
+
         <div class="auth-form-group">
           <label for="email">Email</label>
           <input id="email" name="email" type="email" required class="auth-input" placeholder="you@example.com">
         </div>
+
         <div class="auth-form-group">
           <label for="phone">Số điện thoại <span class="auth-required">*</span></label>
           <input id="phone" name="phone" type="tel" required class="auth-input" placeholder="Ví dụ: 0901234567">
         </div>
+
         <div class="auth-form-group">
           <label for="city">Thành phố <span class="auth-required">*</span></label>
           <select id="city" name="city" required class="auth-input">
@@ -203,31 +241,21 @@ use App\Core\View;
             <option value="TP.HCM">TP.HCM</option>
           </select>
         </div>
+
         <div class="auth-form-group">
-          <label for="ward">Phường/Xã <span class="auth-required">*</span></label>
-          <select id="ward" name="ward" required class="auth-input">
-            <option value="">-- Chọn phường/xã --</option>
-            <option value="Phường Bến Nghé">Phường Bến Nghé</option>
-            <option value="Phường Bến Thành">Phường Bến Thành</option>
-            <option value="Phường Đa Kao">Phường Đa Kao</option>
-            <option value="Phường Tân Định">Phường Tân Định</option>
-            <option value="Phường Thảo Điền">Phường Thảo Điền</option>
-            <option value="Phường An Phú">Phường An Phú</option>
-            <option value="Phường Bình Trưng">Phường Bình Trưng</option>
-            <option value="Phường Linh Tây">Phường Linh Tây</option>
-            <option value="Phường Linh Đông">Phường Linh Đông</option>
-            <option value="Phường Hiệp Bình">Phường Hiệp Bình</option>
-            <option value="Phường Tăng Nhơn Phú">Phường Tăng Nhơn Phú</option>
-            <option value="Phường Tân Sơn Nhất">Phường Tân Sơn Nhất</option>
-            <option value="Phường 12 - Gò Vấp">Phường 12 - Gò Vấp</option>
-            <option value="Phường 15 - Tân Bình">Phường 15 - Tân Bình</option>
-            <option value="Phường 7 - Phú Nhuận">Phường 7 - Phú Nhuận</option>
-            <option value="Phường 5 - Quận 8">Phường 5 - Quận 8</option>
-            <option value="Xã Bình Hưng">Xã Bình Hưng</option>
-            <option value="Xã Nhà Bè">Xã Nhà Bè</option>
-            <option value="Xã Củ Chi">Xã Củ Chi</option>
+          <label for="district">Quận/Huyện <span class="auth-required">*</span></label>
+          <select id="district" name="district" required class="auth-input" disabled>
+            <option value="">-- Chọn quận/huyện --</option>
           </select>
         </div>
+
+        <div class="auth-form-group">
+          <label for="ward">Phường/Xã <span class="auth-required">*</span></label>
+          <select id="ward" name="ward" required class="auth-input" disabled>
+            <option value="">-- Chọn phường/xã --</option>
+          </select>
+        </div>
+
         <div class="auth-form-group">
           <label for="role">Vai trò</label>
           <select id="role" name="role" required class="auth-input">
@@ -235,10 +263,12 @@ use App\Core\View;
             <option value="worker">Người lao động (Worker)</option>
           </select>
         </div>
+
         <div class="auth-form-group full">
           <label for="address_detail">Địa chỉ chi tiết <span class="auth-required">*</span></label>
           <input id="address_detail" name="address_detail" required class="auth-input" placeholder="Số nhà, tên đường...">
         </div>
+
         <div class="auth-form-group full">
           <label for="password">Mật khẩu</label>
           <input id="password" name="password" type="password" required minlength="6" class="auth-input" placeholder="Ít nhất 6 ký tự">
@@ -255,3 +285,86 @@ use App\Core\View;
     </nav>
   </div>
 </section>
+
+<script>
+  (function () {
+    const citySelect = document.getElementById('city');
+    const districtSelect = document.getElementById('district');
+    const wardSelect = document.getElementById('ward');
+    const hcmProvinceCode = '79';
+    const apiUrl = 'https://provinces.open-api.vn/api/p/' + hcmProvinceCode + '?depth=3';
+
+    const setSelectState = (select, enabled, placeholder) => {
+      select.innerHTML = '';
+      const option = document.createElement('option');
+      option.value = '';
+      option.textContent = placeholder;
+      select.appendChild(option);
+      select.disabled = !enabled;
+    };
+
+    const populateSelect = (select, items) => {
+      items.forEach((item) => {
+        const option = document.createElement('option');
+        option.value = item.name;
+        option.textContent = item.name;
+        option.dataset.code = item.code;
+        select.appendChild(option);
+      });
+    };
+
+    let cachedDistricts = [];
+
+    const loadDistricts = async () => {
+      setSelectState(districtSelect, false, 'Dang tai danh sach quan/huyen...');
+      setSelectState(wardSelect, false, '-- Chon phuong/xa --');
+
+      try {
+        const response = await fetch(apiUrl, { headers: { Accept: 'application/json' } });
+        if (!response.ok) {
+          throw new Error('API response not ok');
+        }
+
+        const data = await response.json();
+        cachedDistricts = Array.isArray(data.districts) ? data.districts : [];
+        setSelectState(districtSelect, true, '-- Chon quan/huyen --');
+        populateSelect(districtSelect, cachedDistricts);
+      } catch (error) {
+        setSelectState(districtSelect, true, '-- Chon quan/huyen --');
+        const fallback = document.createElement('option');
+        fallback.value = '';
+        fallback.textContent = 'Khong the tai danh sach, vui long thu lai';
+        districtSelect.appendChild(fallback);
+      }
+    };
+
+    const updateWards = () => {
+      const selected = districtSelect.selectedOptions[0];
+      if (!selected || !selected.dataset.code) {
+        setSelectState(wardSelect, false, '-- Chon phuong/xa --');
+        return;
+      }
+
+      const districtCode = Number(selected.dataset.code);
+      const district = cachedDistricts.find((item) => item.code === districtCode);
+      const wards = district && Array.isArray(district.wards) ? district.wards : [];
+      setSelectState(wardSelect, true, '-- Chon phuong/xa --');
+      populateSelect(wardSelect, wards);
+    };
+
+    citySelect.addEventListener('change', () => {
+      if (citySelect.value) {
+        loadDistricts();
+      } else {
+        setSelectState(districtSelect, false, '-- Chon quan/huyen --');
+        setSelectState(wardSelect, false, '-- Chon phuong/xa --');
+      }
+    });
+
+    districtSelect.addEventListener('change', updateWards);
+
+    if (citySelect.value === 'TP.HCM') {
+      loadDistricts();
+    }
+  })();
+</script>

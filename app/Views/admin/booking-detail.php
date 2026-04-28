@@ -4,6 +4,7 @@ use App\Models\BookingProgress;
 /** @var array $booking */
 /** @var array $progress */
 /** @var array $messages */
+/** @var array $adminWorkerMessages */
 /** @var array|null $payment */
 /** @var array|null $customerPayment */
 /** @var array|null $report */
@@ -174,7 +175,6 @@ $assignedWorkerId = (int)($booking['assigned_worker_id'] ?? 0);
       <hr style="margin: 4px 0 2px; border: none; border-top: 1px solid #e8f2ed;">
       <?php if ($customerPayment !== null && ($customerPayment['status'] ?? '') === 'paid'): ?>
         <p><strong>Thanh toán khách:</strong> <span style="color:#065f46;font-weight:700;">Đã thanh toán</span></p>
-        <p><strong>Số tiền đã trả:</strong> <?= number_format((float)($customerPayment['amount'] ?? 0), 0, ',', '.') ?>đ</p>
         <p><strong>Thời gian thanh toán:</strong> <?= View::e((string)($customerPayment['paid_at'] ?? '')) ?></p>
       <?php elseif ($customerPayment !== null): ?>
         <p><strong>Thanh toán khách:</strong> <span style="color:#991b1b;font-weight:700;">Chưa thanh toán</span></p>
@@ -273,8 +273,32 @@ $assignedWorkerId = (int)($booking['assigned_worker_id'] ?? 0);
     </div>
   </section>
 
-  <section class="home-feature">
-    <h2>Trao đổi trong đơn</h2>
+  <section class="home-feature" id="admin-worker-messages">
+    <h2>Trao đổi Admin - Worker</h2>
+    <div class="review-box">
+      <?php if (empty($adminWorkerMessages)): ?>
+        <p>Chưa có tin nhắn giữa admin và worker.</p>
+      <?php else: ?>
+        <?php foreach ($adminWorkerMessages as $message): ?>
+          <article class="message-item">
+            <p style="margin: 0 0 4px;"><strong><?= View::e((string)($message['sender_name'] ?? '')) ?></strong> (<?= View::e((string)($message['sender_role'] ?? '')) ?>)</p>
+            <p style="margin: 0 0 4px;"><?= View::e((string)($message['content'] ?? '')) ?></p>
+            <small><?= View::e((string)($message['created_at'] ?? '')) ?></small>
+          </article>
+        <?php endforeach; ?>
+      <?php endif; ?>
+
+      <form method="post" action="/admin/bookings/<?= (int)($booking['id'] ?? 0) ?>/message" style="margin-top:12px;">
+        <input type="hidden" name="_csrf" value="<?= View::e($csrf) ?>">
+        <label for="admin-message-content" style="display:block;font-weight:700;margin-bottom:6px;">Nhắn tin cho worker</label>
+        <textarea id="admin-message-content" name="content" rows="3" required style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;font-family:inherit;font-size:14px;" placeholder="Nhập tin nhắn..."></textarea>
+        <button class="home-btn" type="submit" style="margin-top:8px;">Gửi tin nhắn</button>
+      </form>
+    </div>
+  </section>
+
+  <section class="home-feature" id="booking-messages">
+    <h2>Trao đổi khách - worker</h2>
     <div class="review-box">
       <?php if (empty($messages)): ?>
         <p>Chưa có tin nhắn trong đơn này.</p>
@@ -287,6 +311,7 @@ $assignedWorkerId = (int)($booking['assigned_worker_id'] ?? 0);
           </article>
         <?php endforeach; ?>
       <?php endif; ?>
+
     </div>
   </section>
 </section>

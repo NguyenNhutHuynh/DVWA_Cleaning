@@ -6,6 +6,7 @@ namespace App\Controllers;
 use App\Core\Auth;
 use App\Core\Csrf;
 use App\Core\View;
+use App\Models\AdminWorkerMessage;
 use App\Models\Booking;
 use App\Models\BookingMessage;
 use App\Models\BookingPayment;
@@ -102,6 +103,64 @@ final class WorkerController
         ]);
     }
 
+    public function messages(): void
+    {
+        $this->requireApprovedWorkerRole();
+        $workerId = (int)Auth::id();
+
+        $messages = AdminWorkerMessage::byWorkerId($workerId);
+        $grouped = [];
+        foreach ($messages as $message) {
+            $bookingId = (int)($message['booking_id'] ?? 0);
+            if ($bookingId <= 0) {
+                continue;
+            }
+
+            if (!isset($grouped[$bookingId])) {
+                $grouped[$bookingId] = [
+                    'booking_id' => $bookingId,
+                    'service_name' => $message['service_name'] ?? '',
+                    'customer_name' => $message['customer_name'] ?? '',
+                    'messages' => [],
+                ];
+            }
+            $grouped[$bookingId]['messages'][] = $message;
+        }
+
+        View::render('worker/messages', [
+            'threads' => array_values($grouped),
+            'csrf' => Csrf::token(),
+        ]);
+    }
+
+    public function sendAdminMessage(int $id): void
+    {
+        $this->requireApprovedWorkerRole();
+        $this->verifyCsrfToken();
+
+        $booking = $this->findOwnedBooking($id);
+        if ($booking === null) {
+            $this->redirect('/worker/messages');
+        }
+
+        $content = trim((string)($_POST['content'] ?? ''));
+        if ($content === '') {
+            $_SESSION['error'] = 'Tin nhắn không được để trống.';
+            $this->redirect('/worker/messages#booking-' . $id);
+        }
+
+        AdminWorkerMessage::add(
+            $id,
+            (int)Auth::id(),
+            (int)Auth::id(),
+            User::ROLE_WORKER,
+            $content
+        );
+
+        $_SESSION['success'] = 'Đã gửi tin nhắn cho admin.';
+        $this->redirect('/worker/messages#booking-' . $id);
+    }
+
     /**
      * Worker xác nhận nhận việc.
      */
@@ -192,16 +251,41 @@ final class WorkerController
 
         $step = trim((string)($_POST['step'] ?? ''));
         $note = trim((string)($_POST['note'] ?? ''));
-        $validSteps = [
+        $progressOrder = [
             BookingProgress::ON_THE_WAY,
             BookingProgress::ARRIVED,
             BookingProgress::BEFORE_PHOTO,
             BookingProgress::AFTER_PHOTO,
             BookingProgress::COMPLETED,
         ];
+        $requiredPhotoSteps = [
+            BookingProgress::ARRIVED,
+            BookingProgress::BEFORE_PHOTO,
+            BookingProgress::AFTER_PHOTO,
+        ];
 
-        if (!in_array($step, $validSteps, true)) {
+        if (!in_array($step, $progressOrder, true)) {
             $_SESSION['error'] = 'Bước tiến độ không hợp lệ.';
+            $this->redirect('/worker/jobs/' . $id);
+        }
+
+        $latestStep = BookingProgress::latestStep($id);
+        $currentIndex = $latestStep === null ? -1 : array_search($latestStep, $progressOrder, true);
+        $nextIndex = ($currentIndex === false) ? 0 : $currentIndex + 1;
+        $expectedStep = $progressOrder[$nextIndex] ?? null;
+
+        if ($expectedStep === null) {
+            $_SESSION['error'] = 'Tiến độ đã hoàn thành, không thể cập nhật thêm.';
+            $this->redirect('/worker/jobs/' . $id);
+        }
+
+        if ($step !== $expectedStep) {
+            $_SESSION['error'] = 'Vui lòng cập nhật theo thứ tự. Bước tiếp theo: ' . BookingProgress::stepLabel($expectedStep) . '.';
+            $this->redirect('/worker/jobs/' . $id);
+        }
+
+        if (in_array($step, $requiredPhotoSteps, true) && !$this->hasUploadedPhotos()) {
+            $_SESSION['error'] = 'Vui lòng tải ít nhất 1 ảnh cho bước này.';
             $this->redirect('/worker/jobs/' . $id);
         }
 
@@ -220,6 +304,27 @@ final class WorkerController
 
         $_SESSION['success'] = 'Đã cập nhật tiến độ.';
         $this->redirect('/worker/jobs/' . $id);
+    }
+
+    private function hasUploadedPhotos(): bool
+    {
+        if (!isset($_FILES['photos']) || !is_array($_FILES['photos']['name'])) {
+            return false;
+        }
+
+        $count = count($_FILES['photos']['name']);
+        for ($index = 0; $index < $count; $index++) {
+            $name = (string)($_FILES['photos']['name'][$index] ?? '');
+            if ($name === '') {
+                continue;
+            }
+            $error = (int)($_FILES['photos']['error'][$index] ?? UPLOAD_ERR_NO_FILE);
+            if ($error === UPLOAD_ERR_OK) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

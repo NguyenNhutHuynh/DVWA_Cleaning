@@ -295,7 +295,7 @@ use App\Core\View;
               <?= $isCustomerPaid ? 'Đã thanh toán' : 'Chưa thanh toán' ?>
             </span>
             <?php if ($isCustomerPaid): ?>
-              <p style="margin:8px 0 0;font-size:13px;color:#065f46;">Khách đã thanh toán: <?= number_format($paidAmount, 0, ',', '.') ?>đ</p>
+              <p style="margin:8px 0 0;font-size:13px;color:#065f46;">Khách đã thanh toán</p>
             <?php endif; ?>
 
             <div class="hero-actions booking-actions">

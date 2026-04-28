@@ -129,6 +129,7 @@ $router->post('/admin/services/delete', [AdminController::class, 'deleteService'
 $router->post('/admin/services/create', [AdminController::class, 'createService']);
 $router->get('/admin/bookings', [AdminController::class, 'bookings']);
 $router->get('/admin/bookings/{id}', [AdminController::class, 'bookingDetail']);
+$router->post('/admin/bookings/{id}/message', [AdminController::class, 'sendBookingMessage']);
 // Các hành động đặt lịch Admin
 $router->post('/admin/bookings/confirm', [AdminController::class, 'confirmBooking']);
 $router->post('/admin/bookings/cancel', [AdminController::class, 'cancelBooking']);
@@ -155,6 +156,8 @@ $router->get('/cleaner/schedule', [CleanerController::class, 'schedule']);
 
 // Trang công nhân (tên vai trò mới)
 $router->get('/worker/jobs', [WorkerController::class, 'jobs']);
+$router->get('/worker/messages', [WorkerController::class, 'messages']);
+$router->post('/worker/messages/{id}', [WorkerController::class, 'sendAdminMessage']);
 $router->post('/worker/jobs/{id}/accept', [WorkerController::class, 'acceptJob']);
 $router->get('/worker/jobs/{id}', [WorkerController::class, 'jobDetail']);
 $router->post('/worker/jobs/{id}/start', [WorkerController::class, 'startJob']);

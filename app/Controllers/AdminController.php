@@ -8,6 +8,7 @@ use App\Core\Auth;
 use App\Core\Csrf;
 use App\Core\View;
 use App\Models\Booking;
+use App\Models\AdminWorkerMessage;
 use App\Models\BookingMessage;
 use App\Models\BookingPayment;
 use App\Models\BookingProgress;
@@ -106,12 +107,41 @@ final class AdminController
             'workers' => $this->getActiveWorkers(),
             'progress' => BookingProgress::byBookingId($id),
             'messages' => BookingMessage::byBookingId($id),
+            'adminWorkerMessages' => AdminWorkerMessage::byBookingId($id),
             'payment' => BookingPayment::byBookingId($id),
             'customerPayment' => PaymentTransaction::getLatestCustomerByBookingId($id),
             'report' => BookingReport::getByBookingId($id),
             'review' => BookingReview::getByBookingId($id),
             'csrf' => Csrf::token(),
         ]);
+    }
+
+    public function sendBookingMessage(int $id): void
+    {
+        $this->requireAdminRole();
+        $this->verifyCsrfToken();
+
+        $booking = Booking::getById($id);
+        if ($booking === null) {
+            $this->setSessionMessage('error', 'Không tìm thấy đơn đặt #' . $id . '.');
+            $this->redirect('/admin/bookings');
+        }
+
+        $workerId = (int)($booking['assigned_worker_id'] ?? 0);
+        if ($workerId <= 0) {
+            $this->setSessionMessage('error', 'Đơn chưa có worker, không thể nhắn tin.');
+            $this->redirect('/admin/bookings/' . $id . '#admin-worker-messages');
+        }
+
+        $content = trim((string)($_POST['content'] ?? ''));
+        if ($content === '') {
+            $this->setSessionMessage('error', 'Tin nhắn không được để trống.');
+            $this->redirect('/admin/bookings/' . $id . '#admin-worker-messages');
+        }
+
+        AdminWorkerMessage::add($id, $workerId, (int)Auth::id(), User::ROLE_ADMIN, $content);
+        $this->setSessionMessage('success', 'Đã gửi tin nhắn cho worker.');
+        $this->redirect('/admin/bookings/' . $id . '#admin-worker-messages');
     }
 
     public function moderation(): void
