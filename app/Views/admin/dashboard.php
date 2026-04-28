@@ -8,313 +8,283 @@ use App\Core\View;
 
 <style>
 .admin-dashboard {
-  max-width: 1200px;
+  --primary: #2eaf7d;
+  --primary-dark: #16805a;
+  --primary-soft: #e8f7f0;
+  --bg-soft: #f7fdf9;
+  --text-dark: #1f2d3d;
+  --text-muted: #546e7a;
+  --border: #dcefe6;
+  --white: #ffffff;
+  --shadow-sm: 0 8px 24px rgba(31,45,61,0.08);
+  --shadow-md: 0 16px 40px rgba(31,45,61,0.12);
+
+  max-width: 1180px;
   margin: 0 auto;
-  padding: 0 20px 60px;
+  padding: 24px 16px 60px;
+  color: var(--text-dark);
 }
 
-/* Hero Section với Gradient */
-.dashboard-hero {
-  background: linear-gradient(135deg, #2eaf7d 0%, #43c59e 50%, #8cdf94 100%);
-  border-radius: 20px;
-  padding: 50px 40px;
-  margin-bottom: 40px;
-  color: white;
+.admin-dashboard * {
+  box-sizing: border-box;
+}
+
+/* HERO */
+.admin-dashboard .dashboard-hero {
+  position: relative;
+  overflow: hidden;
+  padding: 56px 28px;
+  border-radius: 28px;
   text-align: center;
-  box-shadow: 0 10px 40px rgba(46, 175, 125, 0.3);
-  position: relative;
-  overflow: hidden;
-  animation: slideInDown 0.6s ease-out;
+  background:
+    radial-gradient(circle at top left, rgba(46,175,125,0.20), transparent 34%),
+    linear-gradient(135deg, #f7fdf9 0%, #ffffff 48%, #e8f7f0 100%);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
 }
 
-.dashboard-hero::before {
-  content: '';
+.admin-dashboard .dashboard-hero::after {
+  content: "";
   position: absolute;
-  top: -50%;
-  right: -50%;
-  width: 200%;
-  height: 200%;
-  background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-  animation: rotate 20s linear infinite;
+  right: -80px;
+  bottom: -80px;
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  background: rgba(46,175,125,0.13);
 }
 
-@keyframes rotate {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-@keyframes slideInDown {
-  from {
-    opacity: 0;
-    transform: translateY(-30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.dashboard-hero .home-kicker {
+.admin-dashboard .dashboard-kicker {
   position: relative;
-  z-index: 1;
-  color: #fff;
-  animation: fadeIn 0.5s ease-out;
+  display: inline-flex;
+  margin: 0 0 14px;
+  padding: 7px 14px;
+  border-radius: 999px;
+  background: var(--primary-soft);
+  color: var(--primary-dark);
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
 }
 
-.dashboard-hero h1 {
-  font-size: 2.5rem;
-  margin: 0 0 10px 0;
-  font-weight: 700;
+.admin-dashboard .dashboard-hero h1 {
   position: relative;
-  z-index: 1;
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  animation: fadeInDown 0.6s ease-out 0.1s both;
+  margin: 0 0 12px;
+  color: var(--text-dark);
+  font-size: clamp(32px, 5vw, 52px);
+  line-height: 1.1;
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  text-shadow: none;
 }
 
-.dashboard-hero p {
-  font-size: 1.1rem;
+.admin-dashboard .dashboard-hero p {
+  position: relative;
   margin: 0;
-  opacity: 0.95;
-  position: relative;
-  z-index: 1;
-  animation: fadeInUp 0.6s ease-out 0.2s both;
+  color: var(--text-muted);
+  font-size: 17px;
+  line-height: 1.6;
 }
 
-/* Stats Grid */
-.stats-grid {
+/* SECTION TITLE */
+.admin-dashboard .section-title {
+  margin: 50px 0 24px;
+  color: var(--text-dark);
+  font-size: clamp(24px, 3vw, 34px);
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  text-align: center;
+}
+
+/* STATS */
+.admin-dashboard .stats-grid {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 16px;
-  margin-bottom: 40px;
-  animation: fadeInUp 0.8s ease-out 0.2s both;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 18px;
+  margin-top: 40px;
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes fadeInDown {
-  from {
-    opacity: 0;
-    transform: translateY(-15px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.stat-card {
-  background: white;
-  border-radius: 16px;
-  padding: 25px 20px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+.admin-dashboard .stat-card {
   position: relative;
   overflow: hidden;
-  border: 2px solid transparent;
+  min-height: 190px;
+  padding: 26px 22px;
+  border-radius: 24px;
+  background: var(--white);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
 }
 
-.stat-card::before {
-  content: '';
+.admin-dashboard .stat-card::after {
+  content: "";
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: linear-gradient(90deg, #2eaf7d, #43c59e);
-  transform: scaleX(0);
-  transform-origin: left;
-  transition: transform 0.3s ease;
+  right: -42px;
+  bottom: -42px;
+  width: 118px;
+  height: 118px;
+  border-radius: 50%;
+  background: rgba(46,175,125,0.09);
 }
 
-.stat-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 40px rgba(46, 175, 125, 0.2);
-  border-color: #43c59e;
+.admin-dashboard .stat-card:hover {
+  transform: translateY(-5px);
+  border-color: rgba(46,175,125,0.45);
+  box-shadow: var(--shadow-md);
 }
 
-.stat-card:hover::before {
-  transform: scaleX(1);
+.admin-dashboard .stat-icon {
+  position: relative;
+  z-index: 1;
+  width: 54px;
+  height: 54px;
+  margin-bottom: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 18px;
+  background: var(--primary-soft);
+  font-size: 28px;
 }
 
-.stat-icon {
-  font-size: 2.2rem;
-  margin-bottom: 12px;
-  display: inline-block;
-  animation: bounce 2s infinite;
-}
-
-@keyframes bounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
-}
-
-.stat-card:hover .stat-icon {
-  animation: none;
-  transform: scale(1.15);
-  transition: transform 0.3s ease;
-}
-
-.stat-label {
-  font-size: 0.85rem;
-  color: #666;
-  margin: 0 0 8px 0;
-  font-weight: 500;
+.admin-dashboard .stat-label {
+  position: relative;
+  z-index: 1;
+  margin: 0 0 8px;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.05em;
 }
 
-.stat-value {
-  font-size: 1.9rem;
-  font-weight: 700;
+.admin-dashboard .stat-value {
+  position: relative;
+  z-index: 1;
   margin: 0;
-  background: linear-gradient(135deg, #2eaf7d, #43c59e);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--primary);
+  font-size: clamp(28px, 3vw, 38px);
+  line-height: 1.1;
+  font-weight: 900;
+  letter-spacing: -0.04em;
 }
 
-.stat-subtitle {
-  font-size: 0.8rem;
-  color: #999;
-  margin: 6px 0 0 0;
+.admin-dashboard .stat-subtitle {
+  position: relative;
+  z-index: 1;
+  margin: 10px 0 0;
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.5;
 }
 
-/* Quick Actions Section */
-.section-title {
-  font-size: 1.8rem;
-  margin: 0 0 25px 0;
-  color: #1f2d3d;
-  font-weight: 700;
-  text-align: center;
-  animation: fadeInUp 1s ease-out 0.4s both;
-}
-
-.actions-grid {
+/* ACTIONS */
+.admin-dashboard .actions-grid {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 16px;
-  animation: fadeInUp 1.2s ease-out 0.6s both;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 18px;
 }
 
-.action-card {
-  background: linear-gradient(135deg, #f7fdf9 0%, #f0fff4 100%);
-  border-radius: 16px;
-  padding: 25px 20px;
+.admin-dashboard .action-card {
+  position: relative;
+  overflow: hidden;
+  min-height: 180px;
+  padding: 26px 22px;
+  border-radius: 24px;
+  background: linear-gradient(135deg, #ffffff 0%, #f7fdf9 100%);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
   text-decoration: none;
   color: inherit;
   display: block;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  border: 2px solid #e0f2e9;
-  position: relative;
-  overflow: hidden;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
 }
 
-.action-card::before {
-  content: '';
+.admin-dashboard .action-card::before {
+  content: "";
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(135deg, rgba(46, 175, 125, 0.05), rgba(67, 197, 158, 0.05));
-  transform: translateY(100%);
-  transition: transform 0.3s ease;
+  inset: auto -48px -48px auto;
+  width: 128px;
+  height: 128px;
+  border-radius: 50%;
+  background: rgba(46,175,125,0.10);
+  transition: transform 0.25s ease;
 }
 
-.action-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 40px rgba(46, 175, 125, 0.2);
-  border-color: #43c59e;
+.admin-dashboard .action-card:hover {
+  transform: translateY(-5px);
+  border-color: rgba(46,175,125,0.45);
+  box-shadow: var(--shadow-md);
 }
 
-.action-card:hover::before {
-  transform: translateY(0);
+.admin-dashboard .action-card:hover::before {
+  transform: scale(1.18);
 }
 
-.action-card h3 {
-  font-size: 1.15rem;
-  margin: 0 0 10px 0;
-  color: #2eaf7d;
-  font-weight: 700;
+.admin-dashboard .action-card h3 {
   position: relative;
   z-index: 1;
+  margin: 0 0 12px;
+  color: var(--text-dark);
+  font-size: 20px;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  line-height: 1.35;
 }
 
-.action-card p {
+.admin-dashboard .action-card p {
+  position: relative;
+  z-index: 1;
   margin: 0;
-  color: #666;
-  line-height: 1.5;
-  font-size: 0.9rem;
-  position: relative;
-  z-index: 1;
+  color: var(--text-muted);
+  line-height: 1.6;
+  font-size: 14px;
 }
 
-/* Responsive */
+/* RESPONSIVE */
 @media (max-width: 1200px) {
-  .stats-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-  
-  .actions-grid {
-    grid-template-columns: repeat(3, 1fr);
+  .admin-dashboard .stats-grid,
+  .admin-dashboard .actions-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 900px) {
-  .stats-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  
-  .actions-grid {
-    grid-template-columns: repeat(2, 1fr);
+  .admin-dashboard .stats-grid,
+  .admin-dashboard .actions-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 768px) {
-  .dashboard-hero {
-    padding: 35px 25px;
+  .admin-dashboard {
+    padding: 16px 12px 44px;
   }
-  
-  .dashboard-hero h1 {
-    font-size: 2rem;
+
+  .admin-dashboard .dashboard-hero {
+    padding: 42px 18px;
+    border-radius: 22px;
   }
-  
-  .stats-grid {
+
+  .admin-dashboard .stats-grid,
+  .admin-dashboard .actions-grid {
     grid-template-columns: 1fr;
   }
-  
-  .actions-grid {
-    grid-template-columns: 1fr;
+
+  .admin-dashboard .stat-card,
+  .admin-dashboard .action-card {
+    border-radius: 20px;
   }
 }
 </style>
 
 <div class="admin-dashboard">
-  <!-- Hero Section -->
   <div class="dashboard-hero">
+    <p class="dashboard-kicker">ADMIN DASHBOARD</p>
     <h1>👋 Xin chào, <?= View::e($name) ?>!</h1>
     <p>Chào mừng đến với bảng điều khiển quản trị viên</p>
   </div>
 
-  <!-- Stats Overview -->
   <div class="stats-grid">
     <div class="stat-card">
       <div class="stat-icon">👥</div>
@@ -352,8 +322,8 @@ use App\Core\View;
     </div>
   </div>
 
-  <!-- Quick Actions -->
   <h2 class="section-title">⚡ Chức năng quản trị</h2>
+
   <div class="actions-grid">
     <a href="/admin/users" class="action-card">
       <h3>👥 Quản lý người dùng</h3>

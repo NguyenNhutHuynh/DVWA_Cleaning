@@ -1,6 +1,7 @@
 <?php
 use App\Core\View;
 /** @var array $threads */
+/** @var array $directMessages */
 /** @var string $csrf */
 ?>
 
@@ -272,6 +273,41 @@ use App\Core\View;
   </header>
 
   <div class="messages-list">
+    <article class="thread-card" id="direct-admin-chat">
+      <div class="thread-header">
+        <div>
+          <h2 class="thread-title">Trao đổi trực tiếp với Admin</h2>
+          <span class="thread-customer">Kênh liên hệ nhanh</span>
+        </div>
+        <span class="thread-badge">
+          <?= count($directMessages ?? []) ?> tin nhắn
+        </span>
+      </div>
+
+      <div class="thread-messages">
+        <?php if (empty($directMessages)): ?>
+          <p class="thread-empty">Chưa có tin nhắn trực tiếp nào.</p>
+        <?php else: ?>
+          <?php foreach ($directMessages as $message): ?>
+            <div class="thread-message">
+              <p class="meta">
+                <span class="sender"><?= View::e((string)($message['sender_name'] ?? '')) ?></span>
+                <span class="role">(<?= View::e((string)($message['sender_role'] ?? '')) ?>)</span>
+                • <?= View::e((string)($message['created_at'] ?? '')) ?>
+              </p>
+              <p class="content"><?= View::e((string)($message['content'] ?? '')) ?></p>
+            </div>
+          <?php endforeach; ?>
+        <?php endif; ?>
+      </div>
+
+      <form method="post" action="/worker/messages/direct" class="thread-form">
+        <input type="hidden" name="_csrf" value="<?= View::e($csrf) ?>">
+        <textarea name="content" rows="3" required placeholder="Nhập tin nhắn gửi admin..."></textarea>
+        <button class="worker-btn" type="submit">Gửi tin nhắn</button>
+      </form>
+    </article>
+
     <?php if (empty($threads)): ?>
       <div class="thread-card">
         <p class="thread-empty">Chưa có tin nhắn nào từ admin.</p>

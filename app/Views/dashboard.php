@@ -60,6 +60,8 @@ use App\Models\User;
           <a href="/account/change-password" role="menuitem">Đổi mật khẩu</a>
           <?php if ($role === 'worker'): ?>
             <a href="/worker/messages" role="menuitem">Tin nhắn</a>
+          <?php elseif ($role === 'customer'): ?>
+            <a href="/customer/messages" role="menuitem">Tin nhắn</a>
           <?php endif; ?>
           <a href="/logout" role="menuitem">Đăng xuất</a>
         </div>

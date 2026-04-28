@@ -76,9 +76,32 @@ final class BookingReview
              JOIN users c ON c.id = br.customer_id
              JOIN services s ON s.id = b.service_id
              WHERE b.service_id = :service_id
+               AND (br.is_hidden IS NULL OR br.is_hidden = 0)
              ORDER BY br.created_at DESC"
         );
         $stmt->execute(['service_id' => $serviceId]);
         return $stmt->fetchAll() ?: [];
+    }
+
+    public static function hide(int $id): bool
+    {
+        $stmt = DB::pdo()->prepare(
+            "UPDATE booking_reviews
+             SET is_hidden = 1
+             WHERE id = :id"
+        );
+
+        return $stmt->execute(['id' => $id]);
+    }
+
+    public static function show(int $id): bool
+    {
+        $stmt = DB::pdo()->prepare(
+            "UPDATE booking_reviews
+             SET is_hidden = 0
+             WHERE id = :id"
+        );
+
+        return $stmt->execute(['id' => $id]);
     }
 }

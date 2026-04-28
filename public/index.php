@@ -66,7 +66,9 @@ $router->get('/', function() {
   
   // Average rating from reviews
   $avgRatingStmt = DB::pdo()->query(
-    "SELECT AVG(rating) as avg_rating FROM booking_reviews"
+    "SELECT AVG(rating) as avg_rating
+     FROM booking_reviews
+     WHERE is_hidden IS NULL OR is_hidden = 0"
   );
   $ratingResult = $avgRatingStmt->fetch();
   $averageRating = $ratingResult ? round((float)($ratingResult['avg_rating'] ?? 4.9), 1) : 4.9;
@@ -120,6 +122,8 @@ $router->get('/cleaner/dashboard', [CleanerController::class, 'dashboard']);
 $router->get('/worker/dashboard', [WorkerController::class, 'dashboard']);
 $router->get('/worker/pending', [WorkerController::class, 'pending']);
 $router->get('/customer/dashboard', [CustomerController::class, 'dashboard']);
+$router->get('/customer/messages', [CustomerController::class, 'messages']);
+$router->post('/customer/messages', [CustomerController::class, 'sendMessage']);
 
 // Trang quản lý Admin
 $router->get('/admin/services', [AdminController::class, 'services']);
@@ -130,6 +134,8 @@ $router->post('/admin/services/create', [AdminController::class, 'createService'
 $router->get('/admin/bookings', [AdminController::class, 'bookings']);
 $router->get('/admin/bookings/{id}', [AdminController::class, 'bookingDetail']);
 $router->post('/admin/bookings/{id}/message', [AdminController::class, 'sendBookingMessage']);
+$router->post('/admin/reviews/{id}/hide', [AdminController::class, 'hideReview']);
+$router->post('/admin/reviews/{id}/show', [AdminController::class, 'showReview']);
 // Các hành động đặt lịch Admin
 $router->post('/admin/bookings/confirm', [AdminController::class, 'confirmBooking']);
 $router->post('/admin/bookings/cancel', [AdminController::class, 'cancelBooking']);
@@ -139,6 +145,8 @@ $router->post('/admin/contact/reply', [AdminController::class, 'replyContact']);
 $router->get('/admin/users', [AdminController::class, 'users']);
 $router->get('/admin/user', [AdminController::class, 'userDetail']);
 $router->get('/admin/user/json', [AdminController::class, 'userDetailJson']);
+$router->get('/admin/user/messages', [AdminController::class, 'userMessagesJson']);
+$router->post('/admin/user/message', [AdminController::class, 'sendUserMessage']);
 $router->get('/admin/stats', [AdminController::class, 'stats']);
 // Phê duyệt người dùng Admin
 $router->post('/admin/users/approve', [AdminController::class, 'approveWorker']);
@@ -158,6 +166,7 @@ $router->get('/cleaner/schedule', [CleanerController::class, 'schedule']);
 $router->get('/worker/jobs', [WorkerController::class, 'jobs']);
 $router->get('/worker/messages', [WorkerController::class, 'messages']);
 $router->post('/worker/messages/{id}', [WorkerController::class, 'sendAdminMessage']);
+$router->post('/worker/messages/direct', [WorkerController::class, 'sendAdminDirectMessage']);
 $router->post('/worker/jobs/{id}/accept', [WorkerController::class, 'acceptJob']);
 $router->get('/worker/jobs/{id}', [WorkerController::class, 'jobDetail']);
 $router->post('/worker/jobs/{id}/start', [WorkerController::class, 'startJob']);

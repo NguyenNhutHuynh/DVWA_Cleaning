@@ -6,6 +6,7 @@ namespace App\Controllers;
 use App\Core\Auth;
 use App\Core\Csrf;
 use App\Core\View;
+use App\Models\AdminUserMessage;
 use App\Models\AdminWorkerMessage;
 use App\Models\Booking;
 use App\Models\BookingMessage;
@@ -108,6 +109,7 @@ final class WorkerController
         $this->requireApprovedWorkerRole();
         $workerId = (int)Auth::id();
 
+        $directMessages = AdminUserMessage::byUserId($workerId);
         $messages = AdminWorkerMessage::byWorkerId($workerId);
         $grouped = [];
         foreach ($messages as $message) {
@@ -128,9 +130,28 @@ final class WorkerController
         }
 
         View::render('worker/messages', [
+            'directMessages' => $directMessages,
             'threads' => array_values($grouped),
             'csrf' => Csrf::token(),
         ]);
+    }
+
+    public function sendAdminDirectMessage(): void
+    {
+        $this->requireApprovedWorkerRole();
+        $this->verifyCsrfToken();
+
+        $workerId = (int)Auth::id();
+        $content = trim((string)($_POST['content'] ?? ''));
+
+        if ($content === '') {
+            $_SESSION['error'] = 'Tin nhắn không được để trống.';
+            $this->redirect('/worker/messages#direct-admin-chat');
+        }
+
+        AdminUserMessage::add($workerId, $workerId, User::ROLE_WORKER, $content);
+        $_SESSION['success'] = 'Đã gửi tin nhắn cho admin.';
+        $this->redirect('/worker/messages#direct-admin-chat');
     }
 
     public function sendAdminMessage(int $id): void

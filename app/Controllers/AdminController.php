@@ -9,6 +9,7 @@ use App\Core\Csrf;
 use App\Core\View;
 use App\Models\Booking;
 use App\Models\AdminWorkerMessage;
+use App\Models\AdminUserMessage;
 use App\Models\BookingMessage;
 use App\Models\BookingPayment;
 use App\Models\BookingProgress;
@@ -209,6 +210,57 @@ final class AdminController
         }
 
         echo json_encode($this->formatUserAsJson($user), JSON_UNESCAPED_UNICODE);
+    }
+
+    public function userMessagesJson(): void
+    {
+        $this->requireAdminRole();
+        header('Content-Type: application/json; charset=utf-8');
+
+        $userId = (int)($_GET['id'] ?? 0);
+        if ($userId <= 0) {
+            http_response_code(400);
+            echo json_encode(['error' => 'invalid_id'], JSON_UNESCAPED_UNICODE);
+            return;
+        }
+
+        $user = User::findById($userId);
+        if ($user === null) {
+            http_response_code(404);
+            echo json_encode(['error' => 'not_found'], JSON_UNESCAPED_UNICODE);
+            return;
+        }
+
+        $messages = AdminUserMessage::byUserId($userId);
+        echo json_encode(['messages' => $messages], JSON_UNESCAPED_UNICODE);
+    }
+
+    public function sendUserMessage(): void
+    {
+        $this->requireAdminRole();
+        $this->verifyCsrfToken();
+
+        $userId = (int)($_POST['user_id'] ?? 0);
+        if ($userId <= 0) {
+            $this->setSessionMessage('error', 'Người dùng không hợp lệ.');
+            $this->redirect('/admin/users');
+        }
+
+        $user = User::findById($userId);
+        if ($user === null) {
+            $this->setSessionMessage('error', 'Không tìm thấy người dùng.');
+            $this->redirect('/admin/users');
+        }
+
+        $content = trim((string)($_POST['content'] ?? ''));
+        if ($content === '') {
+            $this->setSessionMessage('error', 'Tin nhắn không được để trống.');
+            $this->redirect('/admin/users?user_id=' . $userId);
+        }
+
+        AdminUserMessage::add($userId, (int)Auth::id(), User::ROLE_ADMIN, $content);
+        $this->setSessionMessage('success', 'Đã gửi tin nhắn cho người dùng #' . $userId . '.');
+        $this->redirect('/admin/users?user_id=' . $userId);
     }
 
     public function userUpdate(): void
@@ -1174,5 +1226,47 @@ final class AdminController
     {
         header('Location: ' . $path);
         exit(0);
+    }
+
+    public function hideReview(int $id): void
+    {
+        $this->requireAdminRole();
+        $this->verifyCsrfToken();
+
+        if ($id <= 0) {
+            $this->setSessionMessage('error', 'ID đánh giá không hợp lệ.');
+            $this->redirect('/admin/moderation');
+        }
+
+        $success = BookingReview::hide($id);
+
+        if ($success) {
+            $this->setSessionMessage('success', 'Đã ẩn đánh giá #' . $id . '.');
+        } else {
+            $this->setSessionMessage('error', 'Ẩn đánh giá thất bại hoặc không tìm thấy đánh giá.');
+        }
+
+        $this->redirect('/admin/moderation');
+    }
+
+    public function showReview(int $id): void
+    {
+        $this->requireAdminRole();
+        $this->verifyCsrfToken();
+
+        if ($id <= 0) {
+            $this->setSessionMessage('error', 'ID đánh giá không hợp lệ.');
+            $this->redirect('/admin/moderation');
+        }
+
+        $success = BookingReview::show($id);
+
+        if ($success) {
+            $this->setSessionMessage('success', 'Đã mở lại đánh giá #' . $id . '.');
+        } else {
+            $this->setSessionMessage('error', 'Mở lại đánh giá thất bại hoặc không tìm thấy đánh giá.');
+        }
+
+        $this->redirect('/admin/moderation');
     }
 }
