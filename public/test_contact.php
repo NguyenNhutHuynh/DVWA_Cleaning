@@ -5,7 +5,7 @@ use App\Core\DB;
 try {
     $pdo = DB::pdo();
     
-    echo "<style>body { font-family: Arial; margin: 20px; }</style>";
+    echo "<style>body { font-family: 'Oswald', sans-serif; margin: 20px; }</style>";
     
     // Verificar a estrutura da tabela
     $result = $pdo->query("PRAGMA table_info(contacts)");

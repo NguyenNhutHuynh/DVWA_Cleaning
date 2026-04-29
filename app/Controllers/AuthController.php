@@ -93,7 +93,11 @@ final class AuthController
                 ? 'Đăng ký thành công! Tài khoản worker đang chờ duyệt. Vui lòng đăng nhập sau khi được duyệt.'
                 : 'Đăng ký thành công! Vui lòng đăng nhập để tiếp tục.'
         );
-        self::redirect('/');
+        if (session_status() !== PHP_SESSION_ACTIVE) {
+            session_start();
+        }
+        $_SESSION['login_email'] = $email;
+        self::redirect('/login');
     }
 
     /**
@@ -101,9 +105,17 @@ final class AuthController
      */
     public static function showLogin(): void
     {
+        if (session_status() !== PHP_SESSION_ACTIVE) {
+            session_start();
+        }
+
+        $prefillEmail = (string)($_SESSION['login_email'] ?? '');
+        unset($_SESSION['login_email']);
+
         View::render('auth/login', [
             'csrf' => Csrf::token(),
             'error' => null,
+            'email' => $prefillEmail,
         ]);
     }
 
@@ -130,6 +142,7 @@ final class AuthController
             View::render('auth/login', [
                 'csrf' => Csrf::token(),
                 'error' => 'Không tìm thấy địa chỉ email.',
+                'email' => $email,
             ]);
             return;
         }
@@ -139,6 +152,7 @@ final class AuthController
             View::render('auth/login', [
                 'csrf' => Csrf::token(),
                 'error' => 'Mật khẩu không chính xác.',
+                'email' => $email,
             ]);
             return;
         }
@@ -150,6 +164,7 @@ final class AuthController
             View::render('auth/login', [
                 'csrf' => Csrf::token(),
                 'error' => $statusError,
+                'email' => $email,
             ]);
             return;
         }

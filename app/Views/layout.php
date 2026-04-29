@@ -7,6 +7,9 @@ use App\Core\Auth;
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Cleaning Service</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/assets/css/app.css">
   <!-- Leaflet Map Library CSS -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" integrity="sha512-h9FcoyWjrSciIFUuxfbMg8TABgkG91B6YGYRtDgGV7ZUnqN1nJikQjalLm65OEftzL6KY3E5IavtrHHMvg/ypA==" crossorigin="anonymous" referrerpolicy="no-referrer" />

@@ -276,7 +276,7 @@ use App\Core\View;
       </div>
 
       <div class="auth-form-group">
-        <button type="submit" class="auth-btn">Tạo tài khoản</button>
+        <button type="submit" class="auth-btn">Đăng ký</button>
       </div>
     </form>
 

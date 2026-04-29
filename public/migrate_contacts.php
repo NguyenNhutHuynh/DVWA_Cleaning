@@ -5,7 +5,7 @@ use App\Core\DB;
 try {
     $pdo = DB::pdo();
     
-    echo "<style>body { font-family: Arial; margin: 20px; }</style>";
+    echo "<style>body { font-family: 'Oswald', sans-serif; margin: 20px; }</style>";
     
     // Kiểm tra xem các cột đã tồn tại hay chưa (MySQL)
     $result = $pdo->query("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='contacts' AND TABLE_SCHEMA=DATABASE()");

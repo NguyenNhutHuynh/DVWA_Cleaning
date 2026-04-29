@@ -7,895 +7,628 @@ use App\Core\View;
 ?>
 
 <style>
-.service-detail-hero {
-    background: #ffffff;
-    color: #333;
-    padding: 0;
-    margin: 0;
-    position: relative;
-    overflow: hidden;
+.service-detail-page {
+    --primary: #2eaf7d;
+    --primary-dark: #16805a;
+    --primary-soft: #e8f7f0;
+    --bg-soft: #f7fdf9;
+    --text-dark: #1f2d3d;
+    --text-muted: #546e7a;
+    --border: #dcefe6;
+    --white: #ffffff;
+    --warning: #f59e0b;
+    --shadow-sm: 0 8px 24px rgba(31,45,61,0.08);
+    --shadow-md: 0 16px 40px rgba(31,45,61,0.12);
+
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 24px 16px 60px;
+    color: var(--text-dark);
 }
 
-.service-detail-container {
-    max-width: 1280px;
-    margin: 0 auto;
-    padding: 40px 20px;
+.service-detail-page * {
+    box-sizing: border-box;
+}
+
+.service-detail-hero {
     position: relative;
-    z-index: 1;
+    overflow: hidden;
+    border-radius: 30px;
+    background:
+        radial-gradient(circle at top left, rgba(46,175,125,0.18), transparent 34%),
+        linear-gradient(135deg, #f7fdf9 0%, #ffffff 48%, #e8f7f0 100%);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-sm);
+}
+
+.service-detail-hero::after {
+    content: "";
+    position: absolute;
+    right: -90px;
+    bottom: -90px;
+    width: 240px;
+    height: 240px;
+    border-radius: 50%;
+    background: rgba(46,175,125,0.12);
 }
 
 .service-detail-grid {
+    position: relative;
+    z-index: 1;
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 40px;
-    align-items: flex-start;
-    background: white;
-    border-radius: 8px;
-    padding: 20px;
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+    gap: 34px;
+    align-items: stretch;
+    padding: 34px;
 }
 
 .service-image-wrapper {
     position: relative;
-    background: #f5f5f5;
-    border-radius: 8px;
     overflow: hidden;
+    min-height: 480px;
+    border-radius: 26px;
+    background: var(--primary-soft);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-sm);
 }
 
 .service-image {
     width: 100%;
-    height: 480px;
+    height: 100%;
+    min-height: 480px;
     object-fit: cover;
-    border-radius: 8px;
     display: block;
-    transition: transform 0.3s ease;
+    transition: transform 0.45s ease;
 }
 
-.service-image:hover {
-    transform: scale(1.05);
+.service-image-wrapper:hover .service-image {
+    transform: scale(1.045);
 }
 
 .service-image-placeholder {
     width: 100%;
-    height: 480px;
-    background: linear-gradient(135deg, #f5f5f5 0%, #eee 100%);
-    border-radius: 8px;
+    min-height: 480px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 120px;
+    font-size: 112px;
+    background:
+        radial-gradient(circle at center, rgba(46,175,125,0.18), transparent 45%),
+        linear-gradient(135deg, #ffffff, var(--primary-soft));
+}
+
+.service-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 12px 4px;
+}
+
+.service-kicker {
+    width: fit-content;
+    margin: 0 0 14px;
+    padding: 7px 14px;
+    border-radius: 999px;
+    background: var(--primary-soft);
+    color: var(--primary-dark);
+    font-size: 13px;
+    font-weight: 900;
+    letter-spacing: 0.08em;
 }
 
 .service-info h1 {
-    font-size: 2rem;
-    margin: 0 0 16px 0;
-    font-weight: 600;
-    color: #333;
-    line-height: 1.3;
+    margin: 0 0 16px;
+    color: var(--text-dark);
+    font-size: clamp(32px, 5vw, 52px);
+    line-height: 1.08;
+    font-weight: 900;
+    letter-spacing: -0.05em;
 }
 
-.service-info p {
-    font-size: 0.95rem;
-    line-height: 1.5;
-    margin: 0 0 24px 0;
-    color: #666;
+.service-description {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 16px;
+    line-height: 1.7;
 }
 
 .service-meta-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-    margin: 28px 0 32px 0;
-    padding: 20px 0;
-    border-top: 1px solid #eee;
-    border-bottom: 1px solid #eee;
-}
-
-.service-meta-item {
-    background: white;
-    padding: 16px;
-    border-radius: 6px;
-    border: 1px solid #f0f0f0;
-    transition: all 0.2s ease;
-}
-
-.service-meta-item:hover {
-    border-color: #43c59e;
-    background: #f9fffe;
-}
-
-.service-meta-label {
-    font-size: 0.8rem;
-    color: #999;
-    margin-bottom: 6px;
-    font-weight: 500;
-}
-
-.service-meta-value {
-    font-size: 1.4rem;
-    font-weight: 700;
-    color: #43c59e;
-}
-
-.service-actions {
-    display: flex;
-    gap: 12px;
-    margin-top: 32px;
-}
-
-.service-actions a {
-    flex: 1;
-    padding: 14px 24px;
-    border-radius: 6px;
-    text-decoration: none;
-    font-weight: 600;
-    text-align: center;
-    transition: all 0.2s ease;
-    font-size: 0.95rem;
-    cursor: pointer;
-    border: none;
-}
-
-.service-actions .primary-btn {
-    background: #43c59e;
-    color: white;
-    box-shadow: 0 2px 4px rgba(67, 197, 158, 0.2);
-}
-
-.service-actions .primary-btn:hover {
-    background: #2eaf7d;
-    box-shadow: 0 4px 12px rgba(67, 197, 158, 0.3);
-    transform: translateY(-2px);
-}
-
-.service-actions .primary-btn:active {
-    transform: translateY(0);
-}
-
-.service-actions .secondary-btn {
-    background: white;
-    color: #43c59e;
-    border: 2px solid #43c59e;
-}
-
-.service-actions .secondary-btn:hover {
-    background: #f9fffe;
-    box-shadow: 0 2px 8px rgba(67, 197, 158, 0.15);
-}
-
-.service-details {
-    background: white;
-    border-radius: 8px;
-    padding: 40px;
-    margin-top: 30px;
-    position: relative;
-    z-index: 2;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.08);
-}
-
-.service-details h2 {
-    font-size: 1.5rem;
-    color: #333;
-    margin: 0 0 28px 0;
-    padding-bottom: 0;
-    border-bottom: none;
-    font-weight: 600;
-}
-
-.details-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 24px;
-    margin-bottom: 48px;
-}
-
-.detail-card {
-    padding: 20px;
-    background: #fafafa;
-    border-radius: 6px;
-    border-left: 4px solid #43c59e;
-    transition: all 0.2s ease;
-    cursor: pointer;
-}
-
-.detail-card:hover {
-    background: #f0f8f6;
-    box-shadow: 0 2px 8px rgba(67, 197, 158, 0.1);
-}
-
-.detail-card h3 {
-    color: #999;
-    margin: 0 0 10px 0;
-    font-size: 0.85rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    font-weight: 500;
-}
-
-.detail-card p {
-    color: #43c59e;
-    font-size: 1.2rem;
-    font-weight: 600;
-    margin: 0;
-}
-
-.reviews-section {
-    margin-top: 48px;
-}
-
-.reviews-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 28px;
-}
-
-.reviews-header h2 {
-    font-size: 1.5rem;
-    color: #333;
-    margin: 0;
-    font-weight: 600;
-}
-
-.review-stats {
-    display: flex;
-    align-items: center;
-    gap: 24px;
-}
-
-.rating-display {
-    text-align: center;
-    background: #f9fffe;
-    padding: 16px 24px;
-    border-radius: 6px;
-    border: 1px solid #e8f5f0;
-}
-
-.rating-stars {
-    font-size: 1.8rem;
-    margin-bottom: 6px;
-}
-
-.rating-number {
-    font-size: 1.3rem;
-    font-weight: 700;
-    color: #43c59e;
-}
-
-.rating-count {
-    font-size: 0.8rem;
-    color: #999;
-    margin-top: 4px;
-}
-
-.reviews-list {
-    display: grid;
-    gap: 12px;
-}
-
-.review-item {
-    background: white;
-    border: 1px solid #f0f0f0;
-    border-radius: 6px;
-    padding: 20px;
-    transition: all 0.2s ease;
-}
-
-.review-item:hover {
-    border-color: #43c59e;
-    box-shadow: 0 2px 8px rgba(67, 197, 158, 0.08);
-}
-
-.review-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: start;
-    margin-bottom: 10px;
-}
-
-.review-name {
-    font-weight: 600;
-    color: #333;
-    font-size: 0.95rem;
-}
-.service-detail-hero {
-    background: #ffffff;
-    color: var(--ui-text);
-    padding: 0;
-    margin: 0;
-    position: relative;
-    overflow: hidden;
-}
-
-.service-detail-container {
-    max-width: 1280px;
-    margin: 0 auto;
-    padding: 44px 20px;
-    position: relative;
-    z-index: 1;
-}
-
-.service-detail-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 44px;
-    align-items: flex-start;
-    background: #ffffff;
-    border-radius: var(--ui-radius-md);
-    padding: 0;
-}
-
-.service-image-wrapper {
-    position: relative;
-    background: var(--ui-surface);
-    border-radius: var(--ui-radius-md);
-    overflow: hidden;
-    box-shadow: var(--ui-shadow-md);
-}
-
-.service-image {
-    width: 100%;
-    height: 480px;
-    object-fit: cover;
-    border-radius: var(--ui-radius-md);
-    display: block;
-    transition: transform 0.3s ease;
-}
-
-.service-image:hover {
-    transform: scale(1.05);
-}
-
-.service-image-placeholder {
-    width: 100%;
-    height: 480px;
-    background: linear-gradient(135deg, var(--ui-surface) 0%, rgba(217, 236, 226, 0.5) 100%);
-    border-radius: var(--ui-radius-md);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 120px;
-}
-
-.service-info h1 {
-    font-size: 1.95rem;
-    margin: 0 0 14px 0;
-    font-weight: 700;
-    color: var(--ui-text);
-    line-height: 1.3;
-    letter-spacing: -0.5px;
-}
-
-.service-info p {
-    font-size: 15px;
-    line-height: 1.6;
-    margin: 0 0 24px 0;
-    color: #5a6c7a;
-}
-
-.service-meta-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-    margin: 24px 0 28px 0;
-    padding: 0;
-    border-top: none;
-    border-bottom: none;
-}
-
-.service-meta-item {
-    background: var(--ui-surface);
-    padding: 14px 16px;
-    border-radius: var(--ui-radius-sm);
-    border: 1px solid var(--ui-border);
-    transition: all 0.18s ease;
-}
-
-.service-meta-item:hover {
-    border-color: var(--ui-primary);
-    background: #f2fbf6;
-    box-shadow: 0 2px 8px rgba(46, 175, 125, 0.12);
-}
-
-.service-meta-label {
-    font-size: 12px;
-    color: #7a8a96;
-    margin-bottom: 6px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.4px;
-}
-
-.service-meta-value {
-    font-size: 1.35rem;
-    font-weight: 700;
-    color: var(--ui-primary);
-    letter-spacing: -0.3px;
-}
-
-.service-actions {
-    display: flex;
-    gap: 12px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
     margin-top: 28px;
 }
 
-.service-actions a {
-    flex: 1;
-    padding: 11px 24px;
-    border-radius: var(--ui-radius-sm);
-    text-decoration: none;
-    font-weight: 700;
-    text-align: center;
-    transition: all 0.18s ease;
-    font-size: 15px;
-    cursor: pointer;
+.service-meta-item {
+    padding: 18px;
+    border-radius: 20px;
+    background: var(--white);
+    border: 1px solid var(--border);
+    box-shadow: 0 6px 18px rgba(31,45,61,0.05);
+    transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+}
+
+.service-meta-item:hover {
+    transform: translateY(-3px);
+    border-color: rgba(46,175,125,0.45);
+    box-shadow: var(--shadow-sm);
+}
+
+.service-meta-label {
+    margin-bottom: 7px;
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.service-meta-value {
+    color: var(--primary);
+    font-size: clamp(20px, 2.5vw, 28px);
+    font-weight: 900;
+    line-height: 1.2;
+    letter-spacing: -0.03em;
+}
+
+.service-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 30px;
+}
+
+.service-btn,
+.home-btn {
+    min-height: 46px;
+    padding: 12px 24px;
+    border-radius: 999px;
     border: none;
-    min-height: 44px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    text-decoration: none;
+    font-size: 15px;
+    font-weight: 900;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
 
-.service-actions .primary-btn {
-    background: var(--ui-primary);
+.service-btn:hover,
+.home-btn:hover {
+    transform: translateY(-2px);
+}
+
+.primary-btn,
+.home-btn {
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
     color: #ffffff;
-    box-shadow: 0 3px 12px rgba(46, 175, 125, 0.2);
+    box-shadow: 0 10px 22px rgba(46,175,125,0.22);
 }
 
-.service-actions .primary-btn:hover {
-    background: #268c66;
-    box-shadow: 0 4px 16px rgba(46, 175, 125, 0.28);
-    transform: translateY(-2px);
-}
-
-.service-actions .primary-btn:active {
-    transform: translateY(0);
-}
-
-.service-actions .secondary-btn {
+.secondary-btn {
     background: #ffffff;
-    color: var(--ui-primary);
-    border: 1.5px solid var(--ui-primary);
-    box-shadow: 0 2px 8px rgba(46, 175, 125, 0.1);
+    color: var(--primary);
+    border: 1.5px solid var(--primary);
 }
 
-.service-actions .secondary-btn:hover {
-    background: var(--ui-surface);
-    box-shadow: 0 3px 12px rgba(46, 175, 125, 0.15);
-    transform: translateY(-2px);
+.secondary-btn:hover {
+    background: var(--primary-soft);
+    box-shadow: var(--shadow-sm);
 }
 
-.service-details {
-    background: #ffffff;
-    border-radius: var(--ui-radius-md);
-    padding: 40px;
-    margin-top: 32px;
-    position: relative;
-    z-index: 2;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-    border: 1px solid var(--ui-border);
+.service-content-card {
+    margin-top: 34px;
+    padding: 34px;
+    border-radius: 28px;
+    background: var(--white);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-sm);
 }
 
-.service-details h2 {
-    font-size: 1.45rem;
-    color: var(--ui-text);
-    margin: 0 0 24px 0;
-    padding-bottom: 0;
-    border-bottom: none;
-    font-weight: 700;
-    letter-spacing: -0.3px;
+.section-heading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    margin-bottom: 24px;
+    text-align: center;
+}
+
+.section-heading > div {
+    width: 100%;
+}
+
+.section-heading h2 {
+    margin: 0;
+    color: var(--text-dark);
+    font-size: clamp(24px, 3vw, 34px);
+    font-weight: 900;
+    letter-spacing: -0.03em;
+    text-align: center;
+}
+
+.section-subtitle {
+    margin: 8px auto 0;
+    color: var(--text-muted);
+    line-height: 1.6;
+    text-align: center;
 }
 
 .details-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 16px;
-    margin-bottom: 44px;
 }
 
 .detail-card {
-    padding: 18px;
-    background: var(--ui-surface);
-    border-radius: var(--ui-radius-sm);
-    border: 1px solid var(--ui-border);
-    border-left: 4px solid var(--ui-primary);
-    transition: all 0.18s ease;
-    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    padding: 22px;
+    border-radius: 22px;
+    background: linear-gradient(135deg, #ffffff, var(--bg-soft));
+    border: 1px solid var(--border);
+    box-shadow: 0 6px 18px rgba(31,45,61,0.05);
+    transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+    text-align: center;
+}
+
+.detail-card::after {
+    content: "";
+    position: absolute;
+    right: -34px;
+    bottom: -34px;
+    width: 92px;
+    height: 92px;
+    border-radius: 50%;
+    background: rgba(46,175,125,0.09);
 }
 
 .detail-card:hover {
-    background: #f2fbf6;
-    border-color: var(--ui-primary);
-    box-shadow: 0 3px 12px rgba(46, 175, 125, 0.1);
-    transform: translateY(-2px);
+    transform: translateY(-4px);
+    border-color: rgba(46,175,125,0.45);
+    box-shadow: var(--shadow-md);
+}
+
+.detail-card h3,
+.detail-card p {
+    position: relative;
+    z-index: 1;
+    text-align: center;
 }
 
 .detail-card h3 {
-    color: #7a8a96;
-    margin: 0 0 8px 0;
-    font-size: 12px;
+    margin: 0 0 9px;
+    color: var(--text-muted);
+    font-size: 13px;
+    font-weight: 900;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
-    font-weight: 700;
+    letter-spacing: 0.05em;
 }
 
 .detail-card p {
-    color: var(--ui-primary);
-    font-size: 1.25rem;
-    font-weight: 700;
     margin: 0;
-    letter-spacing: -0.3px;
+    color: var(--primary);
+    font-size: 22px;
+    font-weight: 900;
+    line-height: 1.35;
 }
 
 .reviews-section {
-    margin-top: 44px;
-}
-
-.reviews-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 24px;
-    gap: 20px;
-}
-
-.reviews-header h2 {
-    font-size: 1.45rem;
-    color: var(--ui-text);
-    margin: 0;
-    font-weight: 700;
-    letter-spacing: -0.3px;
+    margin-top: 34px;
 }
 
 .review-stats {
     display: flex;
+    justify-content: center;
     align-items: center;
     gap: 16px;
 }
 
 .rating-display {
+    min-width: 130px;
+    padding: 14px 18px;
+    border-radius: 18px;
+    background: var(--primary-soft);
+    border: 1px solid #ccefe0;
     text-align: center;
-    background: var(--ui-surface);
-    padding: 14px 20px;
-    border-radius: var(--ui-radius-sm);
-    border: 1px solid var(--ui-border);
-    white-space: nowrap;
-}
-
-.rating-stars {
-    font-size: 1.8rem;
-    margin-bottom: 4px;
 }
 
 .rating-number {
-    font-size: 1.3rem;
-    font-weight: 700;
-    color: var(--ui-primary);
-    letter-spacing: -0.2px;
+    color: var(--primary);
+    font-size: 26px;
+    font-weight: 900;
+    line-height: 1;
 }
 
 .rating-count {
+    margin-top: 5px;
+    color: var(--text-muted);
     font-size: 13px;
-    color: #7a8a96;
-    margin-top: 3px;
+    font-weight: 800;
 }
 
 .reviews-list {
     display: grid;
-    gap: 12px;
+    gap: 14px;
 }
 
 .review-item {
-    background: #ffffff;
-    border: 1px solid var(--ui-border);
-    border-radius: var(--ui-radius-sm);
-    padding: 18px;
-    transition: all 0.18s ease;
+    padding: 20px;
+    border-radius: 20px;
+    background: #fcfffd;
+    border: 1px solid var(--border);
+    transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
 }
 
 .review-item:hover {
-    border-color: var(--ui-primary);
-    box-shadow: 0 2px 8px rgba(46, 175, 125, 0.08);
+    transform: translateY(-3px);
+    border-color: rgba(46,175,125,0.45);
+    box-shadow: var(--shadow-sm);
 }
 
 .review-header {
     display: flex;
     justify-content: space-between;
-    align-items: start;
+    gap: 16px;
+    align-items: flex-start;
     margin-bottom: 10px;
-    gap: 12px;
 }
 
 .review-name {
-    font-weight: 700;
-    color: var(--ui-text);
-    font-size: 14px;
+    color: var(--text-dark);
+    font-size: 15px;
+    font-weight: 900;
 }
+
 .review-date {
-    font-size: 0.8rem;
-    color: #999;
+    color: #78909c;
+    font-size: 13px;
+    white-space: nowrap;
 }
 
 .review-rating {
-    color: #ffc107;
     margin-bottom: 10px;
-    font-size: 0.9rem;
+    color: var(--warning);
+    font-size: 15px;
+}
+
+.review-rating span {
+    color: var(--text-muted);
+    margin-left: 8px;
 }
 
 .review-comment {
-    color: #666;
-    font-style: italic;
     margin: 0;
-    font-size: 0.9rem;
-    line-height: 1.4;
+    color: var(--text-muted);
+    font-style: italic;
+    line-height: 1.65;
 }
 
 .no-reviews {
+    padding: 34px 22px;
+    border-radius: 22px;
+    background: var(--bg-soft);
+    border: 1px dashed #cfe3d8;
+    color: var(--text-muted);
     text-align: center;
-    padding: 50px 30px;
-    color: #999;
-    background: #fafafa;
-    border-radius: 6px;
-    border: 1px solid #f0f0f0;
 }
-.review-date {
-    font-size: 13px;
-    color: #7a8a96;
-    flex-shrink: 0;
-    .service-detail-cta {
-        background: linear-gradient(135deg, var(--ui-primary) 0%, #268c66 100%);
-        color: #ffffff;
-        padding: 48px 24px;
-        text-align: center;
-        margin-top: 40px;
-        border-radius: var(--ui-radius-md);
-        box-shadow: 0 4px 16px rgba(46, 175, 125, 0.2);
-    }
 
-    .service-detail-cta h2 {
-        margin: 0 0 14px 0;
-        font-size: 1.75rem;
-        font-weight: 700;
-        letter-spacing: -0.5px;
-    }
-
-    .service-detail-cta p {
-        margin: 0 0 26px 0;
-        font-size: 15px;
-        opacity: 0.95;
-        line-height: 1.5;
-    }
-
-    .service-detail-cta .home-btn {
-        background: #ffffff;
-        color: var(--ui-primary) !important;
-        font-weight: 700;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        min-width: 160px;
-    }
-
-    .service-detail-cta .home-btn:hover {
-        background: #f2fbf6;
-        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
-        transform: translateY(-2px);
-    }
-
-    @media (max-width: 768px) {
-        .service-detail-grid {
-            grid-template-columns: 1fr;
-            gap: 24px;
-            padding: 0;
-        }
-    
-        .service-image {
-            height: 360px;
-        }
-    
-        .service-image-placeholder {
-            height: 360px;
-            font-size: 80px;
-        }
-    
-        .service-info h1 {
-            font-size: 1.5rem;
-        }
-    
-        .service-details {
-            padding: 24px 18px;
-            margin-top: 24px;
-        }
-    
-        .service-meta-grid {
-            grid-template-columns: 1fr;
-            gap: 12px;
-        }
-    
-        .details-grid {
-            grid-template-columns: 1fr;
-            gap: 12px;
-        }
-    
-        .reviews-header {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 16px;
-        }
-    
-        .service-actions {
-            flex-direction: column;
-        }
-    
-        .service-detail-cta {
-            padding: 32px 18px;
-            margin-top: 32px;
-        }
-    
-        .service-detail-cta h2 {
-            font-size: 1.4rem;
-        }
-    }
-    }
-    
-    .service-details {
-        padding: 20px;
-        margin-top: 20px;
-    }
-    
-    .service-meta-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .details-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .reviews-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 16px;
-    }
-    
-    .service-actions {
-        flex-direction: column;
-    }
+.no-reviews p {
+    margin: 0;
+    line-height: 1.65;
 }
-@media (max-width: 768px) {
+
+.service-detail-cta {
+    margin-top: 34px;
+    padding: 46px 24px;
+    border-radius: 28px;
+    background:
+        radial-gradient(circle at top left, rgba(255,255,255,0.18), transparent 34%),
+        linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: #ffffff;
+    text-align: center;
+    box-shadow: var(--shadow-md);
+}
+
+.service-detail-cta h2 {
+    margin: 0 0 12px;
+    color: #ffffff;
+    font-size: clamp(26px, 4vw, 38px);
+    font-weight: 900;
+    letter-spacing: -0.04em;
+}
+
+.service-detail-cta p {
+    margin: 0 0 24px;
+    color: rgba(255,255,255,0.88);
+    line-height: 1.6;
+}
+
+.service-detail-cta .home-btn {
+    background: #ffffff;
+    color: var(--primary-dark);
+    box-shadow: 0 10px 24px rgba(31,45,61,0.18);
+}
+
+@media (max-width: 900px) {
     .service-detail-grid {
         grid-template-columns: 1fr;
         gap: 24px;
+        padding: 24px;
+    }
+
+    .service-image-wrapper,
+    .service-image,
+    .service-image-placeholder {
+        min-height: 380px;
+    }
+
+    .service-info {
         padding: 0;
     }
-    
-    .service-image {
-        height: 360px;
+}
+
+@media (max-width: 768px) {
+    .service-detail-page {
+        padding: 16px 12px 44px;
     }
-    
+
+    .service-detail-hero {
+        border-radius: 22px;
+    }
+
+    .service-detail-grid {
+        padding: 18px;
+    }
+
+    .service-image-wrapper,
+    .service-image,
     .service-image-placeholder {
-        height: 360px;
-        font-size: 80px;
+        min-height: 300px;
     }
-    
-    .service-info h1 {
-        font-size: 1.5rem;
+
+    .service-image-placeholder {
+        font-size: 76px;
     }
-    
-    .service-details {
-        padding: 24px 18px;
-        margin-top: 24px;
-    }
-    
+
     .service-meta-grid {
         grid-template-columns: 1fr;
-        gap: 12px;
     }
-    
-    .details-grid {
-        grid-template-columns: 1fr;
-        gap: 12px;
+
+    .service-content-card {
+        padding: 22px;
+        border-radius: 22px;
     }
-    
-    .reviews-header {
+
+    .section-heading {
         flex-direction: column;
-        align-items: flex-start;
-        gap: 16px;
+        align-items: center;
     }
-    
-    .service-actions {
+
+    .review-header {
         flex-direction: column;
+        gap: 6px;
+    }
+
+    .review-date {
+        white-space: normal;
+    }
+
+    .service-actions,
+    .service-btn,
+    .home-btn {
+        width: 100%;
     }
 }
 </style>
 
-<section class="home-container" style="padding: 0;">
-    <!-- Hero Section with Image -->
+<section class="home-container service-detail-page">
     <section class="service-detail-hero">
-        <div class="service-detail-container">
-            <div class="service-detail-grid">
-                <div class="service-image-wrapper">
+        <div class="service-detail-grid">
+            <div class="service-image-wrapper">
                 <?php if (!empty($service['image_path'])): ?>
-                    <img 
-                        src="<?= View::e($service['image_path']) ?>" 
-                        alt="<?= View::e($service['name']) ?>" 
+                    <img
+                        src="<?= View::e($service['image_path']) ?>"
+                        alt="<?= View::e($service['name']) ?>"
                         class="service-image"
                         onerror="this.style.display='none'; this.parentElement.querySelector('.service-image-placeholder')?.style.display='flex';"
                     >
                 <?php endif; ?>
+
                 <div class="service-image-placeholder" <?php if (!empty($service['image_path'])) echo 'style="display:none;"'; ?>>
                     <?= View::e($service['icon'] ?: '🧹') ?>
                 </div>
             </div>
-                
-                <div class="service-info">
-                    <h1><?= View::e($service['name']) ?></h1>
-                    <p><?= View::e($service['description']) ?></p>
-                    
-                    <div class="service-meta-grid">
-                        <div class="service-meta-item">
-                            <div class="service-meta-label">💰 Giá cơ bản</div>
-                            <div class="service-meta-value"><?= number_format((int)$service['price'], 0, ',', '.') ?>đ<?= $service['unit'] ? '/' . View::e($service['unit']) : '' ?></div>
+
+            <div class="service-info">
+                <p class="service-kicker">CHI TIẾT DỊCH VỤ</p>
+                <h1><?= View::e($service['name']) ?></h1>
+                <p class="service-description"><?= View::e($service['description']) ?></p>
+
+                <div class="service-meta-grid">
+                    <div class="service-meta-item">
+                        <div class="service-meta-label">💰 Giá cơ bản</div>
+                        <div class="service-meta-value">
+                            <?= number_format((int)$service['price'], 0, ',', '.') ?>đ<?= $service['unit'] ? '/' . View::e($service['unit']) : '' ?>
                         </div>
-                        <?php if (!empty($service['duration'])): ?>
-                            <div class="service-meta-item">
-                                <div class="service-meta-label">⏱️ Thời gian</div>
-                                <div class="service-meta-value"><?= View::e($service['duration']) ?></div>
-                            </div>
-                        <?php endif; ?>
-                        <?php if (!empty($service['minimum'])): ?>
-                            <div class="service-meta-item">
-                                <div class="service-meta-label">📋 Tối thiểu</div>
-                                <div class="service-meta-value"><?= number_format((int)$service['minimum'], 0, ',', '.') ?>đ</div>
-                            </div>
-                        <?php endif; ?>
-                        <?php if ($averageRating !== null): ?>
-                            <div class="service-meta-item">
-                                <div class="service-meta-label">⭐ Đánh giá</div>
-                                <div class="service-meta-value"><?= View::e((string)$averageRating) ?>/5</div>
-                            </div>
-                        <?php endif; ?>
                     </div>
-                    
-                    <div class="service-actions">
-                        <a href="/book?service=<?= (int)$service['id'] ?>" class="primary-btn">Đặt lịch ngay</a>
-                        <a href="/services" class="secondary-btn">← Quay lại</a>
-                    </div>
+
+                    <?php if (!empty($service['duration'])): ?>
+                        <div class="service-meta-item">
+                            <div class="service-meta-label">⏱️ Thời gian</div>
+                            <div class="service-meta-value"><?= View::e($service['duration']) ?></div>
+                        </div>
+                    <?php endif; ?>
+
+                    <?php if (!empty($service['minimum'])): ?>
+                        <div class="service-meta-item">
+                            <div class="service-meta-label">📋 Tối thiểu</div>
+                            <div class="service-meta-value"><?= number_format((int)$service['minimum'], 0, ',', '.') ?>đ</div>
+                        </div>
+                    <?php endif; ?>
+
+                    <?php if ($averageRating !== null): ?>
+                        <div class="service-meta-item">
+                            <div class="service-meta-label">⭐ Đánh giá</div>
+                            <div class="service-meta-value"><?= View::e((string)$averageRating) ?>/5</div>
+                        </div>
+                    <?php endif; ?>
+                </div>
+
+                <div class="service-actions">
+                    <a href="/book?service=<?= (int)$service['id'] ?>" class="service-btn primary-btn">Đặt lịch ngay</a>
+                    <a href="/services" class="service-btn secondary-btn">← Quay lại dịch vụ</a>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Details Section -->
-    <section class="service-details">
-        <h2>ℹ️ Thông tin chi tiết</h2>
+    <section class="service-content-card">
+        <div class="section-heading">
+            <div>
+                <h2>Thông tin chi tiết</h2>
+                <p class="section-subtitle">Các thông tin quan trọng giúp bạn chọn dịch vụ phù hợp.</p>
+            </div>
+        </div>
+
         <div class="details-grid">
             <div class="detail-card">
                 <h3>💰 Mức giá</h3>
                 <p><?= number_format((int)$service['price'], 0, ',', '.') ?>đ<?= $service['unit'] ? '/' . View::e($service['unit']) : '' ?></p>
             </div>
+
             <?php if (!empty($service['duration'])): ?>
                 <div class="detail-card">
                     <h3>⏱️ Khoảng thời gian</h3>
                     <p><?= View::e($service['duration']) ?></p>
                 </div>
             <?php endif; ?>
+
             <?php if (!empty($service['minimum'])): ?>
                 <div class="detail-card">
                     <h3>📋 Chi phí tối thiểu</h3>
                     <p><?= number_format((int)$service['minimum'], 0, ',', '.') ?>đ</p>
                 </div>
             <?php endif; ?>
+
             <div class="detail-card">
                 <h3>📱 Hỗ trợ</h3>
                 <p>24/7</p>
             </div>
         </div>
 
-        <!-- Reviews Section -->
         <div class="reviews-section">
-            <div class="reviews-header">
-                <h2>⭐ Đánh giá từ khách hàng</h2>
+            <div class="section-heading">
+                <div>
+                    <h2>Đánh giá từ khách hàng</h2>
+                    <p class="section-subtitle">Phản hồi thực tế sau khi khách hàng sử dụng dịch vụ.</p>
+                </div>
+
                 <?php if ($averageRating !== null): ?>
                     <div class="review-stats">
                         <div class="rating-display">
-                            <div class="rating-number"><?= View::e((string)$averageRating) ?></div>
+                            <div class="rating-number"><?= View::e((string)$averageRating) ?>/5</div>
                             <div class="rating-count"><?= (int)$totalReviews ?> đánh giá</div>
                         </div>
                     </div>
@@ -914,10 +647,12 @@ use App\Core\View;
                                 <span class="review-name"><?= View::e((string)($review['customer_name'] ?? 'Khách hàng')) ?></span>
                                 <span class="review-date"><?= View::e((string)($review['created_at'] ?? '')) ?></span>
                             </div>
+
                             <div class="review-rating">
                                 <?= str_repeat('⭐', (int)($review['rating'] ?? 0)) ?>
-                                <span style="color: #999; margin-left: 8px;">(<?= (int)($review['rating'] ?? 0) ?>/5)</span>
+                                <span>(<?= (int)($review['rating'] ?? 0) ?>/5)</span>
                             </div>
+
                             <?php if (!empty($review['comment'])): ?>
                                 <p class="review-comment">"<?= View::e((string)$review['comment']) ?>"</p>
                             <?php endif; ?>
@@ -928,11 +663,9 @@ use App\Core\View;
         </div>
     </section>
 
-    <!-- CTA Section -->
-    <!-- CTA Section -->
     <section class="service-detail-cta">
         <h2>Sẵn sàng đặt dịch vụ?</h2>
-        <p>Đặt dịch vụ ngay hôm nay và nhận ưu đãi đặc biệt từ chúng tôi</p>
+        <p>Đặt dịch vụ ngay hôm nay và nhận ưu đãi đặc biệt từ chúng tôi.</p>
         <a href="/book?service=<?= (int)$service['id'] ?>" class="home-btn">💳 Đặt lịch ngay</a>
     </section>
 </section>

@@ -494,136 +494,76 @@ use App\Core\View;
     const btn = document.getElementById('exportPdfBtn');
     if (!btn) return;
 
+    const originalButtonText = btn.textContent;
+    const hiddenControls = [];
+
     btn.disabled = true;
     btn.textContent = '⏳ Đang xử lý...';
 
     try {
+      const exportRoot = document.querySelector('.admin-stats');
+      if (!exportRoot) {
+        throw new Error('Không tìm thấy khu vực thống kê để xuất PDF.');
+      }
+
       const { jsPDF } = window.jspdf;
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
       const margin = 15;
+      const usableWidth = pageWidth - margin * 2;
+      const usableHeight = pageHeight - margin * 2;
 
-      pdf.setFontSize(20);
-      pdf.setTextColor(46, 175, 125);
-      pdf.text('BÁO CÁO THỐNG KÊ HỆ THỐNG', pageWidth / 2, margin, { align: 'center' });
-
-      pdf.setFontSize(12);
-      pdf.setTextColor(100);
-      pdf.text('Ngày xuất: ' + new Date().toLocaleDateString('vi-VN'), pageWidth / 2, margin + 7, { align: 'center' });
-
-      let yOffset = margin + 20;
-
-      pdf.setFontSize(14);
-      pdf.setTextColor(0);
-      pdf.text('Tổng quan:', margin, yOffset);
-      yOffset += 8;
-
-      pdf.setFontSize(11);
-      const overview = [
-        `Dịch vụ: ${statsData.service_count}`,
-        `Đơn đặt: ${statsData.booking_count}`,
-        `Người dùng: ${statsData.user_count}`,
-        `Tin nhắn: ${statsData.contact_count}`,
-      ];
-      overview.forEach(text => {
-        pdf.text('• ' + text, margin + 5, yOffset);
-        yOffset += 6;
+      const controls = exportRoot.querySelectorAll('.stats-toggle-btn, #refreshBtn, #exportPdfBtn');
+      controls.forEach((control) => {
+        control.dataset.pdfHidden = '1';
+        control.style.visibility = 'hidden';
+        hiddenControls.push(control);
       });
 
-      yOffset += 5;
-
-      const revenueStats = [
-        `Tổng doanh thu: ${formatCurrency(statsData.total_revenue)}`,
-        `Giá trị đơn TB: ${formatCurrency(statsData.average_order_value)}`,
-        `Tỷ lệ chuyển đổi: ${statsData.conversion_rate}%`,
-        `Tỷ lệ hoàn thành: ${statsData.completion_rate}%`,
-      ];
-      revenueStats.forEach(text => {
-        pdf.text('• ' + text, margin + 5, yOffset);
-        yOffset += 6;
+      const capture = await html2canvas(exportRoot, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#f7fdf9',
       });
 
-      yOffset += 10;
+      const sliceHeight = Math.max(1, Math.floor((capture.width * usableHeight) / usableWidth));
+      let renderedHeight = 0;
+      let pageIndex = 0;
 
-      const canvasRevenue = document.getElementById('monthlyRevenueChart');
-      if (canvasRevenue) {
-        if (yOffset + 80 > pageHeight - margin) {
-          pdf.addPage();
-          yOffset = margin;
+      while (renderedHeight < capture.height) {
+        const currentSliceHeight = Math.min(sliceHeight, capture.height - renderedHeight);
+        const pageCanvas = document.createElement('canvas');
+        pageCanvas.width = capture.width;
+        pageCanvas.height = currentSliceHeight;
+
+        const context = pageCanvas.getContext('2d');
+        if (!context) {
+          throw new Error('Không thể tạo canvas cho PDF.');
         }
 
-        pdf.setFontSize(14);
-        pdf.text('Doanh thu theo tháng:', margin, yOffset);
-        yOffset += 8;
+        context.drawImage(
+          capture,
+          0,
+          renderedHeight,
+          capture.width,
+          currentSliceHeight,
+          0,
+          0,
+          capture.width,
+          currentSliceHeight
+        );
 
-        const imgDataRevenue = canvasRevenue.toDataURL('image/png');
-        const imgWidth = pageWidth - 2 * margin;
-        const imgHeight = (canvasRevenue.height / canvasRevenue.width) * imgWidth;
-
-        if (yOffset + imgHeight > pageHeight - margin) {
+        if (pageIndex > 0) {
           pdf.addPage();
-          yOffset = margin;
         }
 
-        pdf.addImage(imgDataRevenue, 'PNG', margin, yOffset, imgWidth, imgHeight);
-        yOffset += imgHeight + 10;
-      }
+        const pageImage = pageCanvas.toDataURL('image/png');
+        const renderedSliceHeight = (currentSliceHeight * usableWidth) / capture.width;
+        pdf.addImage(pageImage, 'PNG', margin, margin, usableWidth, renderedSliceHeight);
 
-      const canvas1 = document.getElementById('monthlyBookingsChart');
-      if (canvas1) {
-        pdf.setFontSize(14);
-        pdf.text('Xu hướng đơn đặt:', margin, yOffset);
-        yOffset += 8;
-
-        const imgData1 = canvas1.toDataURL('image/png');
-        const imgWidth = pageWidth - 2 * margin;
-        const imgHeight = (canvas1.height / canvas1.width) * imgWidth;
-
-        if (yOffset + imgHeight > pageHeight - margin) {
-          pdf.addPage();
-          yOffset = margin;
-        }
-
-        pdf.addImage(imgData1, 'PNG', margin, yOffset, imgWidth, imgHeight);
-        yOffset += imgHeight + 10;
-      }
-
-      const canvas2 = document.getElementById('bookingStatusChart');
-      if (canvas2) {
-        if (yOffset + 80 > pageHeight - margin) {
-          pdf.addPage();
-          yOffset = margin;
-        }
-
-        pdf.setFontSize(14);
-        pdf.text('Trạng thái đơn đặt:', margin, yOffset);
-        yOffset += 8;
-
-        const imgData2 = canvas2.toDataURL('image/png');
-        const imgWidth = (pageWidth - 2 * margin) * 0.6;
-        const imgHeight = (canvas2.height / canvas2.width) * imgWidth;
-
-        pdf.addImage(imgData2, 'PNG', margin + (pageWidth - 2*margin - imgWidth)/2, yOffset, imgWidth, imgHeight);
-        yOffset += imgHeight + 10;
-      }
-
-      const canvas3 = document.getElementById('userRoleChart');
-      if (canvas3) {
-        if (yOffset + 80 > pageHeight - margin) {
-          pdf.addPage();
-          yOffset = margin;
-        }
-
-        pdf.setFontSize(14);
-        pdf.text('Phân bố người dùng:', margin, yOffset);
-        yOffset += 8;
-
-        const imgData3 = canvas3.toDataURL('image/png');
-        const imgWidth = (pageWidth - 2 * margin) * 0.6;
-        const imgHeight = (canvas3.height / canvas3.width) * imgWidth;
-
-        pdf.addImage(imgData3, 'PNG', margin + (pageWidth - 2*margin - imgWidth)/2, yOffset, imgWidth, imgHeight);
+        renderedHeight += currentSliceHeight;
+        pageIndex += 1;
       }
 
       const fileName = `Bao-cao-thong-ke-${new Date().toISOString().split('T')[0]}.pdf`;
@@ -632,13 +572,18 @@ use App\Core\View;
       btn.textContent = '✅ Tải xuống thành công!';
       setTimeout(() => {
         btn.disabled = false;
-        btn.textContent = '📥 Tải xuống PDF';
+        btn.textContent = originalButtonText;
       }, 2000);
     } catch (error) {
       console.error('Lỗi khi xuất PDF:', error);
       alert('Có lỗi xảy ra khi xuất PDF. Vui lòng thử lại.');
       btn.disabled = false;
-      btn.textContent = '📥 Tải xuống PDF';
+      btn.textContent = originalButtonText;
+    } finally {
+      hiddenControls.forEach((control) => {
+        control.style.visibility = '';
+        delete control.dataset.pdfHidden;
+      });
     }
   });
 })();

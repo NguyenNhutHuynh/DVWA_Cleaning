@@ -21,7 +21,7 @@ try {
     $pdo = DB::pdo();
     $count = 0;
     
-    echo "<style>body { font-family: Arial; margin: 20px; }</style>";
+    echo "<style>body { font-family: 'Oswald', sans-serif; margin: 20px; }</style>";
     
     foreach ($updates as $name => $path) {
         $stmt = $pdo->prepare("UPDATE services SET image_path = :path WHERE name = :name");

@@ -326,27 +326,27 @@ use App\Core\View;
 
   <div class="actions-grid">
     <a href="/admin/users" class="action-card">
-      <h3>👥 Quản lý người dùng</h3>
+      <h3>Quản lý người dùng</h3>
       <p>Xem, khóa, mở khóa và duyệt tài khoản người dùng</p>
     </a>
 
     <a href="/admin/bookings" class="action-card">
-      <h3>🗓️ Quản lý lịch đặt</h3>
+      <h3>Quản lý lịch đặt</h3>
       <p>Xác nhận, hủy và cập nhật trạng thái đơn đặt</p>
     </a>
 
     <a href="/admin/services" class="action-card">
-      <h3>🧹 Quản lý dịch vụ</h3>
+      <h3>Quản lý dịch vụ</h3>
       <p>Thêm, sửa, xóa dịch vụ và cập nhật giá cả</p>
     </a>
 
     <a href="/admin/moderation" class="action-card">
-      <h3>✅ Kiểm duyệt nội dung</h3>
+      <h3>Kiểm duyệt nội dung</h3>
       <p>Xem xét tin nhắn liên hệ và đánh giá từ khách hàng</p>
     </a>
 
     <a href="/admin/stats" class="action-card">
-      <h3>📈 Báo cáo thống kê</h3>
+      <h3>Báo cáo thống kê</h3>
       <p>Phân tích doanh thu, hiệu suất và xu hướng hệ thống</p>
     </a>
   </div>

@@ -32,17 +32,53 @@ $comboLinks = $comboLinks ?? [
     box-sizing: border-box;
 }
 
+/* ===== HERO BANNER SLIDER ===== */
 .home-page-hero {
     position: relative;
     overflow: hidden;
+    min-height: 430px;
     padding: 70px 28px;
     border-radius: 28px;
     text-align: center;
-    background:
-        linear-gradient(135deg, rgba(247,253,249,0.92), rgba(232,247,240,0.92)),
-        url('/assets/img/banner.png') center/cover no-repeat;
+    background: #e8f7f0;
     border: 1px solid var(--border);
-    box-shadow: var(--shadow-sm);
+    box-shadow: var(--shadow-md);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.hero-slider {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+}
+
+.hero-slide {
+    position: absolute;
+    inset: 0;
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+    opacity: 0;
+    transform: scale(1.04);
+    transition: opacity 0.8s ease, transform 1.2s ease;
+}
+
+.hero-slide.is-active {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.home-page-hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background:
+        linear-gradient(135deg, rgba(247,253,249,0.62), rgba(232,247,240,0.54)),
+        radial-gradient(circle at center, rgba(255,255,255,0.22), transparent 58%);
 }
 
 .home-page-hero::after {
@@ -53,7 +89,8 @@ $comboLinks = $comboLinks ?? [
     width: 240px;
     height: 240px;
     border-radius: 50%;
-    background: rgba(46,175,125,0.14);
+    background: rgba(46,175,125,0.16);
+    z-index: 0;
 }
 
 .hero-content-wrapper,
@@ -62,7 +99,7 @@ $comboLinks = $comboLinks ?? [
 .home-page-hero > .hero-title,
 .home-page-hero > .hero-subtitle {
     position: relative;
-    z-index: 1;
+    z-index: 2;
 }
 
 .hero-kicker {
@@ -70,11 +107,12 @@ $comboLinks = $comboLinks ?? [
     margin: 0 0 14px;
     padding: 7px 14px;
     border-radius: 999px;
-    background: var(--primary-soft);
+    background: rgba(232,247,240,0.88);
     color: var(--primary-dark);
     font-size: 13px;
     font-weight: 900;
     letter-spacing: 0.08em;
+    backdrop-filter: blur(8px);
 }
 
 .hero-title {
@@ -84,17 +122,21 @@ $comboLinks = $comboLinks ?? [
     line-height: 1.08;
     font-weight: 900;
     letter-spacing: -0.05em;
+    text-shadow: 0 2px 14px rgba(255,255,255,0.72);
 }
 
 .hero-subtitle {
     margin: 0 auto 28px;
     max-width: 760px;
-    color: var(--text-muted);
+    color: var(--text-dark);
     font-size: 17px;
     line-height: 1.6;
+    text-shadow: 0 2px 12px rgba(255,255,255,0.72);
 }
 
 .hero-actions {
+    position: relative;
+    z-index: 2;
     display: flex;
     gap: 14px;
     justify-content: center;
@@ -492,6 +534,7 @@ $comboLinks = $comboLinks ?? [
     }
 
     .home-page-hero {
+        min-height: 390px;
         padding: 46px 18px;
         border-radius: 22px;
     }
@@ -516,6 +559,14 @@ $comboLinks = $comboLinks ?? [
 
 <section class="home-container home-page">
     <header class="home-page-hero">
+        <div class="hero-slider" aria-hidden="true">
+            <div class="hero-slide is-active" style="background-image: url('/assets/img/banner.png');"></div>
+            <div class="hero-slide" style="background-image: url('/assets/img/combo-tong-ve-sinh.png');"></div>
+            <div class="hero-slide" style="background-image: url('/assets/img/phong-khach.png');"></div>
+            <div class="hero-slide" style="background-image: url('/assets/img/nha-bep.png');"></div>
+            <div class="hero-slide" style="background-image: url('/assets/img/combo-gia-dinh.png');"></div>
+        </div>
+
         <?php if ($isLoggedIn): ?>
             <p class="hero-kicker">Xin chào khách hàng</p>
             <h1 class="hero-title">Chào mừng, <strong><?= isset($name) ? View::e($name) : ('User #' . View::e($uid)) ?></strong></h1>
@@ -779,3 +830,18 @@ $comboLinks = $comboLinks ?? [
         </p>
     </footer>
 </section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const slides = document.querySelectorAll('.hero-slide');
+    if (!slides.length) return;
+
+    let currentSlide = 0;
+
+    setInterval(function () {
+        slides[currentSlide].classList.remove('is-active');
+        currentSlide = (currentSlide + 1) % slides.length;
+        slides[currentSlide].classList.add('is-active');
+    }, 3000);
+});
+</script>

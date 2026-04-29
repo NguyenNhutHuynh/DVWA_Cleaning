@@ -2,6 +2,7 @@
 use App\Core\View;
 /** @var string $csrf Token CSRF */
 /** @var ?string $error Thông báo lỗi */
+/** @var string $email Email gợi ý */
 ?>
 
 <style>
@@ -221,7 +222,7 @@ use App\Core\View;
 
       <div class="auth-form-group">
         <label for="email">Email</label>
-        <input id="email" name="email" type="email" required class="auth-input" placeholder="you@example.com">
+        <input id="email" name="email" type="email" required class="auth-input" placeholder="you@example.com" value="<?= View::e($email ?? '') ?>">
       </div>
 
       <div class="auth-form-group">
