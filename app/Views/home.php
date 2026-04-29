@@ -3,9 +3,9 @@ use App\Core\View;
 
 $isLoggedIn = isset($uid) && $uid;
 $comboLinks = $comboLinks ?? [
-    'tong_ve_sinh' => '/book',
-    'gia_dinh' => '/book',
-    'chuyen_nha' => '/book',
+    'tong_ve_sinh' => '/contact',
+    'gia_dinh' => '/contact',
+    'chuyen_nha' => '/contact',
 ];
 ?>
 
@@ -383,11 +383,20 @@ $comboLinks = $comboLinks ?? [
     background: var(--primary-soft);
 }
 
+.combo-card.vip .combo-card-price {
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.18);
+}
+
 .combo-card-price-value {
     display: block;
     color: var(--primary);
     font-size: 26px;
     font-weight: 900;
+}
+
+.combo-card.vip .combo-card-price-value {
+    color: #ffffff;
 }
 
 .combo-card-price-unit {
@@ -723,12 +732,12 @@ $comboLinks = $comboLinks ?? [
                 </div>
                 <div class="combo-card-body">
                     <h3 class="combo-card-title">🏠 Combo Tổng vệ sinh</h3>
-                    <p class="combo-card-desc">2 lần/tuần · 3h/lần · Dụng cụ đầy đủ · Tư vấn checklist</p>
+                    <p class="combo-card-desc">2 lần/tuần · 3h/lần · Dụng cụ đầy đủ · Tư vấn checklist theo tình trạng nhà.</p>
                     <div class="combo-card-price">
-                        <strong class="combo-card-price-value">1.299.000đ</strong>
-                        <span class="combo-card-price-unit">/tháng</span>
+                        <strong class="combo-card-price-value">Liên hệ</strong>
+                        <!-- <span class="combo-card-price-unit">check giá</span> -->
                     </div>
-                    <a href="<?= View::e($comboLinks['tong_ve_sinh'] ?? '/book') ?>" class="combo-btn">Chọn gói →</a>
+                    <a href="<?= View::e($comboLinks['tong_ve_sinh'] ?? '/contact') ?>" class="combo-btn">Liên hệ →</a>
                 </div>
             </article>
 
@@ -738,12 +747,12 @@ $comboLinks = $comboLinks ?? [
                 </div>
                 <div class="combo-card-body">
                     <h3 class="combo-card-title">👨‍👩‍👧 Combo Gia đình</h3>
-                    <p class="combo-card-desc">Thứ 2-6 · 2h/ngày · Lau kính, hút bụi, vệ sinh WC</p>
+                    <p class="combo-card-desc">Thứ 2-6 · 2h/ngày · Lau kính, hút bụi, vệ sinh WC, tùy chỉnh theo diện tích.</p>
                     <div class="combo-card-price">
-                        <strong class="combo-card-price-value">3.900.000đ</strong>
-                        <span class="combo-card-price-unit">/tháng</span>
+                        <strong class="combo-card-price-value">Liên hệ</strong>
+                        <!-- <span class="combo-card-price-unit">check giá</span> -->
                     </div>
-                    <a href="<?= View::e($comboLinks['gia_dinh'] ?? '/book') ?>" class="combo-btn">Chọn gói →</a>
+                    <a href="<?= View::e($comboLinks['gia_dinh'] ?? '/contact') ?>" class="combo-btn">Liên hệ →</a>
                 </div>
             </article>
 
@@ -754,12 +763,12 @@ $comboLinks = $comboLinks ?? [
                 </div>
                 <div class="combo-card-body">
                     <h3 class="combo-card-title">🚚 Combo Chuyển nhà</h3>
-                    <p class="combo-card-desc">Đội 4 người · Máy hút công nghiệp · Hoàn thiện trong 1 ngày</p>
+                    <p class="combo-card-desc">Đội nhiều người · Máy hút công nghiệp · Vệ sinh trước/sau chuyển nhà theo hiện trạng.</p>
                     <div class="combo-card-price">
                         <strong class="combo-card-price-value">Liên hệ</strong>
-                        <span class="combo-card-price-unit">báo giá</span>
+                        <!-- <span class="combo-card-price-unit">check giá</span> -->
                     </div>
-                    <a href="/contact" class="combo-btn">Liên hệ ngay →</a>
+                    <a href="<?= View::e($comboLinks['chuyen_nha'] ?? '/contact') ?>" class="combo-btn">Liên hệ →</a>
                 </div>
             </article>
         </div>

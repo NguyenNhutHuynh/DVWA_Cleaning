@@ -260,24 +260,26 @@ use App\Core\View;
         font-weight: 700 !important;
     }
 
-    .social-links {
-        display: flex;
-        gap: 12px;
-        margin-top: 14px;
-    }
+.social-links {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    margin-top: 14px;
+}
 
-    .social-link {
-        width: 44px;
-        height: 44px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 14px;
-        background: var(--primary-soft);
-        text-decoration: none;
-        color: var(--primary);
-        transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
-    }
+.social-link {
+    width: 44px;
+    height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 14px;
+    background: var(--primary-soft);
+    text-decoration: none;
+    color: var(--primary);
+    transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+}
 
     .social-link:hover {
         transform: translateY(-3px);
