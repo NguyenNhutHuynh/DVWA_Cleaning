@@ -21,17 +21,18 @@ $bookingStatusMap = [
   --primary-dark: #16805a;
   --primary-soft: #e8f7f0;
   --bg-soft: #f7fdf9;
-  --bg-card: #ffffff;
+  --white: #ffffff;
   --text-dark: #1f2d3d;
   --text-muted: #5f7482;
   --border: #dcefe6;
-  --border-strong: #bfe4d3;
   --danger: #dc2626;
   --danger-soft: #fff1f1;
   --warning: #d97706;
   --warning-soft: #fff7ed;
   --success-soft: #dff6ea;
   --success-text: #0f7a55;
+  --blue: #2563eb;
+  --blue-soft: #eff6ff;
   --shadow-sm: 0 8px 24px rgba(31,45,61,0.08);
   --shadow-md: 0 16px 40px rgba(31,45,61,0.12);
 
@@ -104,138 +105,188 @@ $bookingStatusMap = [
   margin-top: 34px;
 }
 
-.bookings-list {
-  display: grid;
-  gap: 20px;
-}
-
 .empty-bookings {
   margin: 0;
   padding: 34px 20px;
   text-align: center;
-  border: 1px dashed var(--border-strong);
+  border: 1px dashed var(--border);
   border-radius: 22px;
   color: var(--text-muted);
   background: var(--bg-soft);
   font-weight: 700;
 }
 
-.booking-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border-strong);
+.bookings-panel {
+  overflow: hidden;
+  background: var(--white);
+  border: 1px solid var(--border);
   border-radius: 26px;
-  padding: 24px;
   box-shadow: var(--shadow-sm);
-  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
 }
 
-.booking-card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-md);
-  border-color: #9dd8bf;
-}
-
-.booking-card-head {
+.bookings-panel-head {
+  padding: 24px 26px;
+  border-bottom: 1px solid var(--border);
+  background:
+    radial-gradient(circle at top left, rgba(46,175,125,0.10), transparent 34%),
+    linear-gradient(135deg, #ffffff, #f7fdf9);
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  margin-bottom: 18px;
   flex-wrap: wrap;
 }
 
-.booking-code {
+.bookings-panel-title {
+  margin: 0;
+  color: var(--text-dark);
+  font-size: clamp(22px, 3vw, 30px);
+  font-weight: 900;
+  letter-spacing: -0.03em;
+}
+
+.bookings-count {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  min-width: 62px;
-  padding: 9px 16px;
+  padding: 7px 14px;
   border-radius: 999px;
   background: var(--primary-soft);
   color: var(--primary-dark);
-  font-size: 18px;
+  font-size: 14px;
   font-weight: 900;
+}
+
+.table-wrap {
+  width: 100%;
+  overflow-x: visible;
+}
+
+.bookings-table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  background: var(--white);
+}
+
+.bookings-table thead {
+  background: #fbfefd;
+}
+
+.bookings-table th {
+  padding: 16px 14px;
+  text-align: left;
+  color: var(--text-dark);
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.035em;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.bookings-table td {
+  padding: 18px 14px;
+  vertical-align: top;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-muted);
+  line-height: 1.55;
+  text-align: left;
+}
+
+.bookings-table tbody tr {
+  transition: background 0.2s ease;
+}
+
+.bookings-table tbody tr:hover {
+  background: #fbfefd;
+}
+
+.bookings-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.booking-id {
+  display: inline-flex;
+  min-width: 50px;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: var(--primary-soft);
+  color: var(--primary-dark);
+  font-weight: 900;
+}
+
+.booking-time {
+  color: var(--text-dark);
+  font-weight: 900;
+  white-space: nowrap;
+  text-align: left;
+}
+
+.booking-date {
+  margin-top: 4px;
+  color: var(--text-muted);
+  font-size: 13px;
+  text-align: left;
+}
+
+.booking-service {
+  margin-bottom: 7px;
+  color: var(--text-dark);
+  font-weight: 900;
+  text-align: left;
+}
+
+.booking-location {
+  max-width: 100%;
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.55;
+  word-break: normal;
+  overflow-wrap: anywhere;
+  text-align: left;
+}
+
+.status-chip,
+.payment-chip,
+.worker-chip {
+  display: inline-flex;
+  width: fit-content;
+  max-width: 100%;
+  align-items: center;
+  justify-content: center;
+  padding: 7px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 900;
+  white-space: normal;
+  text-align: center;
 }
 
 .status-chip {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 9px 16px;
-  border-radius: 999px;
-  background: #e5f7ef;
-  color: var(--primary-dark);
-  font-size: 14px;
-  font-weight: 900;
-  text-transform: capitalize;
-}
-
-.booking-body {
-  display: grid;
-  grid-template-columns: 1.45fr 0.9fr 1.1fr;
-  gap: 18px;
-  align-items: stretch;
-}
-
-.booking-panel {
-  height: 100%;
-  padding: 18px;
-  border-radius: 20px;
-  background: #fbfefd;
-  border: 1px solid var(--border);
-}
-
-.booking-panel-title {
-  margin: 0 0 14px;
-  color: var(--text-dark);
-  font-size: 14px;
-  font-weight: 900;
-  letter-spacing: 0.02em;
-}
-
-.booking-info-grid {
-  display: grid;
-  gap: 12px;
-}
-
-.booking-info-item {
-  display: grid;
-  gap: 4px;
-}
-
-.booking-info-label {
-  color: var(--text-dark);
-  font-size: 13px;
-  font-weight: 900;
-}
-
-.booking-info-value {
-  color: var(--text-muted);
-  font-size: 15px;
-  line-height: 1.55;
-  word-break: break-word;
-}
-
-.booking-meta-list {
-  display: grid;
-  gap: 12px;
-}
-
-.meta-pill {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 44px;
-  padding: 10px 14px;
-  border-radius: 14px;
-  text-align: center;
-  font-size: 14px;
-  font-weight: 900;
-}
-
-.worker-chip {
   background: var(--primary-soft);
   color: var(--primary-dark);
+}
+
+.status-chip.status-pending {
+  background: var(--warning-soft);
+  color: var(--warning);
+}
+
+.status-chip.status-cancelled {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.status-chip.status-completed {
+  background: #f5f3ff;
+  color: #7c3aed;
+}
+
+.status-chip.status-progress {
+  background: var(--blue-soft);
+  color: var(--blue);
 }
 
 .payment-chip.paid {
@@ -244,68 +295,131 @@ $bookingStatusMap = [
 }
 
 .payment-chip.unpaid {
-  background: #ffe7e7;
-  color: #a61b1b;
+  background: #fee2e2;
+  color: #991b1b;
 }
 
-.payment-inline {
-  display: flex;
-  align-items: center;
+.worker-chip {
+  background: var(--blue-soft);
+  color: var(--blue);
+}
+
+.worker-chip.empty {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+.payment-stack,
+.worker-stack {
+  display: grid;
+  justify-items: start;
+  gap: 9px;
+}
+
+.row-actions {
+  width: 100%;
+  min-width: 0;
+  display: grid;
   gap: 10px;
-  flex-wrap: wrap;
 }
 
 .payment-detail-link {
   display: inline-flex;
   align-items: center;
-  min-height: 36px;
-  padding: 6px 12px;
+  justify-content: center;
+  width: fit-content;
+  min-height: 34px;
+  padding: 7px 11px;
   border-radius: 999px;
   border: 1px solid var(--border);
-  background: white;
+  background: #ffffff;
   color: var(--primary);
   font-size: 12px;
   font-weight: 900;
   text-decoration: none;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
 }
 
 .payment-detail-link:hover {
+  transform: translateY(-1px);
   background: var(--primary-soft);
   box-shadow: var(--shadow-sm);
-  transform: translateY(-1px);
 }
 
-.booking-actions-panel {
+.top-actions {
   display: grid;
-  gap: 12px;
+  grid-template-columns: minmax(0, 1fr) 72px;
+  gap: 8px;
+  width: 100%;
 }
 
-.action-inline {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
+.top-actions form {
+  margin: 0;
+  width: 100%;
 }
 
-.action-inline form,
 .assign-form {
   margin: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 58px;
+  gap: 8px;
+  width: 100%;
 }
 
-.assign-form {
-  display: grid;
-  gap: 10px;
+.home-btn {
+  width: 100%;
+  min-height: 40px;
+  padding: 9px 12px;
+  border-radius: 999px;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 900;
+  cursor: pointer;
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color: #ffffff;
+  box-shadow: 0 10px 22px rgba(46,175,125,0.18);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  white-space: nowrap;
+}
+
+.home-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 30px rgba(46,175,125,0.26);
+}
+
+.home-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.home-btn-outline {
+  background: #ffffff;
+  color: var(--primary);
+  border: 1.5px solid var(--primary);
+  box-shadow: none;
+}
+
+.home-btn-outline:hover {
+  background: var(--primary-soft);
+  box-shadow: var(--shadow-sm);
 }
 
 .worker-select {
   width: 100%;
-  min-height: 46px;
-  padding: 11px 14px;
-  border-radius: 14px;
+  min-width: 0;
+  min-height: 40px;
+  padding: 9px 12px;
+  border-radius: 999px;
   border: 1px solid var(--border);
-  background: #fff;
+  background: #fcfffd;
   color: var(--text-dark);
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 800;
   font-family: inherit;
 }
@@ -322,57 +436,15 @@ $bookingStatusMap = [
   background: #f5f7f6;
 }
 
-.home-btn {
-  width: 100%;
-  min-height: 46px;
-  padding: 11px 18px;
-  border-radius: 14px;
-  border: none;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  text-decoration: none;
-  font-size: 15px;
-  font-weight: 900;
-  cursor: pointer;
-  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-  color: white;
-  box-shadow: 0 10px 22px rgba(46,175,125,0.22);
-  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
-}
-
-.home-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 14px 30px rgba(46,175,125,0.28);
-}
-
-.home-btn:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
-}
-
-.home-btn-outline {
-  background: #fff;
-  color: var(--primary);
-  border: 1.5px solid var(--primary);
-  box-shadow: none;
-}
-
-.home-btn-outline:hover {
-  background: var(--primary-soft);
-  box-shadow: var(--shadow-sm);
-}
-
 .note-danger,
 .note-warning {
   margin: 0;
-  padding: 13px 16px;
-  border-radius: 16px;
-  font-size: 14px;
+  padding: 9px 12px;
+  border-radius: 14px;
+  font-size: 12px;
   font-weight: 800;
-  text-align: center;
+  text-align: left;
+  line-height: 1.45;
 }
 
 .note-danger {
@@ -387,13 +459,69 @@ $bookingStatusMap = [
   border: 1px solid #fed7aa;
 }
 
-@media (max-width: 1100px) {
-  .booking-body {
+@media (max-width: 980px) {
+  .table-wrap {
+    overflow-x: visible;
+  }
+
+  .bookings-table,
+  .bookings-table thead,
+  .bookings-table tbody,
+  .bookings-table th,
+  .bookings-table td,
+  .bookings-table tr {
+    display: block;
+  }
+
+  .bookings-table colgroup,
+  .bookings-table thead {
+    display: none;
+  }
+
+  .bookings-table tbody {
+    display: grid;
+    gap: 16px;
+    padding: 18px;
+  }
+
+  .bookings-table tr {
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    background: #ffffff;
+    overflow: hidden;
+  }
+
+  .bookings-table td {
+    display: grid;
+    grid-template-columns: 130px 1fr;
+    gap: 12px;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .bookings-table td::before {
+    content: attr(data-label);
+    color: var(--text-dark);
+    font-weight: 900;
+    font-size: 13px;
+  }
+
+  .bookings-table td:last-child {
+    border-bottom: none;
+  }
+
+  .payment-stack,
+  .worker-stack,
+  .row-actions {
+    width: 100%;
+  }
+
+  .top-actions {
     grid-template-columns: 1fr 1fr;
   }
 
-  .booking-actions-wrap {
-    grid-column: 1 / -1;
+  .assign-form {
+    grid-template-columns: minmax(0, 1fr) 72px;
   }
 }
 
@@ -407,17 +535,33 @@ $bookingStatusMap = [
     border-radius: 22px;
   }
 
-  .booking-card {
-    padding: 18px;
+  .bookings-panel {
     border-radius: 20px;
   }
 
-  .booking-body {
+  .bookings-panel-head {
+    padding: 22px;
+  }
+
+  .bookings-table td {
     grid-template-columns: 1fr;
   }
 
-  .action-inline {
+  .top-actions,
+  .assign-form {
     grid-template-columns: 1fr;
+  }
+
+  .home-btn,
+  .worker-select {
+    width: 100%;
+  }
+
+  .payment-detail-link,
+  .status-chip,
+  .payment-chip,
+  .worker-chip {
+    width: fit-content;
   }
 }
 </style>
@@ -426,127 +570,151 @@ $bookingStatusMap = [
   <header class="home-hero bookings-hero">
     <p class="home-kicker">ADMIN • ĐƠN ĐẶT</p>
     <h1>Quản lý đơn đặt</h1>
-    <p>Theo dõi trạng thái, kiểm tra thanh toán và phân công worker một cách trực quan, dễ nhìn hơn.</p>
+    <p>Danh sách đơn dạng bảng, dễ quét thông tin và thao tác nhanh hơn.</p>
   </header>
 
   <section class="bookings-section">
-    <div class="bookings-list">
-      <?php if (empty($bookings)): ?>
-        <p class="empty-bookings">Chưa có đơn đặt nào.</p>
-      <?php else: ?>
-        <?php foreach ($bookings as $b): ?>
-          <?php
-            $status = (string)($b['status'] ?? '');
-            $statusLabel = $bookingStatusMap[$status] ?? 'Không rõ';
-            $isCustomerPaid = !empty($b['is_customer_paid']);
-          ?>
+    <?php if (empty($bookings)): ?>
+      <p class="empty-bookings">Chưa có đơn đặt nào.</p>
+    <?php else: ?>
+      <div class="bookings-panel">
+        <div class="bookings-panel-head">
+          <h2 class="bookings-panel-title">Danh sách đơn đặt</h2>
+          <span class="bookings-count"><?= count($bookings) ?> đơn</span>
+        </div>
 
-          <article class="booking-card">
-            <div class="booking-card-head">
-              <span class="booking-code">#<?= View::e($b['id']) ?></span>
-              <span class="status-chip"><?= View::e($statusLabel) ?></span>
-            </div>
+        <div class="table-wrap">
+          <table class="bookings-table">
+            <colgroup>
+              <col style="width: 7%;">
+              <col style="width: 11%;">
+              <col style="width: 25%;">
+              <col style="width: 12%;">
+              <col style="width: 13%;">
+              <col style="width: 10%;">
+              <col style="width: 22%;">
+            </colgroup>
 
-            <div class="booking-body">
-              <div class="booking-panel">
-                <h3 class="booking-panel-title">Thông tin đơn</h3>
+            <thead>
+              <tr>
+                <th>Mã đơn</th>
+                <th>Thời gian</th>
+                <th>Dịch vụ / Địa điểm</th>
+                <th>Trạng thái</th>
+                <th>Thanh toán</th>
+                <th>Worker</th>
+                <th>Thao tác</th>
+              </tr>
+            </thead>
 
-                <div class="booking-info-grid">
-                  <div class="booking-info-item">
-                    <span class="booking-info-label">Thời gian</span>
-                    <div class="booking-info-value">
-                      <?= View::e($b['date']) ?> <?= View::e($b['time']) ?>
+            <tbody>
+              <?php foreach ($bookings as $b): ?>
+                <?php
+                  $status = (string)($b['status'] ?? '');
+                  $statusLabel = $bookingStatusMap[$status] ?? 'Không rõ';
+                  $isCustomerPaid = !empty($b['is_customer_paid']);
+
+                  $statusClass = match ($status) {
+                    'pending' => 'status-pending',
+                    'cancelled' => 'status-cancelled',
+                    'completed' => 'status-completed',
+                    'accepted', 'in_progress' => 'status-progress',
+                    default => '',
+                  };
+                ?>
+
+                <tr>
+                  <td data-label="Mã đơn">
+                    <span class="booking-id">#<?= View::e($b['id']) ?></span>
+                  </td>
+
+                  <td data-label="Thời gian">
+                    <div class="booking-time"><?= View::e($b['time']) ?></div>
+                    <div class="booking-date"><?= View::e($b['date']) ?></div>
+                  </td>
+
+                  <td data-label="Dịch vụ / Địa điểm">
+                    <div class="booking-service"><?= View::e($b['service_name'] ?? '') ?></div>
+                    <div class="booking-location"><?= View::e($b['location']) ?></div>
+                  </td>
+
+                  <td data-label="Trạng thái">
+                    <span class="status-chip <?= View::e($statusClass) ?>">
+                      <?= View::e($statusLabel) ?>
+                    </span>
+                  </td>
+
+                  <td data-label="Thanh toán">
+                    <div class="payment-stack">
+                      <span class="payment-chip <?= $isCustomerPaid ? 'paid' : 'unpaid' ?>">
+                        <?= $isCustomerPaid ? 'Đã thanh toán' : 'Chưa thanh toán' ?>
+                      </span>
+
+                      <?php if ($isCustomerPaid && !empty($b['customer_paid_transaction_id'])): ?>
+                        <a class="payment-detail-link" href="/admin/payment-transactions/<?= (int)$b['customer_paid_transaction_id'] ?>">
+                          Xem giao dịch
+                        </a>
+                      <?php endif; ?>
                     </div>
-                  </div>
+                  </td>
 
-                  <div class="booking-info-item">
-                    <span class="booking-info-label">Địa điểm</span>
-                    <div class="booking-info-value">
-                      <?= View::e($b['location']) ?>
+                  <td data-label="Worker">
+                    <div class="worker-stack">
+                      <?php if (!empty($b['assigned_worker_id'])): ?>
+                        <span class="worker-chip">Worker #<?= View::e($b['assigned_worker_id']) ?></span>
+                      <?php else: ?>
+                        <span class="worker-chip empty">Chưa gán</span>
+                      <?php endif; ?>
                     </div>
-                  </div>
+                  </td>
 
-                  <div class="booking-info-item">
-                    <span class="booking-info-label">Dịch vụ</span>
-                    <div class="booking-info-value">
-                      <?= View::e($b['service_name'] ?? '') ?>
+                  <td data-label="Thao tác">
+                    <div class="row-actions">
+                      <div class="top-actions">
+                        <a class="home-btn home-btn-outline" href="/admin/bookings/<?= (int)$b['id'] ?>">
+                          Chi tiết
+                        </a>
+
+                        <form method="POST" action="/admin/bookings/cancel">
+                          <input type="hidden" name="_csrf" value="<?= View::e($csrf) ?>">
+                          <input type="hidden" name="id" value="<?= (int)$b['id'] ?>">
+                          <button class="home-btn home-btn-outline" type="submit">Hủy</button>
+                        </form>
+                      </div>
+
+                      <form method="POST" action="/admin/bookings/assign" class="assign-form">
+                        <input type="hidden" name="_csrf" value="<?= View::e($csrf) ?>">
+                        <input type="hidden" name="id" value="<?= (int)$b['id'] ?>">
+
+                        <select name="worker_id" class="worker-select" <?= $isCustomerPaid ? '' : 'disabled' ?>>
+                          <option value="">-- Chọn worker --</option>
+                          <?php foreach ($workers as $w): ?>
+                            <option value="<?= $w['id'] ?>" <?= $b['assigned_worker_id'] == $w['id'] ? 'selected' : '' ?>>
+                              <?= View::e($w['name']) ?>
+                            </option>
+                          <?php endforeach; ?>
+                        </select>
+
+                        <button class="home-btn" type="submit" <?= $isCustomerPaid ? '' : 'disabled' ?>>
+                          Gán
+                        </button>
+                      </form>
+
+                      <?php if (empty($b['assigned_worker_id'])): ?>
+                        <?php if (!$isCustomerPaid): ?>
+                          <p class="note-danger">Chưa thanh toán → chưa thể gán worker.</p>
+                        <?php else: ?>
+                          <p class="note-warning">Đã thanh toán → có thể gán worker.</p>
+                        <?php endif; ?>
+                      <?php endif; ?>
                     </div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="booking-panel">
-                <h3 class="booking-panel-title">Trạng thái xử lý</h3>
-
-                <div class="booking-meta-list">
-                  <?php if (!empty($b['assigned_worker_id'])): ?>
-                    <div class="meta-pill worker-chip">
-                      Worker #<?= View::e($b['assigned_worker_id']) ?>
-                    </div>
-                  <?php else: ?>
-                    <div class="meta-pill worker-chip">
-                      Chưa gán worker
-                    </div>
-                  <?php endif; ?>
-
-                  <div class="payment-inline">
-                    <div class="meta-pill payment-chip <?= $isCustomerPaid ? 'paid' : 'unpaid' ?>">
-                      <?= $isCustomerPaid ? 'Đã thanh toán' : 'Chưa thanh toán' ?>
-                    </div>
-                    <?php if ($isCustomerPaid && !empty($b['customer_paid_transaction_id'])): ?>
-                      <a class="payment-detail-link" href="/admin/payment-transactions/<?= (int)$b['customer_paid_transaction_id'] ?>">Xem chi tiết giao dịch</a>
-                    <?php endif; ?>
-                  </div>
-                </div>
-              </div>
-
-              <div class="booking-panel booking-actions-wrap">
-                <h3 class="booking-panel-title">Thao tác</h3>
-
-                <div class="booking-actions-panel">
-                  <div class="action-inline">
-                    <a class="home-btn home-btn-outline" href="/admin/bookings/<?= (int)$b['id'] ?>">
-                      Chi tiết
-                    </a>
-
-                    <form method="POST" action="/admin/bookings/cancel">
-                      <input type="hidden" name="_csrf" value="<?= View::e($csrf) ?>">
-                      <input type="hidden" name="id" value="<?= (int)$b['id'] ?>">
-                      <button class="home-btn home-btn-outline" type="submit">Hủy</button>
-                    </form>
-                  </div>
-
-                  <form method="POST" action="/admin/bookings/assign" class="assign-form">
-                    <input type="hidden" name="_csrf" value="<?= View::e($csrf) ?>">
-                    <input type="hidden" name="id" value="<?= (int)$b['id'] ?>">
-
-                    <select name="worker_id" class="worker-select" <?= $isCustomerPaid ? '' : 'disabled' ?>>
-                      <option value="">-- Chọn worker --</option>
-                      <?php foreach ($workers as $w): ?>
-                        <option value="<?= $w['id'] ?>" <?= $b['assigned_worker_id'] == $w['id'] ? 'selected' : '' ?>>
-                          <?= View::e($w['name']) ?>
-                        </option>
-                      <?php endforeach; ?>
-                    </select>
-
-                    <button class="home-btn" type="submit" <?= $isCustomerPaid ? '' : 'disabled' ?>>
-                      Gán worker
-                    </button>
-                  </form>
-
-                  <?php if (empty($b['assigned_worker_id'])): ?>
-                    <?php if (!$isCustomerPaid): ?>
-                      <p class="note-danger">Chưa thanh toán → chưa thể gán worker.</p>
-                    <?php else: ?>
-                      <p class="note-warning">Đã thanh toán → có thể gán worker.</p>
-                    <?php endif; ?>
-                  <?php endif; ?>
-                </div>
-              </div>
-            </div>
-          </article>
-        <?php endforeach; ?>
-      <?php endif; ?>
-    </div>
+                  </td>
+                </tr>
+              <?php endforeach; ?>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    <?php endif; ?>
   </section>
 </section>

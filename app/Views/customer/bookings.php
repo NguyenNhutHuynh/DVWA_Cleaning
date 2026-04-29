@@ -1,12 +1,20 @@
 <?php
 use App\Core\View;
-/** @var array $bookings */
-/** @var array $workers */
+/** @var array $bookings Danh sách đơn đặt */
 /** @var string $csrf */
+
+$statusLabels = [
+    'pending'   => '<span class="booking-status booking-status-pending">⏳ Chờ thanh toán</span>',
+    'paid'      => '<span class="booking-status booking-status-paid">✅ Đã thanh toán</span>',
+    'confirmed' => '<span class="booking-status booking-status-paid">✅ Đã xác nhận (Đã thanh toán)</span>',
+    'accepted'  => '<span class="booking-status booking-status-accepted">👷 Đang thực hiện</span>',
+    'completed' => '<span class="booking-status booking-status-completed">🌟 Đã hoàn thành</span>',
+    'cancelled' => '<span class="booking-status booking-status-cancelled">❌ Đã hủy</span>',
+];
 ?>
 
 <style>
-.admin-bookings {
+.bookings-page {
   --primary: #2eaf7d;
   --primary-dark: #16805a;
   --primary-soft: #e8f7f0;
@@ -15,50 +23,46 @@ use App\Core\View;
   --text-muted: #546e7a;
   --border: #dcefe6;
   --white: #ffffff;
-  --danger: #dc2626;
-  --danger-soft: #fff1f1;
-  --warning: #d97706;
-  --warning-soft: #fff7ed;
   --blue: #2563eb;
-  --blue-soft: #eff6ff;
+  --red: #dc2626;
   --shadow-sm: 0 8px 24px rgba(31,45,61,0.08);
   --shadow-md: 0 16px 40px rgba(31,45,61,0.12);
 
-  max-width: 1240px;
+  max-width: 1180px;
   margin: 0 auto;
   padding: 24px 16px 60px;
   color: var(--text-dark);
 }
 
-.admin-bookings * {
+.bookings-page * {
   box-sizing: border-box;
 }
 
-.admin-bookings .bookings-hero {
+.bookings-page .home-hero {
   position: relative;
   overflow: hidden;
-  padding: 52px 28px;
+  padding: 56px 28px;
   border-radius: 28px;
   text-align: center;
   background:
-    radial-gradient(circle at top left, rgba(46,175,125,0.18), transparent 34%),
+    radial-gradient(circle at top left, rgba(46,175,125,0.20), transparent 34%),
     linear-gradient(135deg, #f7fdf9 0%, #ffffff 48%, #e8f7f0 100%);
   border: 1px solid var(--border);
   box-shadow: var(--shadow-sm);
 }
 
-.admin-bookings .bookings-hero::after {
+.bookings-page .home-hero::after {
   content: "";
   position: absolute;
-  right: -70px;
-  bottom: -70px;
-  width: 200px;
-  height: 200px;
+  right: -80px;
+  bottom: -80px;
+  width: 220px;
+  height: 220px;
   border-radius: 50%;
-  background: rgba(46,175,125,0.10);
+  background: rgba(46,175,125,0.13);
 }
 
-.admin-bookings .home-kicker {
+.bookings-page .home-kicker {
   position: relative;
   display: inline-flex;
   margin: 0 0 14px;
@@ -71,521 +75,513 @@ use App\Core\View;
   letter-spacing: 0.08em;
 }
 
-.admin-bookings .bookings-hero h1 {
+.bookings-page .home-hero h1 {
   position: relative;
   margin: 0 0 12px;
-  color: var(--text-dark);
-  font-size: clamp(32px, 5vw, 50px);
+  font-size: clamp(32px, 5vw, 52px);
   line-height: 1.1;
   font-weight: 900;
   letter-spacing: -0.04em;
+  color: var(--text-dark);
 }
 
-.admin-bookings .bookings-hero p {
+.bookings-page .home-hero p {
   position: relative;
   margin: 0;
-  color: var(--text-muted);
   font-size: 17px;
-  line-height: 1.6;
+  color: var(--text-muted);
+}
+
+.hero-actions {
+  position: relative;
+  margin-top: 24px;
+}
+
+.booking-btn {
+  min-height: 46px;
+  padding: 12px 18px;
+  border-radius: 14px;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-decoration: none;
+  font-size: 15px;
+  font-weight: 900;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.booking-btn:hover {
+  transform: translateY(-2px);
+}
+
+.booking-btn-primary {
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color: white;
+  box-shadow: 0 10px 22px rgba(46,175,125,0.22);
+}
+
+.booking-btn-blue {
+  background: var(--blue);
+  color: white;
+  box-shadow: 0 10px 22px rgba(37,99,235,0.18);
+}
+
+.booking-btn-outline {
+  background: white;
+  color: var(--primary);
+  border: 1.5px solid var(--primary);
+}
+
+.booking-btn-danger {
+  background: white;
+  color: var(--red);
+  border: 1.5px solid var(--red);
+}
+
+.booking-btn-danger:hover {
+  background: #fff1f1;
 }
 
 .bookings-section {
-  margin-top: 34px;
-}
-
-.bookings-panel {
-  background: var(--white);
-  border: 1px solid var(--border);
+  margin-top: 40px;
+  padding: 34px;
   border-radius: 26px;
+  background: white;
+  border: 1px solid var(--border);
   box-shadow: var(--shadow-sm);
-  overflow: hidden;
 }
 
-.bookings-panel-head {
-  padding: 24px 26px;
-  border-bottom: 1px solid var(--border);
-  background:
-    radial-gradient(circle at top left, rgba(46,175,125,0.10), transparent 34%),
-    linear-gradient(135deg, #ffffff, #f7fdf9);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-
-.bookings-panel-title {
-  margin: 0;
+.bookings-section h2 {
+  margin: 0 0 24px;
   color: var(--text-dark);
-  font-size: clamp(22px, 3vw, 30px);
+  font-size: clamp(24px, 3vw, 34px);
   font-weight: 900;
   letter-spacing: -0.03em;
 }
 
-.bookings-count {
+.booking-list {
+  display: grid;
+  gap: 18px;
+}
+
+.booking-empty {
+  padding: 34px 20px;
+  text-align: center;
+  color: var(--text-muted);
+  background: var(--bg-soft);
+  border: 1px dashed #cfe3d8;
+  border-radius: 20px;
+}
+
+.booking-empty a {
+  color: var(--primary);
+  font-weight: 900;
+  text-decoration: none;
+}
+
+.booking-card {
+  padding: 24px;
+  border-radius: 22px;
+  border: 1px solid var(--border);
+  background: #ffffff;
+  box-shadow: 0 5px 16px rgba(31,45,61,0.05);
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.booking-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(46,175,125,0.45);
+  box-shadow: var(--shadow-md);
+}
+
+.booking-card.is-cancelled {
+  opacity: 0.72;
+  background: #f9fafb;
+  border-color: #e5e7eb;
+}
+
+.booking-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 18px;
+  margin-bottom: 18px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.booking-head-left {
+  display: grid;
+  gap: 10px;
+  text-align: left;
+  flex: 1;
+}
+
+.booking-code {
   display: inline-flex;
   align-items: center;
+  width: fit-content;
   padding: 7px 14px;
   border-radius: 999px;
   background: var(--primary-soft);
   color: var(--primary-dark);
-  font-weight: 900;
   font-size: 14px;
+  font-weight: 900;
 }
 
-.table-wrap {
-  width: 100%;
-  overflow-x: auto;
-}
-
-.bookings-table {
-  width: 100%;
-  border-collapse: collapse;
-  background: #ffffff;
-}
-
-.bookings-table thead {
-  background: #fbfefd;
-}
-
-.bookings-table th {
-  padding: 16px 18px;
+.booking-date,
+.booking-location {
+  margin: 0;
   text-align: left;
+}
+
+.booking-date {
   color: var(--text-dark);
-  font-size: 13px;
-  font-weight: 900;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  border-bottom: 1px solid var(--border);
-  white-space: nowrap;
-}
-
-.bookings-table td {
-  padding: 18px;
-  vertical-align: top;
-  border-bottom: 1px solid var(--border);
-  color: var(--text-muted);
-  line-height: 1.55;
-}
-
-.bookings-table tbody tr {
-  transition: background 0.2s ease;
-}
-
-.bookings-table tbody tr:hover {
-  background: #fbfefd;
-}
-
-.bookings-table tbody tr:last-child td {
-  border-bottom: none;
-}
-
-.booking-id {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 54px;
-  padding: 8px 13px;
-  border-radius: 999px;
-  background: var(--primary-soft);
-  color: var(--primary-dark);
-  font-weight: 900;
-}
-
-.booking-main-text {
-  display: grid;
-  gap: 6px;
-}
-
-.booking-service {
-  color: var(--text-dark);
-  font-weight: 900;
+  font-size: 16px;
+  font-weight: 800;
 }
 
 .booking-location {
   color: var(--text-muted);
-  font-size: 14px;
+  line-height: 1.6;
 }
 
-.booking-time {
-  color: var(--text-dark);
-  font-weight: 900;
-  white-space: nowrap;
+.booking-head-right {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
 }
 
-.booking-date {
-  color: var(--text-muted);
-  font-size: 14px;
-  margin-top: 3px;
-}
-
-.status-chip,
-.payment-chip,
-.worker-chip {
+.booking-status {
   display: inline-flex;
-  width: fit-content;
   align-items: center;
-  justify-content: center;
-  padding: 7px 13px;
+  padding: 7px 14px;
   border-radius: 999px;
   font-size: 13px;
   font-weight: 900;
   white-space: nowrap;
 }
 
-.status-chip {
-  background: var(--primary-soft);
-  color: var(--primary-dark);
-  text-transform: capitalize;
+.booking-status-pending {
+  background: #fff7ed;
+  color: #c2410c;
 }
 
-.payment-chip.paid {
-  background: #d1fae5;
-  color: #065f46;
+.booking-status-paid {
+  background: #e8f7f0;
+  color: #16805a;
 }
 
-.payment-chip.unpaid {
-  background: #fee2e2;
-  color: #991b1b;
+.booking-status-accepted {
+  background: #eff6ff;
+  color: #2563eb;
 }
 
-.worker-chip {
-  background: var(--blue-soft);
-  color: var(--blue);
+.booking-status-completed {
+  background: #f5f3ff;
+  color: #7c3aed;
 }
 
-.worker-chip.empty {
-  background: #f3f4f6;
-  color: #6b7280;
+.booking-status-cancelled {
+  background: #fff1f1;
+  color: #dc2626;
 }
 
-.row-actions {
+.booking-body {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 18px;
+  align-items: start;
+}
+
+.booking-main {
+  display: grid;
+  gap: 14px;
+}
+
+.booking-info-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.booking-info-item {
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: var(--bg-soft);
+  border: 1px solid var(--border);
+  text-align: left;
+}
+
+.booking-info-label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.booking-info-value {
+  display: block;
+  color: var(--text-dark);
+  font-weight: 900;
+  line-height: 1.5;
+  text-align: left;
+}
+
+.booking-price {
+  color: var(--primary);
+}
+
+.booking-description {
+  margin: 0;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: #fcfffd;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  line-height: 1.6;
+  text-align: left;
+}
+
+.booking-side {
+  display: grid;
+  gap: 14px;
+}
+
+.booking-side-box {
+  padding: 16px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: #fbfefd;
+}
+
+.booking-side-title {
+  margin: 0 0 12px;
+  font-size: 14px;
+  font-weight: 900;
+  color: var(--text-dark);
+  text-align: left;
+}
+
+.booking-meta-stack {
   display: grid;
   gap: 10px;
-  min-width: 280px;
 }
 
-.top-actions {
+.booking-paid-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 8px 14px;
+  background: #d1fae5;
+  color: #065f46;
+  font-weight: 900;
+  border-radius: 999px;
+  border: 1px solid #34d399;
+  white-space: nowrap;
+  width: fit-content;
+}
+
+.booking-actions {
+  display: grid;
+  gap: 10px;
+}
+
+.booking-actions-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 10px;
 }
 
-.top-actions form {
+.booking-actions form {
   margin: 0;
 }
 
-.assign-form {
-  margin: 0;
-  display: grid;
-  grid-template-columns: minmax(150px, 1fr) auto;
-  gap: 10px;
-}
-
-.home-btn {
-  min-height: 42px;
-  padding: 10px 18px;
-  border-radius: 999px;
-  border: none;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  text-decoration: none;
-  font-size: 14px;
-  font-weight: 900;
-  cursor: pointer;
-  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-  color: white;
-  box-shadow: 0 10px 22px rgba(46,175,125,0.18);
-  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
-  white-space: nowrap;
-}
-
-.home-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 14px 30px rgba(46,175,125,0.26);
-}
-
-.home-btn:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
-}
-
-.home-btn-outline {
-  background: #fff;
-  color: var(--primary);
-  border: 1.5px solid var(--primary);
-  box-shadow: none;
-}
-
-.home-btn-outline:hover {
-  background: var(--primary-soft);
-  box-shadow: var(--shadow-sm);
-}
-
-.worker-select {
+.booking-actions .booking-btn {
   width: 100%;
-  min-height: 42px;
-  padding: 10px 13px;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: #fcfffd;
-  color: var(--text-dark);
-  font-size: 14px;
-  font-weight: 800;
-  font-family: inherit;
 }
 
-.worker-select:focus {
-  outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 4px rgba(46,175,125,0.12);
-}
-
-.worker-select:disabled {
-  opacity: 0.65;
-  cursor: not-allowed;
-  background: #f5f7f6;
-}
-
-.note-danger,
-.note-warning {
-  margin: 0;
-  padding: 10px 13px;
-  border-radius: 14px;
-  font-size: 13px;
-  font-weight: 800;
-  text-align: left;
-}
-
-.note-danger {
-  background: var(--danger-soft);
-  color: #991b1b;
-  border: 1px solid #fecaca;
-}
-
-.note-warning {
-  background: var(--warning-soft);
-  color: var(--warning);
-  border: 1px solid #fed7aa;
-}
-
-.empty-bookings {
-  margin: 0;
-  padding: 34px 20px;
-  text-align: center;
-  border: 1px dashed var(--border);
-  border-radius: 22px;
-  color: var(--text-muted);
-  background: var(--bg-soft);
-  font-weight: 700;
-}
-
-@media (max-width: 980px) {
-  .bookings-table,
-  .bookings-table thead,
-  .bookings-table tbody,
-  .bookings-table th,
-  .bookings-table td,
-  .bookings-table tr {
-    display: block;
+@media (max-width: 992px) {
+  .booking-body {
+    grid-template-columns: 1fr;
   }
 
-  .bookings-table thead {
-    display: none;
-  }
-
-  .bookings-table tbody {
-    display: grid;
-    gap: 16px;
-    padding: 18px;
-  }
-
-  .bookings-table tr {
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    background: #fff;
-    overflow: hidden;
-  }
-
-  .bookings-table td {
-    display: grid;
-    grid-template-columns: 130px 1fr;
-    gap: 12px;
-    padding: 14px 16px;
-    border-bottom: 1px solid var(--border);
-  }
-
-  .bookings-table td::before {
-    content: attr(data-label);
-    color: var(--text-dark);
-    font-weight: 900;
-    font-size: 13px;
-  }
-
-  .bookings-table td:last-child {
-    border-bottom: none;
-  }
-
-  .row-actions {
-    min-width: 0;
-  }
-
-  .assign-form {
+  .booking-info-grid {
     grid-template-columns: 1fr;
   }
 }
 
 @media (max-width: 768px) {
-  .admin-bookings {
+  .bookings-page {
     padding: 16px 12px 44px;
   }
 
-  .admin-bookings .bookings-hero {
+  .bookings-page .home-hero {
     padding: 42px 18px;
     border-radius: 22px;
   }
 
-  .bookings-panel {
+  .bookings-section {
+    padding: 22px;
     border-radius: 20px;
   }
 
-  .bookings-panel-head {
-    padding: 22px;
+  .booking-card {
+    padding: 20px;
+    border-radius: 18px;
   }
 
-  .bookings-table td {
+  .booking-card-head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .booking-head-right {
+    justify-content: flex-start;
+  }
+
+  .booking-actions-row {
     grid-template-columns: 1fr;
   }
 
-  .top-actions {
-    grid-template-columns: 1fr;
-  }
-
-  .home-btn,
-  .worker-select {
+  .booking-paid-chip,
+  .booking-actions,
+  .booking-actions form,
+  .booking-btn {
     width: 100%;
   }
 }
 </style>
 
-<section class="home-container admin-bookings">
-  <header class="home-hero bookings-hero">
-    <p class="home-kicker">ADMIN • ĐƠN ĐẶT</p>
-    <h1>Quản lý đơn đặt</h1>
-    <p>Danh sách đơn theo dạng bảng, dễ quét thông tin và thao tác nhanh.</p>
+<section class="home-container bookings-page">
+  <header class="home-hero">
+    <p class="home-kicker">TÀI KHOẢN • KHÁCH HÀNG</p>
+    <h1>Đơn đặt của bạn</h1>
+    <p>Xem trạng thái và chi tiết các lịch đã đặt.</p>
+
+    <div class="hero-actions">
+      <a class="booking-btn booking-btn-primary" href="/book">Đặt lịch mới</a>
+    </div>
   </header>
 
   <section class="bookings-section">
-    <?php if (empty($bookings)): ?>
-      <p class="empty-bookings">Chưa có đơn đặt nào.</p>
-    <?php else: ?>
-      <div class="bookings-panel">
-        <div class="bookings-panel-head">
-          <h2 class="bookings-panel-title">Danh sách đơn đặt</h2>
-          <span class="bookings-count"><?= count($bookings) ?> đơn</span>
-        </div>
+    <h2>Danh sách đơn đặt</h2>
 
-        <div class="table-wrap">
-          <table class="bookings-table">
-            <thead>
-              <tr>
-                <th>Mã đơn</th>
-                <th>Thời gian</th>
-                <th>Dịch vụ & địa điểm</th>
-                <th>Trạng thái</th>
-                <th>Thanh toán</th>
-                <th>Worker</th>
-                <th>Thao tác</th>
-              </tr>
-            </thead>
+    <div class="booking-list">
+      <?php if (empty($bookings)): ?>
+        <p class="booking-empty">
+          Bạn chưa có đơn đặt nào. <a href="/book">Đặt lịch ngay</a>.
+        </p>
+      <?php else: ?>
+        <?php foreach ($bookings as $b): ?>
+          <?php 
+            $status = $b['status'] ?? '';
+            $isCancelled = ($status === 'cancelled');
+          ?>
 
-            <tbody>
-              <?php foreach ($bookings as $b): ?>
-                <?php $isCustomerPaid = !empty($b['is_customer_paid']); ?>
+          <article class="booking-card <?= $isCancelled ? 'is-cancelled' : '' ?>">
+            <div class="booking-card-head">
+              <div class="booking-head-left">
+                <span class="booking-code">#<?= View::e($b['id']) ?></span>
+                <p class="booking-date">📅 <?= View::e($b['date']) ?> • <?= View::e($b['time']) ?></p>
+                <p class="booking-location">📍 <?= View::e($b['location']) ?></p>
+              </div>
 
-                <tr>
-                  <td data-label="Mã đơn">
-                    <span class="booking-id">#<?= View::e($b['id']) ?></span>
-                  </td>
+              <div class="booking-head-right">
+                <?= $statusLabels[$status] ?? '<span class="booking-status" style="background:#f3f4f6;color:#6b7280;">' . View::e($status) . '</span>' ?>
+              </div>
+            </div>
 
-                  <td data-label="Thời gian">
-                    <div class="booking-time"><?= View::e($b['time']) ?></div>
-                    <div class="booking-date"><?= View::e($b['date']) ?></div>
-                  </td>
-
-                  <td data-label="Dịch vụ & địa điểm">
-                    <div class="booking-main-text">
-                      <div class="booking-service"><?= View::e($b['service_name'] ?? '') ?></div>
-                      <div class="booking-location"><?= View::e($b['location']) ?></div>
+            <div class="booking-body">
+              <div class="booking-main">
+                <div class="booking-info-grid">
+                  <?php if (!empty($b['service_name'])): ?>
+                    <div class="booking-info-item">
+                      <span class="booking-info-label">Dịch vụ</span>
+                      <span class="booking-info-value"><?= View::e($b['service_name']) ?></span>
                     </div>
-                  </td>
+                  <?php endif; ?>
 
-                  <td data-label="Trạng thái">
-                    <span class="status-chip"><?= View::e($b['status']) ?></span>
-                  </td>
+                  <?php if (isset($b['quantity']) && (float)$b['quantity'] > 0): ?>
+                    <div class="booking-info-item">
+                      <span class="booking-info-label">Khối lượng</span>
+                      <span class="booking-info-value">
+                        <?= View::e((string)$b['quantity']) ?> <?= View::e((string)($b['measure_unit'] ?? '')) ?>
+                      </span>
+                    </div>
+                  <?php endif; ?>
 
-                  <td data-label="Thanh toán">
-                    <span class="payment-chip <?= $isCustomerPaid ? 'paid' : 'unpaid' ?>">
-                      <?= $isCustomerPaid ? 'Đã thanh toán' : 'Chưa thanh toán' ?>
+                  <div class="booking-info-item">
+                    <span class="booking-info-label">Thành tiền tạm tính</span>
+                    <span class="booking-info-value booking-price">
+                      <?= number_format((float)($b['service_price'] ?? 0), 0, ',', '.') ?>đ
                     </span>
-                  </td>
+                  </div>
+                </div>
 
-                  <td data-label="Worker">
-                    <?php if (!empty($b['assigned_worker_id'])): ?>
-                      <span class="worker-chip">Worker #<?= View::e($b['assigned_worker_id']) ?></span>
-                    <?php else: ?>
-                      <span class="worker-chip empty">Chưa gán</span>
+                <?php if (!empty($b['description'])): ?>
+                  <p class="booking-description"><?= View::e($b['description']) ?></p>
+                <?php endif; ?>
+              </div>
+
+              <div class="booking-side">
+                <div class="booking-side-box">
+                  <h3 class="booking-side-title">Trạng thái thanh toán</h3>
+                  <div class="booking-meta-stack">
+                    <?php if ($status === 'paid' || $status === 'confirmed'): ?>
+                      <span class="booking-paid-chip">✅ Đã thanh toán</span>
+                    <?php elseif ($status === 'pending'): ?>
+                      <span class="booking-status booking-status-pending">⏳ Chờ thanh toán</span>
                     <?php endif; ?>
-                  </td>
+                  </div>
+                </div>
 
-                  <td data-label="Thao tác">
-                    <div class="row-actions">
-                      <div class="top-actions">
-                        <a class="home-btn home-btn-outline" href="/admin/bookings/<?= (int)$b['id'] ?>">Chi tiết</a>
+                <div class="booking-side-box">
+                  <h3 class="booking-side-title">Thao tác</h3>
+                  <div class="booking-actions">
+                    <a class="booking-btn booking-btn-primary" href="/bookings/<?= (int)$b['id'] ?>">Theo dõi đơn</a>
 
-                        <form method="POST" action="/admin/bookings/cancel">
-                          <input type="hidden" name="_csrf" value="<?= View::e($csrf) ?>">
-                          <input type="hidden" name="id" value="<?= (int)$b['id'] ?>">
-                          <button class="home-btn home-btn-outline" type="submit">Hủy</button>
-                        </form>
-                      </div>
-
-                      <form method="POST" action="/admin/bookings/assign" class="assign-form">
+                    <?php if ($status === 'pending'): ?>
+                      <form method="post" action="/bookings/<?= (int)$b['id'] ?>/repay">
                         <input type="hidden" name="_csrf" value="<?= View::e($csrf) ?>">
-                        <input type="hidden" name="id" value="<?= (int)$b['id'] ?>">
-
-                        <select name="worker_id" class="worker-select" <?= $isCustomerPaid ? '' : 'disabled' ?>>
-                          <option value="">-- Chọn worker --</option>
-                          <?php foreach ($workers as $w): ?>
-                            <option value="<?= $w['id'] ?>" <?= $b['assigned_worker_id'] == $w['id'] ? 'selected' : '' ?>>
-                              <?= View::e($w['name']) ?>
-                            </option>
-                          <?php endforeach; ?>
-                        </select>
-
-                        <button class="home-btn" type="submit" <?= $isCustomerPaid ? '' : 'disabled' ?>>
-                          Gán
+                        <button type="submit" class="booking-btn booking-btn-blue">
+                          💳 Thanh toán ngay
                         </button>
                       </form>
+                    <?php endif; ?>
 
-                      <?php if (empty($b['assigned_worker_id'])): ?>
-                        <?php if (!$isCustomerPaid): ?>
-                          <p class="note-danger">Chưa thanh toán → chưa thể gán worker.</p>
-                        <?php else: ?>
-                          <p class="note-warning">Đã thanh toán → có thể gán worker.</p>
-                        <?php endif; ?>
+                    <div class="booking-actions-row">
+                      <?php if (in_array($status, ['pending', 'confirmed', 'accepted'], true)): ?>
+                        <form method="post" action="/bookings/<?= (int)$b['id'] ?>/cancel">
+                          <input type="hidden" name="_csrf" value="<?= View::e($csrf) ?>">
+                          <button
+                            type="submit"
+                            class="booking-btn booking-btn-danger"
+                            onclick="return confirm('Bạn có chắc muốn hủy đơn này không?');"
+                          >
+                            🗑️ Hủy đơn
+                          </button>
+                        </form>
+                      <?php endif; ?>
+
+                      <?php if ($status === 'completed' && empty($b['has_review'])): ?>
+                        <a class="booking-btn booking-btn-outline" href="/bookings/<?= (int)$b['id'] ?>/review">
+                          ⭐ Đánh giá
+                        </a>
                       <?php endif; ?>
                     </div>
-                  </td>
-                </tr>
-              <?php endforeach; ?>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    <?php endif; ?>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </article>
+        <?php endforeach; ?>
+      <?php endif; ?>
+    </div>
   </section>
 </section>
