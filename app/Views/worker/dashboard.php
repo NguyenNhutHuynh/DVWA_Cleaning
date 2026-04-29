@@ -372,11 +372,15 @@ use App\Models\User;
         <div class="worker-grid">
           <?php foreach ($todayBookings as $booking): ?>
             <?php 
-              $statusText = match($booking['status']) {
+              $statusText = match($booking['status'] ?? '') {
+                Booking::STATUS_PENDING => '⏳ Chờ thanh toán',
                 Booking::STATUS_CONFIRMED => '⏳ Chờ xác nhận',
                 Booking::STATUS_ACCEPTED => '✅ Đã nhận',
                 Booking::STATUS_IN_PROGRESS => '🔄 Đang thực hiện',
-                default => $booking['status']
+                Booking::STATUS_COMPLETED => '🏁 Hoàn thành',
+                Booking::STATUS_CANCELLED => '❌ Đã hủy',
+                'paid' => '✅ Đã thanh toán',
+                default => 'Không rõ'
               };
             ?>
 

@@ -42,6 +42,37 @@ $router->get('/', function() {
   // Get featured services (first 6)
   $allServices = Service::all();
   $featuredServices = array_slice($allServices, 0, 6);
+
+  $normalizeServiceName = static function(string $name): string {
+    if (function_exists('mb_strtolower')) {
+      return mb_strtolower($name);
+    }
+
+    return strtolower($name);
+  };
+
+  $serviceIdByName = [];
+  foreach ($allServices as $service) {
+    $name = trim((string)($service['name'] ?? ''));
+    if ($name === '') {
+      continue;
+    }
+
+    $serviceIdByName[$normalizeServiceName($name)] = (int)($service['id'] ?? 0);
+  }
+
+  $buildComboLink = static function(string $serviceName) use ($serviceIdByName, $normalizeServiceName): string {
+    $key = $normalizeServiceName($serviceName);
+    $serviceId = $serviceIdByName[$key] ?? 0;
+
+    return $serviceId > 0 ? '/book?service=' . $serviceId : '/book';
+  };
+
+  $comboLinks = [
+    'tong_ve_sinh' => $buildComboLink('Combo Tổng vệ sinh'),
+    'gia_dinh' => $buildComboLink('Combo Gia đình'),
+    'chuyen_nha' => $buildComboLink('Combo Chuyển Nhà'),
+  ];
   
   // Get statistics
   $totalServices = count($allServices);
@@ -77,6 +108,7 @@ $router->get('/', function() {
     'uid' => $uid,
     'name' => $user['name'] ?? null,
     'featuredServices' => $featuredServices,
+    'comboLinks' => $comboLinks,
     'totalBookings' => $totalBookings,
     'completedBookings' => $completedBookings,
     'totalWorkers' => $totalWorkers,
@@ -133,6 +165,7 @@ $router->post('/admin/services/delete', [AdminController::class, 'deleteService'
 $router->post('/admin/services/create', [AdminController::class, 'createService']);
 $router->get('/admin/bookings', [AdminController::class, 'bookings']);
 $router->get('/admin/bookings/{id}', [AdminController::class, 'bookingDetail']);
+$router->get('/admin/payment-transactions/{id}', [AdminController::class, 'paymentTransactionDetail']);
 $router->post('/admin/bookings/{id}/message', [AdminController::class, 'sendBookingMessage']);
 $router->post('/admin/reviews/{id}/hide', [AdminController::class, 'hideReview']);
 $router->post('/admin/reviews/{id}/show', [AdminController::class, 'showReview']);

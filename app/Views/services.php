@@ -85,7 +85,7 @@ use App\Core\View;
 
                         <div class="services-card-actions">
                             <a href="/service?id=<?= (int)$s['id'] ?>" class="services-btn services-btn-outline">Xem chi tiết</a>
-                            <a href="/book" class="services-btn services-btn-primary">Đặt lịch</a>
+                            <a href="/book?service=<?= (int)$s['id'] ?>" class="services-btn services-btn-primary">Đặt lịch</a>
                         </div>
                     </div>
                 </article>

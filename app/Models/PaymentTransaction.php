@@ -84,6 +84,25 @@ final class PaymentTransaction
     }
 
     /**
+     * Lấy thông tin giao dịch theo ID.
+     */
+    public static function getById(int $id): ?array
+    {
+        try {
+            $stmt = DB::pdo()->prepare(
+                "SELECT * FROM payment_transactions WHERE id = :id LIMIT 1"
+            );
+            $stmt->execute([':id' => $id]);
+            $result = $stmt->fetch();
+
+            return $result ?: null;
+        } catch (PDOException $e) {
+            error_log('PaymentTransaction::getById error: ' . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
      * Lấy thông tin giao dịch theo Booking ID
      */
     public static function getByBookingId(int $bookingId): ?array
@@ -133,6 +152,38 @@ final class PaymentTransaction
             return $result ?: null;
         } catch (PDOException $e) {
             error_log('PaymentTransaction::getLatestCustomerByBookingId error: ' . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Lấy giao dịch khách thanh toán đã paid mới nhất theo booking.
+     */
+    public static function getLatestPaidCustomerByBookingId(int $bookingId): ?array
+    {
+        try {
+            $stmt = DB::pdo()->prepare(
+                "SELECT * FROM payment_transactions
+                 WHERE booking_id = :booking_id
+                   AND status = 'paid'
+                   AND (
+                        payment_method IS NULL
+                        OR payment_method IN (:customer_method, :legacy_method)
+                   )
+                 ORDER BY paid_at DESC, created_at DESC
+                 LIMIT 1"
+            );
+
+            $stmt->execute([
+                ':booking_id' => $bookingId,
+                ':customer_method' => self::METHOD_CUSTOMER_PAYMENT,
+                ':legacy_method' => 'bank_transfer',
+            ]);
+
+            $result = $stmt->fetch();
+            return $result ?: null;
+        } catch (PDOException $e) {
+            error_log('PaymentTransaction::getLatestPaidCustomerByBookingId error: ' . $e->getMessage());
             return null;
         }
     }

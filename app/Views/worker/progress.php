@@ -1,6 +1,16 @@
 <?php
 use App\Core\View;
 /** @var array $progress Dữ liệu tiến độ công việc */
+
+$bookingStatusMap = [
+  'pending' => 'Chờ thanh toán',
+  'paid' => 'Đã thanh toán',
+  'confirmed' => 'Chờ xác nhận',
+  'accepted' => 'Đã nhận',
+  'in_progress' => 'Đang thực hiện',
+  'completed' => 'Hoàn thành',
+  'cancelled' => 'Đã hủy',
+];
 ?>
 <section class="home-container">
   <header class="home-hero">
@@ -21,7 +31,11 @@ use App\Core\View;
           <p style="margin:6px 0;">Bước: <?= View::e($p['step']) ?></p>
           <div class="hero-actions" style="justify-content:flex-start;margin-top:6px;">
             <a class="home-btn" href="/worker/jobs/<?= (int)$p['booking_id'] ?>">Vào cập nhật</a>
-            <span class="home-btn home-btn-outline" style="cursor:default;">Trạng thái: <?= View::e($p['status'] ?? '') ?></span>
+            <?php
+              $status = (string)($p['status'] ?? '');
+              $statusLabel = $bookingStatusMap[$status] ?? 'Không rõ';
+            ?>
+            <span class="home-btn home-btn-outline" style="cursor:default;">Trạng thái: <?= View::e($statusLabel) ?></span>
           </div>
         </div>
       <?php endforeach; ?>

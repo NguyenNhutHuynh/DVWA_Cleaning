@@ -3,6 +3,16 @@ use App\Core\View;
 /** @var array $bookings */
 /** @var array $workers */
 /** @var string $csrf */
+
+$bookingStatusMap = [
+  'pending' => 'Chờ thanh toán',
+  'paid' => 'Đã thanh toán',
+  'confirmed' => 'Đã xác nhận',
+  'accepted' => 'Đang thực hiện',
+  'in_progress' => 'Đang thực hiện',
+  'completed' => 'Đã hoàn thành',
+  'cancelled' => 'Đã hủy',
+];
 ?>
 
 <style>
@@ -238,6 +248,34 @@ use App\Core\View;
   color: #a61b1b;
 }
 
+.payment-inline {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.payment-detail-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: white;
+  color: var(--primary);
+  font-size: 12px;
+  font-weight: 900;
+  text-decoration: none;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.payment-detail-link:hover {
+  background: var(--primary-soft);
+  box-shadow: var(--shadow-sm);
+  transform: translateY(-1px);
+}
+
 .booking-actions-panel {
   display: grid;
   gap: 12px;
@@ -397,12 +435,16 @@ use App\Core\View;
         <p class="empty-bookings">Chưa có đơn đặt nào.</p>
       <?php else: ?>
         <?php foreach ($bookings as $b): ?>
-          <?php $isCustomerPaid = !empty($b['is_customer_paid']); ?>
+          <?php
+            $status = (string)($b['status'] ?? '');
+            $statusLabel = $bookingStatusMap[$status] ?? 'Không rõ';
+            $isCustomerPaid = !empty($b['is_customer_paid']);
+          ?>
 
           <article class="booking-card">
             <div class="booking-card-head">
               <span class="booking-code">#<?= View::e($b['id']) ?></span>
-              <span class="status-chip"><?= View::e($b['status']) ?></span>
+              <span class="status-chip"><?= View::e($statusLabel) ?></span>
             </div>
 
             <div class="booking-body">
@@ -447,8 +489,13 @@ use App\Core\View;
                     </div>
                   <?php endif; ?>
 
-                  <div class="meta-pill payment-chip <?= $isCustomerPaid ? 'paid' : 'unpaid' ?>">
-                    <?= $isCustomerPaid ? 'Đã thanh toán' : 'Chưa thanh toán' ?>
+                  <div class="payment-inline">
+                    <div class="meta-pill payment-chip <?= $isCustomerPaid ? 'paid' : 'unpaid' ?>">
+                      <?= $isCustomerPaid ? 'Đã thanh toán' : 'Chưa thanh toán' ?>
+                    </div>
+                    <?php if ($isCustomerPaid && !empty($b['customer_paid_transaction_id'])): ?>
+                      <a class="payment-detail-link" href="/admin/payment-transactions/<?= (int)$b['customer_paid_transaction_id'] ?>">Xem chi tiết giao dịch</a>
+                    <?php endif; ?>
                   </div>
                 </div>
               </div>

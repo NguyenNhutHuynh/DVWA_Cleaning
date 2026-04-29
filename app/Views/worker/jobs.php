@@ -3,6 +3,16 @@ use App\Core\View;
 /** @var array $readyJobs */
 /** @var array $activeJobs */
 /** @var string $csrf */
+
+$bookingStatusMap = [
+  'pending' => 'Chờ thanh toán',
+  'paid' => 'Đã thanh toán',
+  'confirmed' => 'Chờ xác nhận',
+  'accepted' => 'Đã nhận',
+  'in_progress' => 'Đang thực hiện',
+  'completed' => 'Hoàn thành',
+  'cancelled' => 'Đã hủy',
+];
 ?>
 
 <style>
@@ -378,7 +388,11 @@ use App\Core\View;
                 <p class="job-time">📅 <?= View::e($j['date']) ?> • <?= View::e($j['time']) ?></p>
               </div>
 
-              <span class="job-status"><?= View::e($j['status']) ?></span>
+              <?php
+                $status = (string)($j['status'] ?? '');
+                $statusLabel = $bookingStatusMap[$status] ?? 'Không rõ';
+              ?>
+              <span class="job-status"><?= View::e($statusLabel) ?></span>
             </div>
 
             <div class="job-info-grid">

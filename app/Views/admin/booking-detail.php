@@ -7,12 +7,25 @@ use App\Models\BookingProgress;
 /** @var array $adminWorkerMessages */
 /** @var array|null $payment */
 /** @var array|null $customerPayment */
+/** @var array|null $customerPaidTransaction */
 /** @var array|null $report */
 /** @var array|null $review */
 /** @var array $workers */
 
+$bookingStatusMap = [
+  'pending' => 'Chờ thanh toán',
+  'paid' => 'Đã thanh toán',
+  'confirmed' => 'Đã xác nhận',
+  'accepted' => 'Đang thực hiện',
+  'in_progress' => 'Đang thực hiện',
+  'completed' => 'Đã hoàn thành',
+  'cancelled' => 'Đã hủy',
+];
+
 $isCustomerPaid = $customerPayment !== null && (($customerPayment['status'] ?? '') === 'paid');
 $assignedWorkerId = (int)($booking['assigned_worker_id'] ?? 0);
+$bookingStatus = (string)($booking['status'] ?? '');
+$bookingStatusLabel = $bookingStatusMap[$bookingStatus] ?? 'Không rõ';
 ?>
 
 <style>
@@ -182,6 +195,33 @@ $assignedWorkerId = (int)($booking['assigned_worker_id'] ?? 0);
 .payment-paid {
   color: #065f46;
   font-weight: 900;
+}
+
+.payment-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.payment-detail-link {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: white;
+  color: var(--primary);
+  font-size: 12px;
+  font-weight: 800;
+  text-decoration: none;
+  transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.payment-detail-link:hover {
+  background: var(--primary-soft);
+  box-shadow: var(--shadow-sm);
+  transform: translateY(-1px);
 }
 
 .payment-unpaid {
@@ -463,14 +503,18 @@ $assignedWorkerId = (int)($booking['assigned_worker_id'] ?? 0);
 
         <div class="meta-item">
           <strong>Trạng thái</strong>
-          <span class="status-chip"><?= View::e((string)($booking['status'] ?? '')) ?></span>
+          <span class="status-chip"><?= View::e($bookingStatusLabel) ?></span>
         </div>
       </div>
 
       <div class="payment-box">
-        <?php if ($customerPayment !== null && ($customerPayment['status'] ?? '') === 'paid'): ?>
-          <p><strong>Thanh toán khách:</strong> <span class="payment-paid">Đã thanh toán</span></p>
-          <p><strong>Thời gian thanh toán:</strong> <?= View::e((string)($customerPayment['paid_at'] ?? '')) ?></p>
+        <?php if ($customerPaidTransaction !== null): ?>
+          <p class="payment-inline">
+            <strong>Thanh toán khách:</strong>
+            <span class="payment-paid">Đã thanh toán</span>
+            <a class="payment-detail-link" href="/admin/payment-transactions/<?= (int)$customerPaidTransaction['id'] ?>">Xem chi tiết giao dịch</a>
+          </p>
+          <p><strong>Thời gian thanh toán:</strong> <?= View::e((string)($customerPaidTransaction['paid_at'] ?? '')) ?></p>
         <?php elseif ($customerPayment !== null): ?>
           <p><strong>Thanh toán khách:</strong> <span class="payment-unpaid">Chưa thanh toán</span></p>
           <p><strong>Số tiền cần thanh toán:</strong> <?= number_format((float)($customerPayment['amount'] ?? ($booking['service_price'] ?? 0)), 0, ',', '.') ?>đ</p>

@@ -2,6 +2,11 @@
 use App\Core\View;
 
 $isLoggedIn = isset($uid) && $uid;
+$comboLinks = $comboLinks ?? [
+    'tong_ve_sinh' => '/book',
+    'gia_dinh' => '/book',
+    'chuyen_nha' => '/book',
+];
 ?>
 
 <style>
@@ -672,7 +677,7 @@ $isLoggedIn = isset($uid) && $uid;
                         <strong class="combo-card-price-value">1.299.000đ</strong>
                         <span class="combo-card-price-unit">/tháng</span>
                     </div>
-                    <a href="/book" class="combo-btn">Chọn gói →</a>
+                    <a href="<?= View::e($comboLinks['tong_ve_sinh'] ?? '/book') ?>" class="combo-btn">Chọn gói →</a>
                 </div>
             </article>
 
@@ -687,7 +692,7 @@ $isLoggedIn = isset($uid) && $uid;
                         <strong class="combo-card-price-value">3.900.000đ</strong>
                         <span class="combo-card-price-unit">/tháng</span>
                     </div>
-                    <a href="/book" class="combo-btn">Chọn gói →</a>
+                    <a href="<?= View::e($comboLinks['gia_dinh'] ?? '/book') ?>" class="combo-btn">Chọn gói →</a>
                 </div>
             </article>
 

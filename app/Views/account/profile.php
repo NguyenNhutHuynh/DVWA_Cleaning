@@ -1,5 +1,19 @@
 <?php
 use App\Core\View;
+
+$roleLabelMap = [
+  'admin' => 'Quản trị viên',
+  'worker' => 'Người lao động',
+  'customer' => 'Khách hàng',
+];
+
+$approvalStatusMap = [
+  'active' => 'Đang hoạt động',
+  'pending' => 'Chờ duyệt',
+  'rejected' => 'Từ chối',
+  'locked' => 'Đã khóa',
+  'deleted' => 'Đã xóa',
+];
 ?>
 
 <style>
@@ -266,13 +280,21 @@ use App\Core\View;
 
             <div class="account-info-item">
               <span class="account-info-label">Vai trò</span>
-              <span class="account-info-value account-role"><?= View::e($user['role'] ?? '') ?></span>
+              <?php
+                $role = (string)($user['role'] ?? '');
+                $roleLabel = $roleLabelMap[$role] ?? 'Không rõ';
+              ?>
+              <span class="account-info-value account-role"><?= View::e($roleLabel) ?></span>
             </div>
 
             <?php if (!empty($user['approval_status'])): ?>
               <div class="account-info-item">
                 <span class="account-info-label">Trạng thái</span>
-                <span class="account-info-value"><?= View::e($user['approval_status']) ?></span>
+                <?php
+                  $approvalStatus = (string)($user['approval_status'] ?? '');
+                  $approvalLabel = $approvalStatusMap[$approvalStatus] ?? 'Không rõ';
+                ?>
+                <span class="account-info-value"><?= View::e($approvalLabel) ?></span>
               </div>
             <?php endif; ?>
           </div>

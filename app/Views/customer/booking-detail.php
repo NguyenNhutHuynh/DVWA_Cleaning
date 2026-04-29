@@ -7,6 +7,19 @@ use App\Models\BookingProgress;
 /** @var array|null $payment */
 /** @var bool $hasReview */
 /** @var string $csrf */
+
+$bookingStatusMap = [
+  'pending' => 'Chờ thanh toán',
+  'paid' => 'Đã thanh toán',
+  'confirmed' => 'Đã xác nhận',
+  'accepted' => 'Đang thực hiện',
+  'in_progress' => 'Đang thực hiện',
+  'completed' => 'Đã hoàn thành',
+  'cancelled' => 'Đã hủy',
+];
+
+$bookingStatus = (string)($booking['status'] ?? '');
+$bookingStatusLabel = $bookingStatusMap[$bookingStatus] ?? 'Không rõ';
 ?>
 
 <style>
@@ -436,7 +449,7 @@ use App\Models\BookingProgress;
 
         <div class="info-item">
           <span class="info-label">Trạng thái</span>
-          <span class="info-value primary"><?= View::e($booking['status'] ?? '') ?></span>
+          <span class="info-value primary"><?= View::e($bookingStatusLabel) ?></span>
         </div>
 
         <div class="info-item">

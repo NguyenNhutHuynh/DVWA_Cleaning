@@ -156,6 +156,30 @@ writeLog("Đã nhận Webhook cho Order Code: " . $orderCode);
 $amount = (float)($dataArray['amount'] ?? 0);
 $responseCode = $requestData['code'] ?? '';
 
+$normalizeWebhookValue = static function (mixed $value): ?string {
+    $normalized = trim((string)$value);
+    if ($normalized === '' || $normalized === 'null' || $normalized === 'undefined') {
+        return null;
+    }
+
+    return $normalized;
+};
+
+$transactionId = $normalizeWebhookValue($dataArray['reference'] ?? null);
+if ($transactionId === null) {
+    $transactionId = $normalizeWebhookValue($dataArray['paymentLinkId'] ?? null);
+}
+
+$payerAccountNumber = $normalizeWebhookValue($dataArray['counterAccountNumber'] ?? null);
+if ($payerAccountNumber === null) {
+    $payerAccountNumber = $normalizeWebhookValue($dataArray['accountNumber'] ?? null);
+}
+
+$payerName = $normalizeWebhookValue($dataArray['counterAccountName'] ?? null);
+if ($payerName === null) {
+    $payerName = $normalizeWebhookValue($dataArray['virtualAccountName'] ?? null);
+}
+
 writeLog("Extracted data - Order: {$orderCode}, Amount: {$amount}, Code: {$responseCode}");
 
 // ============================================================================
@@ -195,21 +219,29 @@ try {
     $currentStatus = $paymentRecord['status'] ?? '';
         $paymentMethod = (string)($paymentRecord['payment_method'] ?? '');
     
-    // Nếu đã paid rồi, bỏ qua (idempotent)
-    if ($currentStatus === 'paid') {
-        writeLog("WARNING: Order {$orderCode} already marked as paid");
-        echo json_encode(["error" => 0, "message" => "Ok"]);
-        exit;
-    }
-    
     // === 5B: Cập nhật payment_transactions status = 'paid' ===
     $updatePayment = $db->prepare("
         UPDATE payment_transactions 
-        SET status = 'paid', paid_at = NOW(), updated_at = NOW()
+        SET status = 'paid',
+            paid_at = COALESCE(paid_at, NOW()),
+            updated_at = NOW(),
+            transaction_id = :transaction_id,
+            payer_account_number = :payer_account_number,
+            payer_name = :payer_name,
+            webhook_raw_data = :webhook_raw_data,
+            webhook_signature = :webhook_signature,
+            webhook_received_at = NOW()
         WHERE order_code = :order_code
     ");
     
-    $result1 = $updatePayment->execute([':order_code' => $orderCode]);
+    $result1 = $updatePayment->execute([
+        ':order_code' => $orderCode,
+        ':transaction_id' => $transactionId,
+        ':payer_account_number' => $payerAccountNumber,
+        ':payer_name' => $payerName,
+        ':webhook_raw_data' => $rawData,
+        ':webhook_signature' => $signature,
+    ]);
     $affectedRows1 = $updatePayment->rowCount();
     
     if (!$result1) {

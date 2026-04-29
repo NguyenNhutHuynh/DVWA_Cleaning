@@ -111,9 +111,29 @@ final class AdminController
             'adminWorkerMessages' => AdminWorkerMessage::byBookingId($id),
             'payment' => BookingPayment::byBookingId($id),
             'customerPayment' => PaymentTransaction::getLatestCustomerByBookingId($id),
+            'customerPaidTransaction' => PaymentTransaction::getLatestPaidCustomerByBookingId($id),
             'report' => BookingReport::getByBookingId($id),
             'review' => BookingReview::getByBookingId($id),
             'csrf' => Csrf::token(),
+        ]);
+    }
+
+    public function paymentTransactionDetail(int $id): void
+    {
+        $this->requireAdminRole();
+
+        $transaction = PaymentTransaction::getById($id);
+        if ($transaction === null) {
+            $this->setSessionMessage('error', 'Không tìm thấy giao dịch #' . $id . '.');
+            $this->redirect('/admin/bookings');
+        }
+
+        $bookingId = (int)($transaction['booking_id'] ?? 0);
+        $booking = $bookingId > 0 ? Booking::getDetailById($bookingId) : null;
+
+        View::render('admin/payment-transaction-detail', [
+            'transaction' => $transaction,
+            'booking' => $booking,
         ]);
     }
 
@@ -759,11 +779,18 @@ final class AdminController
         foreach ($bookings as &$booking) {
             $bookingId = (int)($booking['id'] ?? 0);
             $payment = PaymentTransaction::getLatestCustomerByBookingId($bookingId);
+            $paidPayment = null;
 
             $booking['is_customer_paid'] = PaymentTransaction::hasSuccessfulCustomerPayment($bookingId);
             $booking['customer_payment_status'] = $payment['status'] ?? 'pending';
             $booking['customer_paid_amount'] = (float)($payment['amount'] ?? 0);
             $booking['customer_paid_at'] = $payment['paid_at'] ?? null;
+
+            if (!empty($booking['is_customer_paid'])) {
+                $paidPayment = PaymentTransaction::getLatestPaidCustomerByBookingId($bookingId);
+            }
+
+            $booking['customer_paid_transaction_id'] = $paidPayment['id'] ?? null;
         }
         unset($booking);
 

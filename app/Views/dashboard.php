@@ -39,11 +39,12 @@ use App\Models\User;
         <!-- <a href="/worker/schedule" class="function-btn">Lịch làm</a> -->
       <?php else: ?>
         <a href="/" class="function-btn">Trang chủ</a>
+        <a href="/services" class="function-btn">Dịch vụ</a>
         <a href="/book" class="function-btn">Đặt lịch</a>
         <a href="/pricing" class="function-btn">Bảng giá</a>
         <a href="/contact" class="function-btn">Liên hệ</a>
         <a href="/bookings" class="function-btn">Lịch đã đặt</a>
-        <a href="/services" class="function-btn">Dịch vụ</a>
+        
       <?php endif; ?>
       <div class="user-menu">
         <button class="avatar-btn" id="userMenuBtn" aria-haspopup="true" aria-expanded="false" title="Quản lý tài khoản">
