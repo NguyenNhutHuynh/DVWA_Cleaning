@@ -386,6 +386,7 @@ use App\Core\View;
         <div class="booking-layout">
             <section class="booking-card">
                 <form id="bookingForm" method="POST" action="/book" class="booking-form">
+                    <input type="hidden" name="_csrf" value="<?= View::e($csrf ?? '') ?>">
 
                     <div class="booking-section">
                         <h2 class="section-title">

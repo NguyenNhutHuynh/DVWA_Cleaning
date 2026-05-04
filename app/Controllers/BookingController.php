@@ -76,6 +76,7 @@ final class BookingController
             'services' => $services,
             'selected' => $selectedServiceId,
             'userAddress' => $userAddress,
+            'csrf' => Csrf::token(),
         ]);
     }
 
