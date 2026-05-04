@@ -16,6 +16,23 @@ declare(strict_types=1);
 // Cấu hình
 define('LOG_FILE', __DIR__ . '/webhook.log');
 
+// Load .env if present (PayOS will call this file directly)
+$envFile = __DIR__ . '/../.env';
+if (file_exists($envFile)) {
+    $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    foreach ($lines as $line) {
+        if (str_starts_with($line, '#')) continue;
+        if (!str_contains($line, '=')) continue;
+        [$k, $v] = explode('=', $line, 2);
+        $k = trim($k);
+        $v = trim($v);
+        if ($k !== '' && getenv($k) === false) {
+            putenv("{$k}={$v}");
+            $_ENV[$k] = $v;
+        }
+    }
+}
+
 // Nhập DB class
 require_once __DIR__ . '/../app/Core/DB.php';
 use App\Core\DB;
