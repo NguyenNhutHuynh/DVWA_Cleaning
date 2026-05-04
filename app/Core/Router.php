@@ -53,7 +53,7 @@ final class Router
             if (!Csrf::verify($token)) {
                 http_response_code(419);
                 echo 'Mã bảo mật không hợp lệ.';
-                return;
+                exit(1);
             }
         }
         $routes = $this->selectRoutes($method);
