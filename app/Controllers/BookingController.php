@@ -184,7 +184,7 @@ final class BookingController
     {
         $this->requireAuthentication();
         $this->requirePostRequest();
-        $this->verifyCsrfToken();
+
 
         $booking = Booking::getById($id);
 
@@ -252,7 +252,7 @@ final class BookingController
     {
         $this->requireAuthentication();
         $this->requirePostRequest();
-        $this->verifyCsrfToken();
+
 
         $booking = Booking::getById($id);
         if ($booking === null || (int)$booking['user_id'] !== (int)Auth::id()) {
@@ -304,7 +304,7 @@ final class BookingController
     {
         $this->requireAuthentication();
         $this->requirePostRequest();
-        $this->verifyCsrfToken();
+
 
         $booking = Booking::getDetailById($id);
         if ($booking === null || (int)$booking['user_id'] !== (int)Auth::id()) {
@@ -631,7 +631,7 @@ final class BookingController
     {
         $this->requireAuthentication();
         $this->requirePostRequest();
-        $this->verifyCsrfToken();
+
         
         // Kiểm tra booking tồn tại và thuộc người dùng
         $booking = Booking::getDetailById($id);

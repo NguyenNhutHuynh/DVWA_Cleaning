@@ -139,7 +139,7 @@ final class WorkerController
     public function sendAdminDirectMessage(): void
     {
         $this->requireApprovedWorkerRole();
-        $this->verifyCsrfToken();
+
 
         $workerId = (int)Auth::id();
         $content = trim((string)($_POST['content'] ?? ''));
@@ -157,7 +157,7 @@ final class WorkerController
     public function sendAdminMessage(int $id): void
     {
         $this->requireApprovedWorkerRole();
-        $this->verifyCsrfToken();
+
 
         $booking = $this->findOwnedBooking($id);
         if ($booking === null) {
@@ -188,7 +188,7 @@ final class WorkerController
     public function acceptJob(int $id): void
     {
         $this->requireApprovedWorkerRole();
-        $this->verifyCsrfToken();
+
 
         $booking = $this->findOwnedBooking($id);
         if ($booking === null) {
@@ -237,7 +237,7 @@ final class WorkerController
     public function startJob(int $id): void
     {
         $this->requireApprovedWorkerRole();
-        $this->verifyCsrfToken();
+
 
         $booking = $this->findOwnedBooking($id);
         if ($booking === null) {
@@ -263,7 +263,7 @@ final class WorkerController
     public function updateProgress(int $id): void
     {
         $this->requireApprovedWorkerRole();
-        $this->verifyCsrfToken();
+
 
         $booking = $this->findOwnedBooking($id);
         if ($booking === null) {
@@ -354,7 +354,7 @@ final class WorkerController
     public function updateETA(int $id): void
     {
         $this->requireApprovedWorkerRole();
-        $this->verifyCsrfToken();
+
 
         $booking = $this->findOwnedBooking($id);
         if ($booking === null) {
@@ -385,7 +385,7 @@ final class WorkerController
     public function sendMessage(int $id): void
     {
         $this->requireApprovedWorkerRole();
-        $this->verifyCsrfToken();
+
 
         $booking = $this->findOwnedBooking($id);
         if ($booking === null) {
@@ -432,7 +432,7 @@ final class WorkerController
     public function submitReport(int $id): void
     {
         $this->requireApprovedWorkerRole();
-        $this->verifyCsrfToken();
+
 
         $booking = $this->findOwnedBooking($id);
         if ($booking === null) {

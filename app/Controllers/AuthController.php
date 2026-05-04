@@ -41,12 +41,8 @@ final class AuthController
      */
     public static function register(): void
     {
-        // Xác thực token CSRF
-        if (!Csrf::verify($_POST['_csrf'] ?? null)) {
-            http_response_code(self::STATUS_CSRF_TOKEN_MISMATCH);
-            echo 'Mã bảo mật không hợp lệ. Vui lòng thử lại.';
-            exit(1);
-        }
+        // CSRF token already verified by Router::dispatch() for all POST requests
+        // No need to verify again here
 
         // Lấy và chuẩn hóa dữ liệu biểu mẫu
         $name = trim((string)($_POST['name'] ?? ''));
@@ -125,12 +121,8 @@ final class AuthController
      */
     public static function login(): void
     {
-        // Xác thực token CSRF
-        if (!Csrf::verify($_POST['_csrf'] ?? null)) {
-            http_response_code(self::STATUS_CSRF_TOKEN_MISMATCH);
-            echo 'Mã bảo mật không hợp lệ. Vui lòng thử lại.';
-            exit(1);
-        }
+        // CSRF token already verified by Router::dispatch() for all POST requests
+        // No need to verify again here
 
         // Lấy dữ liệu biểu mẫu
         if (session_status() !== PHP_SESSION_ACTIVE) {

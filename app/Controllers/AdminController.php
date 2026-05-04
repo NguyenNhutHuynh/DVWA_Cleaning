@@ -140,7 +140,7 @@ final class AdminController
     public function sendBookingMessage(int $id): void
     {
         $this->requireAdminRole();
-        $this->verifyCsrfToken();
+
 
         $booking = Booking::getById($id);
         if ($booking === null) {
@@ -258,7 +258,7 @@ final class AdminController
     public function sendUserMessage(): void
     {
         $this->requireAdminRole();
-        $this->verifyCsrfToken();
+
 
         $userId = (int)($_POST['user_id'] ?? 0);
         if ($userId <= 0) {
@@ -286,7 +286,7 @@ final class AdminController
     public function userUpdate(): void
     {
         $this->requireAdminRole();
-        $this->verifyCsrfToken();
+
 
         $userId = (int)($_POST['id'] ?? 0);
         if ($userId <= 0) {
@@ -363,7 +363,7 @@ final class AdminController
     public function userLock(): void
     {
         $this->requireAdminRole();
-        $this->verifyCsrfToken();
+
 
         $userId = (int)($_POST['id'] ?? 0);
         if ($userId <= 0) {
@@ -381,7 +381,7 @@ final class AdminController
     public function userUnlock(): void
     {
         $this->requireAdminRole();
-        $this->verifyCsrfToken();
+
 
         $userId = (int)($_POST['id'] ?? 0);
         if ($userId <= 0) {
@@ -398,7 +398,7 @@ final class AdminController
     public function userDelete(): void
     {
         $this->requireAdminRole();
-        $this->verifyCsrfToken();
+
 
         $userId = (int)($_POST['id'] ?? 0);
         if ($userId <= 0) {
@@ -459,7 +459,7 @@ final class AdminController
     public function approveWorker(): void
     {
         $this->requireAdminRole();
-        $this->verifyCsrfToken();
+
 
         $workerId = (int)($_POST['id'] ?? 0);
         if ($workerId <= 0) {
@@ -474,7 +474,7 @@ final class AdminController
     public function rejectWorker(): void
     {
         $this->requireAdminRole();
-        $this->verifyCsrfToken();
+
 
         $workerId = (int)($_POST['id'] ?? 0);
         if ($workerId <= 0) {
@@ -490,7 +490,7 @@ final class AdminController
     public function updateService(): void
     {
         $this->requireAdminRole();
-        $this->verifyCsrfToken();
+
 
         $serviceId = (int)($_POST['id'] ?? 0);
         if ($serviceId <= 0) {
@@ -516,7 +516,7 @@ final class AdminController
     public function toggleService(): void
     {
         $this->requireAdminRole();
-        $this->verifyCsrfToken();
+
 
         $serviceId = (int)($_POST['id'] ?? 0);
         if ($serviceId <= 0) {
@@ -531,7 +531,7 @@ final class AdminController
     public function deleteService(): void
     {
         $this->requireAdminRole();
-        $this->verifyCsrfToken();
+
 
         $serviceId = (int)($_POST['id'] ?? 0);
         if ($serviceId <= 0) {
@@ -551,7 +551,7 @@ final class AdminController
     public function createService(): void
     {
         $this->requireAdminRole();
-        $this->verifyCsrfToken();
+
 
         $payload = $this->extractServiceData();
         $payload['is_active'] = (int)($_POST['is_active'] ?? 1);
@@ -580,7 +580,7 @@ final class AdminController
     public function confirmBooking(): void
     {
         $this->requireAdminRole();
-        $this->verifyCsrfToken();
+
 
         $bookingId = (int)($_POST['id'] ?? 0);
         if ($bookingId <= 0) {
@@ -611,7 +611,7 @@ final class AdminController
     public function cancelBooking(): void
     {
         $this->requireAdminRole();
-        $this->verifyCsrfToken();
+
 
         $bookingId = (int)($_POST['id'] ?? 0);
         if ($bookingId <= 0) {
@@ -626,7 +626,7 @@ final class AdminController
     public function assignBooking(): void
     {
         $this->requireAdminRole();
-        $this->verifyCsrfToken();
+
 
         $bookingId = (int)($_POST['id'] ?? 0);
         $workerId = (int)($_POST['worker_id'] ?? 0);
@@ -1258,7 +1258,7 @@ final class AdminController
     public function hideReview(int $id): void
     {
         $this->requireAdminRole();
-        $this->verifyCsrfToken();
+
 
         if ($id <= 0) {
             $this->setSessionMessage('error', 'ID đánh giá không hợp lệ.');
@@ -1279,7 +1279,7 @@ final class AdminController
     public function showReview(int $id): void
     {
         $this->requireAdminRole();
-        $this->verifyCsrfToken();
+
 
         if ($id <= 0) {
             $this->setSessionMessage('error', 'ID đánh giá không hợp lệ.');

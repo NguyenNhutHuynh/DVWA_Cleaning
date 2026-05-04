@@ -50,7 +50,7 @@ final class CustomerController
     public function sendMessage(): void
     {
         $this->requireCustomerRole();
-        $this->verifyCsrfToken();
+
 
         $userId = (int)Auth::id();
         $content = trim((string)($_POST['content'] ?? ''));

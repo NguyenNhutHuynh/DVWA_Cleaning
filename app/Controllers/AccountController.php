@@ -53,7 +53,7 @@ final class AccountController
     public function update(): void
     {
         $this->requireAuthentication();
-        $this->verifyCsrfToken();
+
 
         $uid = Auth::id();
         $name = trim((string)($_POST['name'] ?? ''));
@@ -116,7 +116,7 @@ final class AccountController
     public function updatePassword(): void
     {
         $this->requireAuthentication();
-        $this->verifyCsrfToken();
+
 
         $uid = Auth::id();
         $current = (string)($_POST['current_password'] ?? '');
