@@ -1,8 +1,40 @@
 <?php
 declare(strict_types=1);
 
+// Load .env file if it exists
+$envFile = __DIR__ . '/../.env';
+if (file_exists($envFile)) {
+    $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    foreach ($lines as $line) {
+        if (str_starts_with($line, '#')) {
+            continue;
+        }
+        if (str_contains($line, '=')) {
+            [$key, $value] = explode('=', $line, 2);
+            $key = trim($key);
+            $value = trim($value);
+            if (!empty($key) && empty($_ENV[$key]) && empty($_SERVER[$key])) {
+                putenv("{$key}={$value}");
+                $_ENV[$key] = $value;
+            }
+        }
+    }
+}
+
 $config = require __DIR__ . '/../config/app.php';
+
+// Secure session cookie settings
+$secure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || (isset($_SERVER['SERVER_PORT']) && (int)$_SERVER['SERVER_PORT'] === 443);
+$cookieParams = [
+  'lifetime' => 0,
+  'path' => '/',
+  'domain' => $_SERVER['HTTP_HOST'] ?? '',
+  'secure' => $secure,
+  'httponly' => true,
+  'samesite' => 'Lax',
+];
 session_name($config['app']['session_name']);
+session_set_cookie_params($cookieParams);
 session_start();
 
 // Tự tải đơn giản cho namespace App\

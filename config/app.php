@@ -1,24 +1,25 @@
 <?php
     return [
-  'db' => [
-    'host' => '127.0.0.1',
-    'port' => 3306,
-    'name' => 'cleaning_db',
-    'user' => 'cleaning_user',
-    'pass' => 'cleaning_pass', 
-    'charset' => 'utf8mb4',
+    'db' => [
+    'host' => getenv('DB_HOST') ?: '127.0.0.1',
+    'port' => (int)(getenv('DB_PORT') ?: 3306),
+    'name' => getenv('DB_NAME') ?: 'cleaning_db',
+    'user' => getenv('DB_USER') ?: 'cleaning_user',
+    'pass' => getenv('DB_PASS') ?: 'cleaning_pass',
+    'charset' => getenv('DB_CHARSET') ?: 'utf8mb4',
   ],
   'app' => [
-    'base_url' => 'http://cleaning.test',
-    'session_name' => 'CLEANINGSESSID',
+    'base_url' => getenv('APP_BASE_URL') ?: 'http://cleaning.test',
+    'session_name' => getenv('APP_SESSION_NAME') ?: 'CLEANINGSESSID',
   ],
   'payos' => [
-    'client_id' => '88c5c667-369b-4187-903f-0aa0d9f34359',
-    'api_key' => 'd9aadaf3-4e7d-4987-9c75-5457731d9a64',
-    'checksum_key' => '922b18544e809831a8bad56ec78d47e161ae9306a0e8386f7eb494b7d86d8f29',
-    'webhook_url' => 'https://suasively-metaphoric-gearldine.ngrok-free.dev/webhook.php',
-    'bank_account_number' => '0382583013',
-    'bank_account_name' => 'NGUYEN NHUT HUYNH',
+    'client_id' => getenv('PAYOS_CLIENT_ID') ?: null,
+    'api_key' => getenv('PAYOS_API_KEY') ?: null,
+    // checksum_key is sensitive; prefer setting PAYOS_CHECKSUM_KEY in environment
+    'checksum_key' => getenv('PAYOS_CHECKSUM_KEY') ?: null,
+    'webhook_url' => getenv('PAYOS_WEBHOOK_URL') ?: null,
+    'bank_account_number' => getenv('PAYOS_BANK_ACCOUNT') ?: null,
+    'bank_account_name' => getenv('PAYOS_BANK_ACCOUNT_NAME') ?: null,
   ],
 ];
 ?>

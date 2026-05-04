@@ -43,6 +43,15 @@ final class Router
     {
         $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
         $path = $this->extractPath();
+        // Global CSRF protection for all POST requests (expect token in form or header)
+        if ($method === 'POST') {
+            $token = $_POST['_csrf'] ?? ($_SERVER['HTTP_X_CSRF_TOKEN'] ?? null);
+            if (!Csrf::verify($token)) {
+                http_response_code(419);
+                echo 'Mã bảo mật không hợp lệ.';
+                return;
+            }
+        }
         $routes = $this->selectRoutes($method);
 
         if (isset($routes[$path])) {

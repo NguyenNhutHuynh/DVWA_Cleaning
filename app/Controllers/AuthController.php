@@ -133,37 +133,60 @@ final class AuthController
         }
 
         // Lấy dữ liệu biểu mẫu
+        if (session_status() !== PHP_SESSION_ACTIVE) {
+            session_start();
+        }
+
         $email = trim((string)($_POST['email'] ?? ''));
         $password = (string)($_POST['password'] ?? '');
 
+        // Rate-limit theo IP: tối đa 5 lần trong cửa sổ 15 phút
+        $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+        $now = time();
+        $window = 15 * 60; // 15 phút
+        $maxAttempts = 5;
+        $attempts = $_SESSION['login_attempts'][$ip] ?? [];
+        // Loại bỏ các attempt cũ
+        $attempts = array_values(array_filter($attempts, static fn($t) => ($t + $window) >= $now));
+        if (count($attempts) >= $maxAttempts) {
+            View::render('auth/login', [
+                'csrf' => Csrf::token(),
+                'error' => 'Quá nhiều lần đăng nhập không thành công. Vui lòng thử lại sau.',
+                'email' => $email,
+            ]);
+            return;
+        }
+
         // Tìm người dùng theo email
         $user = User::findByEmail($email);
-        if ($user === null) {
+
+        // Kiểm tra mật khẩu và user existence
+        $authOk = $user !== null && password_verify($password, $user['password_hash']);
+        if (!$authOk) {
+            // Ghi lại lần thử
+            $attempts[] = $now;
+            $_SESSION['login_attempts'][$ip] = $attempts;
+
             View::render('auth/login', [
                 'csrf' => Csrf::token(),
-                'error' => 'Không tìm thấy địa chỉ email.',
+                'error' => 'Đăng nhập không thành công. Vui lòng kiểm tra email hoặc mật khẩu.',
                 'email' => $email,
             ]);
             return;
         }
 
-        // Kiểm tra mật khẩu
-        if (!password_verify($password, $user['password_hash'])) {
-            View::render('auth/login', [
-                'csrf' => Csrf::token(),
-                'error' => 'Mật khẩu không chính xác.',
-                'email' => $email,
-            ]);
-            return;
-        }
 
-        // Kiểm tra trạng thái tài khoản
+        // Kiểm tra trạng thái tài khoản (nếu không cho phép đăng nhập vẫn trả về thông báo chung)
         $accountStatus = (string)($user['approval_status'] ?? User::STATUS_ACTIVE);
         $statusError = self::validateAccountStatus($accountStatus, $user);
         if ($statusError !== null) {
+            // Ghi attempt khi bị chặn
+            $attempts[] = $now;
+            $_SESSION['login_attempts'][$ip] = $attempts;
+
             View::render('auth/login', [
                 'csrf' => Csrf::token(),
-                'error' => $statusError,
+                'error' => 'Đăng nhập không thành công. Vui lòng kiểm tra email hoặc mật khẩu.',
                 'email' => $email,
             ]);
             return;
@@ -172,6 +195,9 @@ final class AuthController
         // Đăng nhập người dùng
         $userRole = self::normalizeUserRole((string)$user['role']);
         Auth::login((int)$user['id'], $userRole);
+
+        // Thành công: xóa bộ đếm attempt cho IP này
+        unset($_SESSION['login_attempts'][$ip]);
 
         // Chuyển hướng tới trang điều khiển phù hợp
         self::redirectToUserDashboard($userRole, $accountStatus);

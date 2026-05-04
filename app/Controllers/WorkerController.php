@@ -544,10 +544,21 @@ final class WorkerController
 
             $tmpPath = (string)$_FILES['photos']['tmp_name'][$index];
             $original = (string)$_FILES['photos']['name'][$index];
-            $extension = strtolower((string)pathinfo($original, PATHINFO_EXTENSION));
-            if (!in_array($extension, ['jpg', 'jpeg', 'png', 'webp'], true)) {
+
+            // Validate real MIME type using finfo
+            $finfo = new \finfo(FILEINFO_MIME_TYPE);
+            $mime = $finfo->file($tmpPath) ?: '';
+            $mimeMap = [
+                'image/jpeg' => 'jpg',
+                'image/png' => 'png',
+                'image/webp' => 'webp',
+                'image/gif' => 'gif',
+            ];
+            if (!isset($mimeMap[$mime])) {
                 continue;
             }
+
+            $extension = $mimeMap[$mime];
 
             $fileName = 'p_' . $progressId . '_' . bin2hex(random_bytes(4)) . '.' . $extension;
             $targetPath = $uploadDir . '/' . $fileName;
