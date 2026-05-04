@@ -24,14 +24,18 @@ if (file_exists($envFile)) {
 $config = require __DIR__ . '/../config/app.php';
 
 // Secure session cookie settings
-$secure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || (isset($_SERVER['SERVER_PORT']) && (int)$_SERVER['SERVER_PORT'] === 443);
+// Only set secure flag if truly HTTPS in production
+$isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || 
+           (!empty($_SERVER['REQUEST_SCHEME']) && $_SERVER['REQUEST_SCHEME'] === 'https') ||
+           (isset($_SERVER['SERVER_PORT']) && (int)$_SERVER['SERVER_PORT'] === 443);
+
 $cookieParams = [
   'lifetime' => 0,
   'path' => '/',
-  'domain' => $_SERVER['HTTP_HOST'] ?? '',
-  'secure' => $secure,
-  'httponly' => true,
-  'samesite' => 'Lax',
+  'domain' => '',  // Empty = browser uses document.domain; works for all subdomains
+  'secure' => $isHttps,  // false on localhost (HTTP), true in production (HTTPS)
+  'httponly' => true,  // Prevent JS access
+  'samesite' => 'Lax',  // Protect against CSRF while allowing top-level navigation
 ];
 session_name($config['app']['session_name']);
 session_set_cookie_params($cookieParams);

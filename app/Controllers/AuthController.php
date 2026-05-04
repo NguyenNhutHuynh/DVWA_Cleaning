@@ -89,9 +89,6 @@ final class AuthController
                 ? 'Đăng ký thành công! Tài khoản worker đang chờ duyệt. Vui lòng đăng nhập sau khi được duyệt.'
                 : 'Đăng ký thành công! Vui lòng đăng nhập để tiếp tục.'
         );
-        if (session_status() !== PHP_SESSION_ACTIVE) {
-            session_start();
-        }
         $_SESSION['login_email'] = $email;
         self::redirect('/login');
     }
@@ -101,10 +98,6 @@ final class AuthController
      */
     public static function showLogin(): void
     {
-        if (session_status() !== PHP_SESSION_ACTIVE) {
-            session_start();
-        }
-
         $prefillEmail = (string)($_SESSION['login_email'] ?? '');
         unset($_SESSION['login_email']);
 
@@ -125,10 +118,6 @@ final class AuthController
         // No need to verify again here
 
         // Lấy dữ liệu biểu mẫu
-        if (session_status() !== PHP_SESSION_ACTIVE) {
-            session_start();
-        }
-
         $email = trim((string)($_POST['email'] ?? ''));
         $password = (string)($_POST['password'] ?? '');
 
