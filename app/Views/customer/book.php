@@ -501,9 +501,9 @@ use App\Core\View;
                             >
                             <label for="agree_terms">
                                 Tôi đồng ý với 
-                                <a href="#">điều khoản dịch vụ</a> 
+                                <a href="/terms" target="_blank" style="color: #2eaf7d; text-decoration: none; font-weight: 600;">điều khoản dịch vụ</a> 
                                 và 
-                                <a href="#">chính sách bảo mật</a>
+                                <a href="/privacy" target="_blank" style="color: #2eaf7d; text-decoration: none; font-weight: 600;">chính sách bảo mật</a>
                             </label>
                         </div>
                     </div>

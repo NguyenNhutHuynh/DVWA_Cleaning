@@ -160,11 +160,13 @@ $router->get('/login', [AuthController::class, 'showLogin']);
 $router->post('/login', [AuthController::class, 'login']);
 $router->get('/logout', [AuthController::class, 'logout']);
 
-// Forgot Password
-$router->get('/forgot-password', [AuthController::class, 'showForgotPassword']);
-$router->post('/forgot-password', [AuthController::class, 'sendResetLink']);
-$router->get('/reset-password/{token}', [AuthController::class, 'showResetPassword']);
-$router->post('/reset-password', [AuthController::class, 'resetPassword']);
+// Điều Khoản & Chính Sách
+$router->get('/terms', function() {
+  View::render('terms');
+});
+$router->get('/privacy', function() {
+  View::render('privacy');
+});
 
 // Các dịch vụ
 $router->get('/services', [ServicesController::class, 'index']);

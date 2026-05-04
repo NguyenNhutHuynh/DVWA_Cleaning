@@ -235,11 +235,6 @@ use App\Core\View;
       </div>
     </form>
 
-      <div style="text-align: center; margin-top: 16px; padding-top: 16px; border-top: 1px solid #dcefe6;">
-        <a href="/forgot-password" style="color: #2eaf7d; text-decoration: none; font-size: 14px; font-weight: 600;">
-          Quên mật khẩu?
-        </a>
-      </div>
 
     <nav class="auth-link" aria-label="Liên kết chuyển trang đăng ký">
       Chưa có tài khoản? <a href="/register">Đăng ký</a>
