@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Core\Auth;
+use App\Core\Csrf;
 use App\Core\View;
 use App\Models\Contact;
 use App\Models\User;
@@ -19,26 +20,22 @@ final class ContactController
      */
     public function index(): void
     {
-        $userContacts = [];
-
-        if (Auth::isAuthenticated()) {
-            // Lấy email của người dùng hiện tại
-            $currentUser = User::findById((int)Auth::id());
-            $userEmail = $currentUser['email'] ?? '';
-
-            // Lấy các tin nhắn liên hệ trước đó của người dùng (dựa trên email)
-            $allContacts = Contact::getAll();
-            $userContacts = array_filter(
-                $allContacts,
-                fn($c) => (string)($c['email'] ?? '') === $userEmail
-            );
-
-            // Sắp xếp theo thời gian mới nhất trước
-            usort($userContacts, fn($a, $b) => strtotime($b['created_at'] ?? 0) - strtotime($a['created_at'] ?? 0));
-        }
+        $isAuthenticated = Auth::isAuthenticated();
+        $currentUser = $isAuthenticated ? User::findById((int)Auth::id()) : null;
+        $contactPrefill = [
+            'name' => (string)($currentUser['name'] ?? ''),
+            'email' => (string)($currentUser['email'] ?? ''),
+            'phone' => (string)($currentUser['phone'] ?? ''),
+        ];
+        $userContacts = $isAuthenticated
+            ? Contact::getByUserId((int)Auth::id(), (string)($currentUser['email'] ?? ''))
+            : [];
         
         View::render('contact', [
+            'isAuthenticated' => $isAuthenticated,
+            'contactPrefill' => $contactPrefill,
             'previousContacts' => array_values($userContacts),
+            'csrf' => Csrf::token(),
         ]);
     }
 
@@ -51,6 +48,12 @@ final class ContactController
         // Chỉ chấp nhận request POST
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             $this->handleInvalidMethod();
+            return;
+        }
+
+        if (!Auth::isAuthenticated()) {
+            $_SESSION['error'] = 'Bạn cần đăng nhập để gửi tin nhắn liên hệ.';
+            $this->redirect('/login');
             return;
         }
 

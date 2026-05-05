@@ -101,10 +101,20 @@ final class AuthController
         $prefillEmail = (string)($_SESSION['login_email'] ?? '');
         unset($_SESSION['login_email']);
 
+        $returnTo = self::resolveLoginReturnTo($_GET['return_to'] ?? null);
+        if ($returnTo !== null) {
+            $_SESSION['login_return_to'] = $returnTo;
+        }
+
+        $storedReturnTo = self::resolveLoginReturnTo($_SESSION['login_return_to'] ?? null);
+        $contactLoginFlow = $storedReturnTo === '/contact';
+
         View::render('auth/login', [
             'csrf' => Csrf::token(),
             'error' => null,
             'email' => $prefillEmail,
+            'returnTo' => $storedReturnTo,
+            'contactLoginFlow' => $contactLoginFlow,
         ]);
     }
 
@@ -130,16 +140,20 @@ final class AuthController
         // Loại bỏ các attempt cũ
         $attempts = array_values(array_filter($attempts, static fn($t) => ($t + $window) >= $now));
         if (count($attempts) >= $maxAttempts) {
+            $returnTo = self::resolveLoginReturnTo($_SESSION['login_return_to'] ?? null);
             View::render('auth/login', [
                 'csrf' => Csrf::token(),
                 'error' => 'Quá nhiều lần đăng nhập không thành công. Vui lòng thử lại sau.',
                 'email' => $email,
+                'returnTo' => $returnTo,
+                'contactLoginFlow' => $returnTo === '/contact',
             ]);
             return;
         }
 
         // Tìm người dùng theo email
         $user = User::findByEmail($email);
+        $returnTo = self::resolveLoginReturnTo($_SESSION['login_return_to'] ?? null);
 
         // Kiểm tra mật khẩu và user existence
         $authOk = $user !== null && password_verify($password, $user['password_hash']);
@@ -152,6 +166,8 @@ final class AuthController
                 'csrf' => Csrf::token(),
                 'error' => 'Đăng nhập không thành công. Vui lòng kiểm tra email hoặc mật khẩu.',
                 'email' => $email,
+                'returnTo' => $returnTo,
+                'contactLoginFlow' => $returnTo === '/contact',
             ]);
             return;
         }
@@ -169,6 +185,20 @@ final class AuthController
                 'csrf' => Csrf::token(),
                 'error' => 'Đăng nhập không thành công. Vui lòng kiểm tra email hoặc mật khẩu.',
                 'email' => $email,
+                'returnTo' => $returnTo,
+                'contactLoginFlow' => $returnTo === '/contact',
+            ]);
+            return;
+        }
+
+        if ($returnTo === '/contact' && self::normalizeUserRole((string)$user['role']) !== User::ROLE_CUSTOMER) {
+            $_SESSION['login_return_to'] = '/contact';
+            View::render('auth/login', [
+                'csrf' => Csrf::token(),
+                'error' => 'Luồng đăng nhập từ trang liên hệ chỉ dành cho tài khoản khách hàng.',
+                'email' => $email,
+                'returnTo' => $returnTo,
+                'contactLoginFlow' => true,
             ]);
             return;
         }
@@ -179,8 +209,14 @@ final class AuthController
 
         // Thành công: xóa bộ đếm attempt cho IP này
         unset($_SESSION['login_attempts'][$ip]);
+        unset($_SESSION['login_return_to']);
 
         // Chuyển hướng tới trang điều khiển phù hợp
+        if ($userRole === User::ROLE_CUSTOMER && $returnTo === '/contact') {
+            self::redirect('/contact');
+            return;
+        }
+
         self::redirectToUserDashboard($userRole, $accountStatus);
     }
 
@@ -312,6 +348,14 @@ final class AuthController
         };
 
         self::redirect($path);
+    }
+
+    /**
+     * Chỉ chấp nhận luồng quay lại an toàn từ trang liên hệ.
+     */
+    private static function resolveLoginReturnTo(mixed $returnTo): ?string
+    {
+        return $returnTo === '/contact' ? '/contact' : null;
     }
 
     /**

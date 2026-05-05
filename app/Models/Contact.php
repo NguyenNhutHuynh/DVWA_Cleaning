@@ -17,6 +17,8 @@ final class Contact
     public const STATUS_RESPONDED = 'replied';
     public const STATUS_CLOSED = 'closed';
 
+    private static ?bool $hasUserIdColumn = null;
+
     /**
      * Lấy toàn bộ tin nhắn liên hệ từ cơ sở dữ liệu.
      *
@@ -25,6 +27,31 @@ final class Contact
     public static function getAll(): array
     {
         $stmt = DB::pdo()->query("SELECT * FROM contacts ORDER BY created_at DESC");
+        return $stmt->fetchAll() ?: [];
+    }
+
+    /**
+     * Lấy các tin nhắn liên hệ theo người dùng.
+     *
+     * @param int $userId ID người dùng
+     * @return array Danh sách tin nhắn liên hệ của người dùng
+     */
+    public static function getByUserId(int $userId, ?string $email = null): array
+    {
+        if (self::hasUserIdColumn()) {
+            $stmt = DB::pdo()->prepare("SELECT * FROM contacts WHERE user_id = :user_id ORDER BY created_at DESC");
+            $stmt->execute(['user_id' => $userId]);
+
+            return $stmt->fetchAll() ?: [];
+        }
+
+        if ($email === null || $email === '') {
+            return [];
+        }
+
+        $stmt = DB::pdo()->prepare("SELECT * FROM contacts WHERE email = :email ORDER BY created_at DESC");
+        $stmt->execute(['email' => $email]);
+
         return $stmt->fetchAll() ?: [];
     }
 
@@ -48,18 +75,34 @@ final class Contact
         string $message
     ): int {
         $pdo = DB::pdo();
-        $stmt = $pdo->prepare(
-            "INSERT INTO contacts (name, email, phone, subject, message, status, created_at, updated_at)
-             VALUES (:name, :email, :phone, :subject, :message, :status, NOW(), NOW())"
-        );
-        $stmt->execute([
-            'name' => $name,
-            'email' => $email,
-            'phone' => $phone,
-            'subject' => $subject,
-            'message' => $message,
-            'status' => self::STATUS_PENDING,
-        ]);
+        if (self::hasUserIdColumn()) {
+            $stmt = $pdo->prepare(
+                "INSERT INTO contacts (user_id, name, email, phone, subject, message, status, created_at, updated_at)
+                 VALUES (:user_id, :name, :email, :phone, :subject, :message, :status, NOW(), NOW())"
+            );
+            $stmt->execute([
+                'user_id' => $userId,
+                'name' => $name,
+                'email' => $email,
+                'phone' => $phone,
+                'subject' => $subject,
+                'message' => $message,
+                'status' => self::STATUS_PENDING,
+            ]);
+        } else {
+            $stmt = $pdo->prepare(
+                "INSERT INTO contacts (name, email, phone, subject, message, status, created_at, updated_at)
+                 VALUES (:name, :email, :phone, :subject, :message, :status, NOW(), NOW())"
+            );
+            $stmt->execute([
+                'name' => $name,
+                'email' => $email,
+                'phone' => $phone,
+                'subject' => $subject,
+                'message' => $message,
+                'status' => self::STATUS_PENDING,
+            ]);
+        }
         
         return (int)$pdo->lastInsertId();
     }
@@ -118,6 +161,28 @@ final class Contact
             'id' => $id,
             'status' => self::STATUS_RESPONDED,
         ]);
+    }
+
+    /**
+     * Kiểm tra bảng contacts có cột user_id hay chưa.
+     */
+    private static function hasUserIdColumn(): bool
+    {
+        if (self::$hasUserIdColumn !== null) {
+            return self::$hasUserIdColumn;
+        }
+
+        $stmt = DB::pdo()->prepare(
+            "SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+             WHERE TABLE_SCHEMA = DATABASE()
+               AND TABLE_NAME = 'contacts'
+               AND COLUMN_NAME = 'user_id'"
+        );
+        $stmt->execute();
+
+        self::$hasUserIdColumn = ((int)$stmt->fetchColumn() > 0);
+
+        return self::$hasUserIdColumn;
     }
 }
 

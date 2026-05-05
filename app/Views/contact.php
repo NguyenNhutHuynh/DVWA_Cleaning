@@ -1,6 +1,8 @@
 <?php
 use App\Core\View;
 /** @var array $previousContacts */
+/** @var bool $isAuthenticated */
+/** @var array $contactPrefill */
 ?>
 
 <style>
@@ -551,44 +553,52 @@ use App\Core\View;
         <div class="contact-form-box">
             <h2>Gửi tin nhắn</h2>
 
-            <form method="POST" action="/contact" class="contact-form">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Họ tên <span class="required">*</span></label>
-                        <input type="text" name="name" required placeholder="Nhập họ tên của bạn">
+            <?php if ($isAuthenticated): ?>
+                <form method="POST" action="/contact" class="contact-form">
+                    <input type="hidden" name="_csrf" value="<?= View::e($csrf) ?>">
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Họ tên <span class="required">*</span></label>
+                            <input type="text" name="name" required placeholder="Nhập họ tên của bạn" value="<?= View::e((string)($contactPrefill['name'] ?? '')) ?>" <?= $isAuthenticated ? 'readonly' : '' ?>>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Email <span class="required">*</span></label>
+                            <input type="email" name="email" required placeholder="example@email.com" value="<?= View::e((string)($contactPrefill['email'] ?? '')) ?>" <?= $isAuthenticated ? 'readonly' : '' ?>>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Điện thoại <span class="required">*</span></label>
+                            <input type="tel" name="phone" required placeholder="0123456789" value="<?= View::e((string)($contactPrefill['phone'] ?? '')) ?>" <?= $isAuthenticated ? 'readonly' : '' ?>>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Chủ đề <span class="required">*</span></label>
+                            <select name="subject" required>
+                                <option value="">-- Chọn chủ đề --</option>
+                                <option value="Hỏi giá">Hỏi giá dịch vụ</option>
+                                <option value="Tư vấn">Tư vấn dịch vụ</option>
+                                <option value="Khiếu nại">Khiếu nại / Phản hồi</option>
+                                <option value="Khác">Khác</option>
+                            </select>
+                        </div>
                     </div>
 
                     <div class="form-group">
-                        <label>Email <span class="required">*</span></label>
-                        <input type="email" name="email" required placeholder="example@email.com">
+                        <label>Tin nhắn <span class="required">*</span></label>
+                        <textarea name="message" required placeholder="Viết tin nhắn của bạn..."></textarea>
                     </div>
+
+                    <button type="submit">Gửi tin nhắn</button>
+                </form>
+            <?php else: ?>
+                <div class="alert alert-error" style="margin-top: 0;">
+                    Bạn cần <a href="/login?return_to=/contact">đăng nhập tài khoản khách hàng</a> để gửi tin nhắn liên hệ.
                 </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Điện thoại <span class="required">*</span></label>
-                        <input type="tel" name="phone" required placeholder="0123456789">
-                    </div>
-
-                    <div class="form-group">
-                        <label>Chủ đề <span class="required">*</span></label>
-                        <select name="subject" required>
-                            <option value="">-- Chọn chủ đề --</option>
-                            <option value="Hỏi giá">Hỏi giá dịch vụ</option>
-                            <option value="Tư vấn">Tư vấn dịch vụ</option>
-                            <option value="Khiếu nại">Khiếu nại / Phản hồi</option>
-                            <option value="Khác">Khác</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label>Tin nhắn <span class="required">*</span></label>
-                    <textarea name="message" required placeholder="Viết tin nhắn của bạn..."></textarea>
-                </div>
-
-                <button type="submit">Gửi tin nhắn</button>
-            </form>
+            <?php endif; ?>
         </div>
 
         <div class="contact-info-section">
@@ -636,7 +646,7 @@ use App\Core\View;
         </div>
     </section>
 
-    <?php if (!empty($previousContacts)): ?>
+    <?php if ($isAuthenticated && !empty($previousContacts)): ?>
         <section class="contact-history-section">
             <h2>Phản hồi từ Admin</h2>
 

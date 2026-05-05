@@ -18,6 +18,7 @@ try {
     
     // Các cột cần thiết
     $requiredColumns = [
+        'user_id' => 'BIGINT UNSIGNED NULL',
         'processed_by' => 'INT',
         'processed_at' => 'TIMESTAMP NULL DEFAULT NULL',
         'reply' => 'LONGTEXT',

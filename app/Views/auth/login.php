@@ -3,6 +3,8 @@ use App\Core\View;
 /** @var string $csrf Token CSRF */
 /** @var ?string $error Thông báo lỗi */
 /** @var string $email Email gợi ý */
+/** @var ?string $returnTo Đường dẫn quay lại an toàn */
+/** @var bool $contactLoginFlow */
 ?>
 
 <style>
@@ -206,7 +208,7 @@ use App\Core\View;
   <div class="auth-panel">
     <header>
       <h2 id="auth-login-heading" class="auth-title">Đăng nhập</h2>
-      <p class="auth-subtitle">Truy cập tài khoản để đặt lịch và theo dõi dịch vụ</p>
+      <p class="auth-subtitle"><?= !empty($contactLoginFlow) ? 'Luồng này chỉ dành cho tài khoản khách hàng để gửi liên hệ.' : 'Truy cập tài khoản để đặt lịch và theo dõi dịch vụ' ?></p>
     </header>
 
     <?php if ($error): ?>
@@ -219,6 +221,9 @@ use App\Core\View;
 
     <form method="post" action="/login" aria-label="Form đăng nhập" class="auth-form">
       <input type="hidden" name="_csrf" value="<?= View::e($csrf) ?>">
+      <?php if (!empty($returnTo)): ?>
+        <input type="hidden" name="return_to" value="<?= View::e($returnTo) ?>">
+      <?php endif; ?>
 
       <div class="auth-form-group">
         <label for="email">Email</label>
