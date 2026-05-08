@@ -21,5 +21,8 @@
     'bank_account_number' => getenv('PAYOS_BANK_ACCOUNT') ?: null,
     'bank_account_name' => getenv('PAYOS_BANK_ACCOUNT_NAME') ?: null,
   ],
+  'admin' => [
+    'login_key' => getenv('ADMIN_LOGIN_KEY') ?: 'admin-secret-key-040803',
+  ],
 ];
 ?>

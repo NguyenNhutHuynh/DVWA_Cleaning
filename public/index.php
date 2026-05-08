@@ -158,6 +158,8 @@ $router->get('/register', [AuthController::class, 'showRegister']);
 $router->post('/register', [AuthController::class, 'register']);
 $router->get('/login', [AuthController::class, 'showLogin']);
 $router->post('/login', [AuthController::class, 'login']);
+$router->get('/admin/login', [AuthController::class, 'showAdminLogin']);
+$router->post('/admin/login', [AuthController::class, 'adminLogin']);
 $router->get('/logout', [AuthController::class, 'logout']);
 
 // Điều Khoản & Chính Sách

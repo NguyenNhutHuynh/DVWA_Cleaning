@@ -83,12 +83,13 @@ $renderModerationList = static function (array $items, string $emptyText): void 
   --shadow-sm: 0 8px 24px rgba(31,45,61,0.08);
   --shadow-md: 0 16px 40px rgba(31,45,61,0.12);
 
-  max-width: 1180px;
+  max-width: 1120px;
   margin: 0 auto;
   padding: 24px 16px 60px;
   color: var(--text-dark);
   display: grid;
   gap: 24px;
+  justify-items: stretch;
 }
 
 .moderation-page * {
@@ -152,9 +153,12 @@ $renderModerationList = static function (array $items, string $emptyText): void 
 
 .moderation-tabs {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
   padding: 14px;
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
   background: var(--white);
   border: 1px solid var(--border);
   border-radius: 24px;
@@ -162,6 +166,7 @@ $renderModerationList = static function (array $items, string $emptyText): void 
 }
 
 .moderation-tab-btn {
+  width: 100%;
   min-height: 48px;
   border: 1.5px solid var(--border);
   background: #fcfffd;
@@ -201,6 +206,9 @@ $renderModerationList = static function (array $items, string $emptyText): void 
   background: var(--white);
   border: 1px solid var(--border);
   box-shadow: var(--shadow-sm);
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
 }
 
 .moderation-page .home-feature h2 {
@@ -443,13 +451,13 @@ $renderModerationList = static function (array $items, string $emptyText): void 
   <header class="home-hero">
     <p class="home-kicker">ADMIN • KIỂM DUYỆT</p>
     <h1>Kiểm duyệt nội dung</h1>
-    <p>Duyệt phản hồi, khiếu nại, nội dung gửi lên.</p>
+    <p>Duyệt phản hồi và nội dung gửi lên một cách gọn gàng, đồng đều.</p>
   </header>
 
   <nav class="moderation-tabs" aria-label="Danh mục kiểm duyệt">
     <button type="button" class="moderation-tab-btn is-active" data-tab-target="contacts">📩 Tin nhắn liên hệ</button>
     <button type="button" class="moderation-tab-btn" data-tab-target="reviews">⭐ Đánh giá từ khách</button>
-    <button type="button" class="moderation-tab-btn" data-tab-target="complaints">⚠️ Khiếu nại từ khách</button>
+    <!-- <button type="button" class="moderation-tab-btn" data-tab-target="complaints">⚠️ Khiếu nại từ khách</button> -->
     <button type="button" class="moderation-tab-btn" data-tab-target="reports">📋 Báo cáo của nhân viên</button>
   </nav>
 

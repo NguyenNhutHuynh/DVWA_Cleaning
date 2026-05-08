@@ -203,8 +203,20 @@ final class AuthController
             return;
         }
 
-        // Đăng nhập người dùng
+        // Chặn admin khỏi đăng nhập trên trang login thường
         $userRole = self::normalizeUserRole((string)$user['role']);
+        if ($userRole === User::ROLE_ADMIN) {
+            View::render('auth/login', [
+                'csrf' => Csrf::token(),
+                'error' => 'Tài khoản admin không thể đăng nhập trên trang này. Vui lòng sử dụng trang quản trị riêng biệt.',
+                'email' => $email,
+                'returnTo' => $returnTo,
+                'contactLoginFlow' => $returnTo === '/contact',
+            ]);
+            return;
+        }
+
+        // Đăng nhập người dùng
         Auth::login((int)$user['id'], $userRole);
 
         // Thành công: xóa bộ đếm attempt cho IP này
@@ -221,13 +233,125 @@ final class AuthController
     }
 
     /**
+     * Hiển thị trang đăng nhập admin (yêu cầu secret key).
+     * Chỉ có thể truy cập được thông qua URL có chứa key chính xác.
+     */
+    public static function showAdminLogin(): void
+    {
+        // Kiểm tra xem session đã được xác thực hay chưa
+        $sessionVerified = $_SESSION['admin_login_verified'] ?? false;
+        $verifiedTime = $_SESSION['admin_login_verified_time'] ?? 0;
+        $sessionValid = $sessionVerified && (time() - $verifiedTime) <= 300; // 5 minute window
+        
+        // Nếu session chưa được xác thực, kiểm tra secret key từ URL
+        if (!$sessionValid) {
+            $config = require __DIR__ . '/../../config/app.php';
+            $adminKey = $config['admin']['login_key'] ?? 'admin-secret-key-2024';
+            $providedKey = (string)($_GET['key'] ?? '');
+
+            if (empty($providedKey) || !hash_equals($adminKey, $providedKey)) {
+                // Invalid or missing key - redirect to home
+                self::redirect('/');
+                return;
+            }
+
+            // Key đúng - lưu vào session
+            $_SESSION['admin_login_verified'] = true;
+            $_SESSION['admin_login_verified_time'] = time();
+        }
+
+        // Hiển thị form đăng nhập
+        View::render('auth/admin-login', [
+            'csrf' => Csrf::token(),
+            'error' => null,
+            'email' => '',
+            'hideChrome' => true,
+        ]);
+    }
+
+    /**
+     * Xử lý đăng nhập cho tài khoản admin.
+     * Chỉ cho phép đăng nhập nếu người dùng có vai trò admin.
+     */
+    public static function adminLogin(): void
+    {
+        // Verify admin session was properly initiated
+        $sessionVerified = $_SESSION['admin_login_verified'] ?? false;
+        $verifiedTime = $_SESSION['admin_login_verified_time'] ?? 0;
+        
+        if (!$sessionVerified || (time() - $verifiedTime) > 300) { // 5 minute window
+            // Session expired or not verified - redirect to home
+            self::redirect('/');
+            return;
+        }
+
+        // Get form data
+        $email = trim((string)($_POST['email'] ?? ''));
+        $password = (string)($_POST['password'] ?? '');
+
+        // Find user and verify credentials
+        $user = User::findByEmail($email);
+        
+        // Check if user exists and password is correct
+        if ($user === null || !password_verify($password, $user['password_hash'])) {
+            View::render('auth/admin-login', [
+                'csrf' => Csrf::token(),
+                'error' => 'Email hoặc mật khẩu không chính xác.',
+                'email' => $email,
+                'hideChrome' => true,
+            ]);
+            return;
+        }
+
+        // Check if user is admin
+        $userRole = self::normalizeUserRole((string)$user['role']);
+        if ($userRole !== User::ROLE_ADMIN) {
+            View::render('auth/admin-login', [
+                'csrf' => Csrf::token(),
+                'error' => 'Tài khoản này không có quyền truy cập khu vực quản trị. Chỉ tài khoản admin mới có thể đăng nhập ở đây.',
+                'email' => $email,
+                'hideChrome' => true,
+            ]);
+            return;
+        }
+
+        // Check account status
+        $accountStatus = (string)($user['approval_status'] ?? User::STATUS_ACTIVE);
+        $statusError = self::validateAccountStatus($accountStatus, $user);
+        if ($statusError !== null) {
+            View::render('auth/admin-login', [
+                'csrf' => Csrf::token(),
+                'error' => 'Tài khoản này không thể đăng nhập. ' . $statusError,
+                'email' => $email,
+                'hideChrome' => true,
+            ]);
+            return;
+        }
+
+        // Login successful
+        Auth::login((int)$user['id'], User::ROLE_ADMIN);
+        unset($_SESSION['admin_login_verified']);
+        unset($_SESSION['admin_login_verified_time']);
+        self::redirect('/admin/dashboard');
+    }
+
+    /**
      * Xử lý đăng xuất.
      * Xóa session và chuyển hướng về trang chủ.
      */
     public static function logout(): void
     {
+        $currentRole = Auth::role();
+        $adminLoginUrl = '/';
+
+        if ($currentRole === User::ROLE_ADMIN) {
+            $config = require __DIR__ . '/../../config/app.php';
+            $adminKey = $config['admin']['login_key'] ?? 'admin-secret-key-2024';
+            $adminLoginUrl = '/admin/login?key=' . urlencode((string)$adminKey);
+        }
+
         Auth::logout();
-        self::redirect('/');
+        self::redirect($adminLoginUrl);
     }
 
     /**
