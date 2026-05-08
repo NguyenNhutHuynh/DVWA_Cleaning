@@ -414,7 +414,7 @@ if (!empty($services)) {
 .services-search-head {
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
+    align-items: center;
     gap: 18px;
     margin-bottom: 18px;
 }
