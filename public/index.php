@@ -57,6 +57,7 @@ use App\Controllers\PricingController;
 use App\Controllers\ContactController;
 use App\Controllers\BookingController;
 use App\Controllers\AdminController;
+use App\Controllers\Manager\ManagerController;
 use App\Controllers\CleanerController;
 use App\Controllers\CustomerController;
 use App\Controllers\WorkerController;
@@ -235,7 +236,27 @@ $router->post('/admin/user/update', [AdminController::class, 'userUpdate']);
 $router->post('/admin/user/lock', [AdminController::class, 'userLock']);
 $router->post('/admin/user/unlock', [AdminController::class, 'userUnlock']);
 $router->post('/admin/user/delete', [AdminController::class, 'userDelete']);
+// ===== MANAGER ROUTES (Quản lý vận hành) =====
+// Manager Dashboard
+$router->get('/manager', function() { header('Location: /manager/dashboard'); exit; });
+$router->get('/manager/dashboard', [ManagerController::class, 'dashboard']);
 
+// Manager Bookings
+$router->get('/manager/bookings', [ManagerController::class, 'bookings']);
+$router->get('/manager/bookings/{id}', [ManagerController::class, 'bookingDetail']);
+$router->post('/manager/bookings/confirm', [ManagerController::class, 'confirmBooking']);
+$router->post('/manager/bookings/cancel', [ManagerController::class, 'cancelBooking']);
+$router->post('/manager/bookings/assign', [ManagerController::class, 'assignBooking']);
+
+// Manager Workers
+$router->get('/manager/workers', [ManagerController::class, 'workers']);
+$router->get('/manager/workers/{id}', [ManagerController::class, 'workerDetail']);
+$router->post('/manager/workers/approve', [ManagerController::class, 'approveWorker']);
+$router->post('/manager/workers/reject', [ManagerController::class, 'rejectWorker']);
+
+// Manager Customers
+$router->get('/manager/customers', [ManagerController::class, 'customers']);
+$router->get('/manager/customers/{id}', [ManagerController::class, 'customerDetail']);
 // Trang người dọn dẹp
 $router->get('/cleaner/jobs', [CleanerController::class, 'jobs']);
 $router->get('/cleaner/progress', [CleanerController::class, 'progress']);

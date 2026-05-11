@@ -233,8 +233,9 @@ final class AuthController
     }
 
     /**
-     * Hiển thị trang đăng nhập admin (yêu cầu secret key).
+     * Hiển thị trang đăng nhập admin/manager (yêu cầu secret key).
      * Chỉ có thể truy cập được thông qua URL có chứa key chính xác.
+     * Hỗ trợ chuyển đổi giữa admin và manager login thông qua form tabs.
      */
     public static function showAdminLogin(): void
     {
@@ -260,18 +261,25 @@ final class AuthController
             $_SESSION['admin_login_verified_time'] = time();
         }
 
-        // Hiển thị form đăng nhập
+        // Lấy loại login từ GET parameter (admin hoặc manager)
+        $loginType = trim((string)($_GET['type'] ?? 'admin'));
+        if (!in_array($loginType, ['admin', 'manager'], true)) {
+            $loginType = 'admin';
+        }
+
+        // Hiển thị form đăng nhập với hỗ trợ cho cả admin và manager
         View::render('auth/admin-login', [
             'csrf' => Csrf::token(),
             'error' => null,
             'email' => '',
             'hideChrome' => true,
+            'loginType' => $loginType,
         ]);
     }
 
     /**
-     * Xử lý đăng nhập cho tài khoản admin.
-     * Chỉ cho phép đăng nhập nếu người dùng có vai trò admin.
+     * Xử lý đăng nhập cho tài khoản admin hoặc manager.
+     * Kiểm tra loại login từ form và xác thực vai trò phù hợp.
      */
     public static function adminLogin(): void
     {
@@ -288,6 +296,12 @@ final class AuthController
         // Get form data
         $email = trim((string)($_POST['email'] ?? ''));
         $password = (string)($_POST['password'] ?? '');
+        $loginType = trim((string)($_POST['login_type'] ?? 'admin'));
+        
+        // Validate login type
+        if (!in_array($loginType, ['admin', 'manager'], true)) {
+            $loginType = 'admin';
+        }
 
         // Find user and verify credentials
         $user = User::findByEmail($email);
@@ -299,20 +313,37 @@ final class AuthController
                 'error' => 'Email hoặc mật khẩu không chính xác.',
                 'email' => $email,
                 'hideChrome' => true,
+                'loginType' => $loginType,
             ]);
             return;
         }
 
-        // Check if user is admin
+        // Get user role
         $userRole = self::normalizeUserRole((string)$user['role']);
-        if ($userRole !== User::ROLE_ADMIN) {
-            View::render('auth/admin-login', [
-                'csrf' => Csrf::token(),
-                'error' => 'Tài khoản này không có quyền truy cập khu vực quản trị. Chỉ tài khoản admin mới có thể đăng nhập ở đây.',
-                'email' => $email,
-                'hideChrome' => true,
-            ]);
-            return;
+
+        // Validate role based on login type
+        if ($loginType === 'admin') {
+            if ($userRole !== User::ROLE_ADMIN) {
+                View::render('auth/admin-login', [
+                    'csrf' => Csrf::token(),
+                    'error' => 'Tài khoản này không có quyền đăng nhập vào khu vực quản trị Admin. Chỉ tài khoản Admin mới có thể đăng nhập ở đây.',
+                    'email' => $email,
+                    'hideChrome' => true,
+                    'loginType' => $loginType,
+                ]);
+                return;
+            }
+        } elseif ($loginType === 'manager') {
+            if ($userRole !== User::ROLE_MANAGER && $userRole !== User::ROLE_ADMIN) {
+                View::render('auth/admin-login', [
+                    'csrf' => Csrf::token(),
+                    'error' => 'Tài khoản này không có quyền đăng nhập vào khu vực quản lý. Chỉ tài khoản Manager hoặc Admin mới có thể đăng nhập ở đây.',
+                    'email' => $email,
+                    'hideChrome' => true,
+                    'loginType' => $loginType,
+                ]);
+                return;
+            }
         }
 
         // Check account status
@@ -324,34 +355,45 @@ final class AuthController
                 'error' => 'Tài khoản này không thể đăng nhập. ' . $statusError,
                 'email' => $email,
                 'hideChrome' => true,
+                'loginType' => $loginType,
             ]);
             return;
         }
 
         // Login successful
-        Auth::login((int)$user['id'], User::ROLE_ADMIN);
+        Auth::login((int)$user['id'], $userRole);
         unset($_SESSION['admin_login_verified']);
         unset($_SESSION['admin_login_verified_time']);
-        self::redirect('/admin/dashboard');
+        
+        // Redirect based on role
+        if ($userRole === User::ROLE_ADMIN) {
+            self::redirect('/admin/dashboard');
+        } elseif ($userRole === User::ROLE_MANAGER) {
+            self::redirect('/manager/dashboard');
+        } else {
+            // Fallback for unexpected role
+            self::redirect('/');
+        }
     }
 
     /**
      * Xử lý đăng xuất.
-     * Xóa session và chuyển hướng về trang chủ.
+     * Xóa session và chuyển hướng về trang chủ hoặc trang đăng nhập quản lý.
      */
     public static function logout(): void
     {
         $currentRole = Auth::role();
-        $adminLoginUrl = '/';
+        $redirectUrl = '/';
 
-        if ($currentRole === User::ROLE_ADMIN) {
+        // Manager và Admin đăng xuất về trang đăng nhập quản lý
+        if ($currentRole === User::ROLE_ADMIN || $currentRole === User::ROLE_MANAGER) {
             $config = require __DIR__ . '/../../config/app.php';
             $adminKey = $config['admin']['login_key'] ?? 'admin-secret-key-2024';
-            $adminLoginUrl = '/admin/login?key=' . urlencode((string)$adminKey);
+            $redirectUrl = '/admin/login?key=' . urlencode((string)$adminKey);
         }
 
         Auth::logout();
-        self::redirect($adminLoginUrl);
+        self::redirect($redirectUrl);
     }
 
     /**

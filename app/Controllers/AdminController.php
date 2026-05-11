@@ -314,7 +314,7 @@ final class AdminController
             $this->redirect($returnTo !== '' ? $returnTo : '/admin/user?id=' . $userId);
         }
 
-        $allowedRoles = [User::ROLE_ADMIN, User::ROLE_WORKER, User::ROLE_CUSTOMER];
+        $allowedRoles = [User::ROLE_ADMIN, User::ROLE_MANAGER, User::ROLE_WORKER, User::ROLE_CUSTOMER];
         if (!in_array($role, $allowedRoles, true)) {
             $this->setSessionMessage('error', 'Vai trò người dùng không hợp lệ.');
             $this->redirect($returnTo !== '' ? $returnTo : '/admin/user?id=' . $userId);

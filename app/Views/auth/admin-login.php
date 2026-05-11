@@ -3,6 +3,7 @@ use App\Core\View;
 /** @var string $csrf Token CSRF */
 /** @var ?string $error Thông báo lỗi */
 /** @var string $email Email gợi ý */
+/** @var string $loginType Loại đăng nhập (admin hoặc manager) */
 ?>
 
 <style>
@@ -30,6 +31,36 @@ use App\Core\View;
 
   .auth-container * {
     box-sizing: border-box;
+  }
+
+  .auth-tabs {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .auth-tab-btn {
+    flex: 1;
+    padding: 12px 16px;
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    background: transparent;
+    color: var(--text-muted);
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .auth-tab-btn:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+  }
+
+  .auth-tab-btn.active {
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    border-color: var(--primary);
+    color: white;
   }
 
   .auth-panel {
@@ -202,16 +233,51 @@ use App\Core\View;
       padding: 28px 20px;
       border-radius: 22px;
     }
+
+    .auth-tabs {
+      gap: 8px;
+    }
+
+    .auth-tab-btn {
+      padding: 10px 12px;
+      font-size: 12px;
+    }
   }
 </style>
 
 <section class="auth-container" aria-labelledby="auth-admin-login-heading">
   <div class="auth-panel">
     <header>
-      <div class="auth-badge">🔐 Khu vực quản trị</div>
-      <h2 id="auth-admin-login-heading" class="auth-title">Đăng nhập Admin</h2>
-      <p class="auth-subtitle">Chỉ dành cho nhân viên quản trị hệ thống</p>
+      <div class="auth-badge">🔐 Khu vực quản lý</div>
+      <h2 id="auth-admin-login-heading" class="auth-title">
+        <?php 
+          if ($loginType === 'manager') {
+            echo 'Đăng nhập Manager';
+          } else {
+            echo 'Đăng nhập Admin';
+          }
+        ?>
+      </h2>
+      <p class="auth-subtitle">
+        <?php 
+          if ($loginType === 'manager') {
+            echo 'Chỉ dành cho nhân viên quản lý vận hành';
+          } else {
+            echo 'Chỉ dành cho nhân viên quản trị hệ thống';
+          }
+        ?>
+      </p>
     </header>
+
+    <!-- LOGIN TYPE TABS -->
+    <div class="auth-tabs">
+      <button type="button" class="auth-tab-btn <?php echo $loginType === 'admin' ? 'active' : ''; ?>" onclick="switchLoginType('admin')">
+        👤 Admin
+      </button>
+      <button type="button" class="auth-tab-btn <?php echo $loginType === 'manager' ? 'active' : ''; ?>" onclick="switchLoginType('manager')">
+        💼 Manager
+      </button>
+    </div>
 
     <?php if ($error): ?>
       <div class="auth-alert auth-alert-danger" role="alert" aria-live="assertive">
@@ -220,12 +286,21 @@ use App\Core\View;
       </div>
     <?php endif; ?>
 
-    <form method="post" action="/admin/login" aria-label="Form đăng nhập admin" class="auth-form">
+    <form method="post" action="/admin/login" aria-label="Form đăng nhập quản lý" class="auth-form" id="loginForm">
       <input type="hidden" name="_csrf" value="<?= View::e($csrf) ?>">
+      <input type="hidden" name="login_type" value="<?= View::e($loginType) ?>" id="loginTypeInput">
 
       <div class="auth-form-group">
-        <label for="email">Email quản trị</label>
-        <input id="email" name="email" type="email" required class="auth-input" placeholder="admin@example.com" value="<?= View::e($email ?? '') ?>" autocomplete="email">
+        <label for="email">
+          <?php 
+            if ($loginType === 'manager') {
+              echo 'Email Manager';
+            } else {
+              echo 'Email Admin';
+            }
+          ?>
+        </label>
+        <input id="email" name="email" type="email" required class="auth-input" placeholder="example@company.com" value="<?= View::e($email ?? '') ?>" autocomplete="email">
       </div>
 
       <div class="auth-form-group">
@@ -234,8 +309,33 @@ use App\Core\View;
       </div>
 
       <div class="auth-form-group">
-        <button type="submit" class="auth-btn">Đăng nhập</button>
+        <button type="submit" class="auth-btn">
+          <?php 
+            if ($loginType === 'manager') {
+              echo 'Đăng nhập Manager';
+            } else {
+              echo 'Đăng nhập Admin';
+            }
+          ?>
+        </button>
       </div>
     </form>
   </div>
 </section>
+
+<script>
+  function switchLoginType(type) {
+    const validTypes = ['admin', 'manager'];
+    if (!validTypes.includes(type)) {
+      type = 'admin';
+    }
+    
+    // Update hidden input
+    document.getElementById('loginTypeInput').value = type;
+    
+    // Reload page with new type
+    const currentUrl = new URL(window.location);
+    currentUrl.searchParams.set('type', type);
+    window.location.href = currentUrl.toString();
+  }
+</script>

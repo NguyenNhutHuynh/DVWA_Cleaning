@@ -10,6 +10,7 @@ use App\Models\User;
       if (Auth::id()) {
         $role = Auth::role();
         if ($role === 'admin') $homeLink = '/admin/dashboard';
+        elseif ($role === 'manager') $homeLink = '/manager/dashboard';
         elseif ($role === 'worker') $homeLink = '/worker/dashboard';
         else $homeLink = '/';
       }
@@ -25,6 +26,7 @@ use App\Models\User;
         $user = User::findById((int)Auth::id());
         $initial = strtoupper(substr($user['name'] ?? 'U', 0, 1));
       ?>
+      <!-- ADMIN MENU -->
       <?php if ($role === 'admin'): ?>
         <a href="/admin/dashboard" class="function-btn">Trang quản trị</a>
         <a href="/admin/services" class="function-btn">Dịch vụ</a>
@@ -32,11 +34,19 @@ use App\Models\User;
         <a href="/admin/moderation" class="function-btn">Kiểm duyệt</a>
         <a href="/admin/users" class="function-btn">Người dùng</a>
         <a href="/admin/stats" class="function-btn">Thống kê</a>
+      <!-- MANAGER MENU -->
+      <?php elseif ($role === 'manager'): ?>
+        <a href="/manager/dashboard" class="function-btn">Bảng điều khiển</a>
+        <a href="/manager/bookings" class="function-btn">Đơn đặt</a>
+        <a href="/manager/workers" class="function-btn">Nhân viên</a>
+        <a href="/manager/customers" class="function-btn">Khách hàng</a>
+      <!-- WORKER MENU -->
       <?php elseif ($role === 'worker'): ?>
         <a href="/worker/dashboard" class="function-btn">Bảng điều khiển</a>
         <a href="/worker/jobs" class="function-btn">Nhận việc</a>
         <a href="/worker/progress" class="function-btn">Tiến độ</a>
         <!-- <a href="/worker/schedule" class="function-btn">Lịch làm</a> -->
+      <!-- CUSTOMER MENU -->
       <?php else: ?>
         <a href="/" class="function-btn">Trang chủ</a>
         <a href="/services" class="function-btn">Dịch vụ</a>

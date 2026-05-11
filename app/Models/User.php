@@ -28,7 +28,105 @@ final class User
     // Các vai trò người dùng
     public const ROLE_CUSTOMER = 'customer';
     public const ROLE_WORKER = 'worker';
+    public const ROLE_MANAGER = 'manager';
     public const ROLE_ADMIN = 'admin';
+
+    /**
+     * Kiểm tra người dùng có phải là admin không.
+     *
+     * @param array|null $user Dữ liệu người dùng
+     * @return bool True nếu là admin
+     */
+    public static function isAdmin(?array $user): bool
+    {
+        return $user !== null && ($user['role'] ?? '') === self::ROLE_ADMIN;
+    }
+
+    /**
+     * Kiểm tra người dùng có phải là manager không.
+     *
+     * @param array|null $user Dữ liệu người dùng
+     * @return bool True nếu là manager
+     */
+    public static function isManager(?array $user): bool
+    {
+        return $user !== null && ($user['role'] ?? '') === self::ROLE_MANAGER;
+    }
+
+    /**
+     * Kiểm tra người dùng có phải là worker không.
+     *
+     * @param array|null $user Dữ liệu người dùng
+     * @return bool True nếu là worker
+     */
+    public static function isWorker(?array $user): bool
+    {
+        return $user !== null && ($user['role'] ?? '') === self::ROLE_WORKER;
+    }
+
+    /**
+     * Kiểm tra người dùng có phải là customer không.
+     *
+     * @param array|null $user Dữ liệu người dùng
+     * @return bool True nếu là customer
+     */
+    public static function isCustomer(?array $user): bool
+    {
+        return $user !== null && ($user['role'] ?? '') === self::ROLE_CUSTOMER;
+    }
+
+    /**
+     * Kiểm tra người dùng có một trong các vai trò được chỉ định không.
+     *
+     * @param array|null $user Dữ liệu người dùng
+     * @param string|array $roles Vai trò(s) cần kiểm tra
+     * @return bool True nếu người dùng có một trong các vai trò
+     */
+    public static function hasRole(?array $user, string|array $roles): bool
+    {
+        if ($user === null) {
+            return false;
+        }
+
+        $userRole = $user['role'] ?? '';
+        $rolesToCheck = is_string($roles) ? [$roles] : $roles;
+        return in_array($userRole, $rolesToCheck, true);
+    }
+
+    /**
+     * Kiểm tra người dùng có phải là admin hoặc manager không (các vai trò quản lý).
+     *
+     * @param array|null $user Dữ liệu người dùng
+     * @return bool True nếu là admin hoặc manager
+     */
+    public static function isManagerialRole(?array $user): bool
+    {
+        return self::isAdmin($user) || self::isManager($user);
+    }
+
+    /**
+     * Kiểm tra người dùng có phải là operational staff (manager) không.
+     * Manager có quyền quản lý booking, worker, customer nhưng không quản lý dịch vụ hay tài khoản admin.
+     *
+     * @param array|null $user Dữ liệu người dùng
+     * @return bool True nếu là manager
+     */
+    public static function canManageOperations(?array $user): bool
+    {
+        return self::isManager($user) || self::isAdmin($user);
+    }
+
+    /**
+     * Kiểm tra người dùng có phải là super admin không.
+     * Chỉ super admin mới có thể quản lý dịch vụ, thống kê doanh thu và tài khoản admin/manager.
+     *
+     * @param array|null $user Dữ liệu người dùng
+     * @return bool True nếu là admin
+     */
+    public static function isSuperAdmin(?array $user): bool
+    {
+        return self::isAdmin($user);
+    }
 
     /**
      * Tìm người dùng theo ID.
@@ -237,12 +335,12 @@ final class User
     /**
      * Lấy danh sách toàn bộ người dùng (thông tin cơ bản) cho trang quản trị.
      *
-     * @return array Danh sách người dùng [id, name, email, role, approval_status]
+     * @return array Danh sách người dùng [id, name, email, phone, address, role, approval_status, created_at]
      */
     public static function listAll(): array
     {
         $stmt = DB::pdo()->query(
-            "SELECT id, name, email, role, approval_status FROM users ORDER BY id DESC"
+            "SELECT id, name, email, phone, address, role, approval_status, created_at FROM users ORDER BY id DESC"
         );
         return $stmt->fetchAll() ?: [];
     }
@@ -255,7 +353,7 @@ final class User
     public static function getAllUsers(): array
     {
         $stmt = DB::pdo()->prepare(
-            "SELECT id, name, email, role, approval_status, reject_reason, created_at FROM users ORDER BY created_at DESC"
+            "SELECT id, name, email, phone, address, role, approval_status, reject_reason, created_at FROM users ORDER BY created_at DESC"
         );
         $stmt->execute();
         return $stmt->fetchAll() ?: [];

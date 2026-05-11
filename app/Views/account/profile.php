@@ -3,6 +3,7 @@ use App\Core\View;
 
 $roleLabelMap = [
   'admin' => 'Quản trị viên',
+  'manager' => 'Quản lý',
   'worker' => 'Người lao động',
   'customer' => 'Khách hàng',
 ];

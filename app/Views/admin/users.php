@@ -764,10 +764,12 @@ use App\Core\View;
 
     <?php
       $admins = array_filter($users, fn($u) => ($u['role'] ?? '') === 'admin');
+      $managers = array_filter($users, fn($u) => ($u['role'] ?? '') === 'manager');
       $workers = array_filter($users, fn($u) => in_array(($u['role'] ?? ''), ['worker'], true));
       $customers = array_filter($users, fn($u) => ($u['role'] ?? '') === 'customer');
       $groupDefs = [
         ['key' => 'admins', 'title' => 'Quản trị viên (Admin)', 'items' => $admins, 'badge' => count($admins)],
+        ['key' => 'managers', 'title' => 'Quản lý (Manager)', 'items' => $managers, 'badge' => count($managers)],
         ['key' => 'workers', 'title' => 'Người lao động (Worker)', 'items' => $workers, 'badge' => count($workers)],
         ['key' => 'customers', 'title' => 'Khách hàng (Customer)', 'items' => $customers, 'badge' => count($customers)],
       ];
@@ -841,27 +843,7 @@ use App\Core\View;
             <select id="editUserRole" name="role" class="auth-input">
               <option value="customer">customer</option>
               <option value="worker">worker</option>
-              <option value="admin">admin</option>
-            </select>
-          </div>
-
-          <div class="form-field">
-            <label for="editUserStatus">Trạng thái</label>
-            <select id="editUserStatus" name="approval_status" class="auth-input">
-              <option value="active">active</option>
-              <option value="pending">pending</option>
-              <option value="rejected">rejected</option>
-              <option value="locked">locked</option>
-              <option value="deleted">deleted</option>
-            </select>
-          </div>
-
-          <div class="form-field full-row">
-            <label for="editUserAddress">Địa chỉ</label>
-            <input id="editUserAddress" name="address" class="auth-input">
-          </div>
-
-          <div class="form-field full-row">
+                <option value="manager">manager</option>
             <label for="editUserReason">Lý do trạng thái</label>
             <input id="editUserReason" name="reject_reason" class="auth-input" placeholder="Ví dụ: yêu cầu xác minh thêm thông tin">
           </div>

@@ -102,7 +102,7 @@ final class Booking
             ? 'COALESCE(NULLIF(b.line_total, 0), s.price)'
             : 's.price';
 
-        $sql = "SELECT b.*, u.name AS user_name, s.name AS service_name, {$servicePriceExpr} AS service_price
+        $sql = "SELECT b.*, u.name AS user_name, u.name AS customer_name, COALESCE(b.date, b.created_at) AS booking_date, s.name AS service_name, {$servicePriceExpr} AS service_price
                 FROM bookings b
                 JOIN users u ON u.id = b.user_id
                 JOIN services s ON s.id = b.service_id
@@ -137,8 +137,13 @@ final class Booking
             "SELECT
                 b.*,
                 u.name AS user_name,
+                u.email AS customer_email,
                 u.phone AS user_phone,
+                u.phone AS customer_phone,
                 u.address AS user_address,
+                u.address AS customer_address,
+                u.name AS customer_name,
+                COALESCE(b.date, b.created_at) AS booking_date,
                 s.name AS service_name,
                 {$servicePriceExpr} AS service_price,
                 s.unit AS service_unit,
