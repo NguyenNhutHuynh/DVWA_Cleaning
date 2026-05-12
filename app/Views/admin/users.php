@@ -768,7 +768,7 @@ use App\Core\View;
       $workers = array_filter($users, fn($u) => in_array(($u['role'] ?? ''), ['worker'], true));
       $customers = array_filter($users, fn($u) => ($u['role'] ?? '') === 'customer');
       $groupDefs = [
-        ['key' => 'admins', 'title' => 'Quản trị viên (Admin)', 'items' => $admins, 'badge' => count($admins)],
+        
         ['key' => 'managers', 'title' => 'Quản lý (Manager)', 'items' => $managers, 'badge' => count($managers)],
         ['key' => 'workers', 'title' => 'Người lao động (Worker)', 'items' => $workers, 'badge' => count($workers)],
         ['key' => 'customers', 'title' => 'Khách hàng (Customer)', 'items' => $customers, 'badge' => count($customers)],
@@ -843,7 +843,26 @@ use App\Core\View;
             <select id="editUserRole" name="role" class="auth-input">
               <option value="customer">customer</option>
               <option value="worker">worker</option>
-                <option value="manager">manager</option>
+              <option value="manager">manager</option>
+            </select>
+          </div>
+
+          <div class="form-field">
+            <label for="editUserStatus">Trạng thái duyệt</label>
+            <select id="editUserStatus" name="approval_status" class="auth-input">
+              <option value="active">active</option>
+              <option value="pending">pending</option>
+              <option value="locked">locked</option>
+              <option value="rejected">rejected</option>
+            </select>
+          </div>
+
+          <div class="form-field">
+            <label for="editUserAddress">Địa chỉ</label>
+            <input id="editUserAddress" name="address" class="auth-input">
+          </div>
+
+          <div class="form-field full-row">
             <label for="editUserReason">Lý do trạng thái</label>
             <input id="editUserReason" name="reject_reason" class="auth-input" placeholder="Ví dụ: yêu cầu xác minh thêm thông tin">
           </div>
@@ -1053,18 +1072,37 @@ use App\Core\View;
         detailGrid.innerHTML = '';
 
         try {
-          const response = await fetch('/admin/user/json?id=' + encodeURIComponent(userId), {
+          const url = '/admin/user/json?id=' + encodeURIComponent(userId);
+          console.log('Fetching user detail from:', url);
+          
+          const response = await fetch(url, {
             headers: {
               'Accept': 'application/json'
             }
           });
 
+          console.log('Response status:', response.status);
+          console.log('Response headers:', response.headers);
+          
           if (!response.ok) {
-            throw new Error('request_failed');
+            const errorText = await response.text();
+            console.error('Response not ok. Status:', response.status, 'Body:', errorText);
+            throw new Error(`HTTP ${response.status}: request_failed`);
           }
 
-          const data = await response.json();
+          let data;
+          try {
+            data = await response.json();
+          } catch (jsonError) {
+            const text = await response.text();
+            console.error('JSON parse error:', jsonError, 'Response text:', text);
+            throw new Error('invalid_json: ' + jsonError.message);
+          }
+          
+          console.log('Parsed data:', data);
+          
           if (!data || data.error) {
+            console.error('Data error:', data?.error || 'invalid_data');
             throw new Error(data?.error || 'invalid_data');
           }
 
@@ -1110,7 +1148,8 @@ use App\Core\View;
 
           detailPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
         } catch (error) {
-          detailHint.textContent = 'Không thể tải thông tin người dùng. Vui lòng thử lại.';
+          console.error('showUserDetail error:', error.message, error);
+          detailHint.textContent = 'Không thể tải thông tin người dùng: ' + error.message + '. Vui lòng kiểm tra console.';
           detailGrid.innerHTML = '';
           detailActions.hidden = true;
           setEditMode(false);

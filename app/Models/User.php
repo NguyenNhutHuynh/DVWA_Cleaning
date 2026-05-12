@@ -414,7 +414,7 @@ final class User
         $stmt = DB::pdo()->prepare(
             "UPDATE users 
              SET approval_status = :rejected_status, approved_by = :adminId, approved_at = NOW(), reject_reason = :reason 
-             WHERE id = :id AND role = :role AND approval_status IN (:pending_status, :rejected_status)"
+             WHERE id = :id AND role = :role AND approval_status = :pending_status"
         );
         return $stmt->execute([
             'rejected_status' => self::STATUS_REJECTED,

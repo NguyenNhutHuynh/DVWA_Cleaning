@@ -35,11 +35,12 @@ use App\Core\View;
       <?php endif; ?>
       <div class="hero-actions" style="justify-content:flex-start;">
         <?php if ($st === 'rejected' || $st === 'locked' || $st === 'deleted'): ?>
-          <a class="home-btn" href="/contact">Liên hệ hỗ trợ</a>
-          <a class="home-btn home-btn-outline" href="/logout">Đăng xuất</a>
+          <!-- <a class="home-btn" href="/contact">Liên hệ hỗ trợ</a> -->
+          <a class="home-btn home-btn-outline" href="/logout">Thoát</a>
         <?php else: ?>
           <a class="home-btn home-btn-outline" href="/services">Xem dịch vụ</a>
-          <a class="home-btn" href="/contact">Liên hệ hỗ trợ</a>
+          <!-- <a class="home-btn" href="/contact">Liên hệ hỗ trợ</a> -->
+          <a class="home-btn home-btn-outline" href="/logout">Thoát</a>
         <?php endif; ?>
       </div>
     </div>

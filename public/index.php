@@ -285,4 +285,16 @@ $router->post('/account/edit', [AccountController::class, 'update']);
 $router->get('/account/change-password', [AccountController::class, 'changePassword']);
 $router->post('/account/update-password', [AccountController::class, 'updatePassword']);
 
+// Debug: test endpoint
+$router->get('/test-admin-user-json', function() {
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode([
+        'status' => 'ok',
+        'message' => 'Test endpoint working',
+        'auth' => Auth::isAuthenticated() ? 'yes' : 'no',
+        'role' => Auth::role(),
+    ], JSON_UNESCAPED_UNICODE);
+    exit(0);
+});
+
 $router->dispatch();

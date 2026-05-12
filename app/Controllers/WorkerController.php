@@ -593,6 +593,7 @@ final class WorkerController
             'status' => $user['approval_status'] ?? 'pending',
             'reason' => $user['reject_reason'] ?? null,
             'name' => $user['name'] ?? 'Worker',
+            'hideChrome' => true,
         ]);
     }
 

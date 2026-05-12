@@ -61,7 +61,7 @@ use App\Core\View;
                 <td style="padding: 16px; color: #1f2d3d; font-weight: 600;"><?= View::e($worker['name']) ?></td>
                 <td style="padding: 16px; color: #546e7a;"><?= View::e($worker['email']) ?></td>
                 <td style="padding: 16px; text-align: center;">
-                  <a href="/manager/workers/<?= $worker['id'] ?>" style="color: #2eaf7d; text-decoration: none; margin: 0 8px; font-weight: 600;">Xem</a>
+                  <a href="/manager/workers/<?= $worker['id'] ?>" style="color: #2eaf7d; text-decoration: none; margin: 0 8px; font-weight: 600;">Chi Tiết</a>
                 </td>
               </tr>
             <?php endforeach; ?>

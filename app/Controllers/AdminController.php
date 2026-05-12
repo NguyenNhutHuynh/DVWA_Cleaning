@@ -212,47 +212,63 @@ final class AdminController
 
     public function userDetailJson(): void
     {
-        $this->requireAdminRole();
-        header('Content-Type: application/json; charset=utf-8');
+        try {
+            $this->requireAdminRole();
+            header('Content-Type: application/json; charset=utf-8');
 
-        $userId = (int)($_GET['id'] ?? 0);
-        if ($userId <= 0) {
-            http_response_code(400);
-            echo json_encode(['error' => 'invalid_id'], JSON_UNESCAPED_UNICODE);
-            return;
+            $userId = (int)($_GET['id'] ?? 0);
+            if ($userId <= 0) {
+                http_response_code(400);
+                echo json_encode(['error' => 'invalid_id', 'message' => 'ID người dùng không hợp lệ'], JSON_UNESCAPED_UNICODE);
+                exit(0);
+            }
+
+            $user = User::findById($userId);
+            if ($user === null) {
+                http_response_code(404);
+                echo json_encode(['error' => 'not_found', 'message' => 'Không tìm thấy người dùng'], JSON_UNESCAPED_UNICODE);
+                exit(0);
+            }
+
+            echo json_encode($this->formatUserAsJson($user), JSON_UNESCAPED_UNICODE);
+            exit(0);
+        } catch (\Throwable $e) {
+            header('Content-Type: application/json; charset=utf-8');
+            http_response_code(500);
+            echo json_encode(['error' => 'server_error', 'message' => $e->getMessage()], JSON_UNESCAPED_UNICODE);
+            exit(1);
         }
-
-        $user = User::findById($userId);
-        if ($user === null) {
-            http_response_code(404);
-            echo json_encode(['error' => 'not_found'], JSON_UNESCAPED_UNICODE);
-            return;
-        }
-
-        echo json_encode($this->formatUserAsJson($user), JSON_UNESCAPED_UNICODE);
     }
 
     public function userMessagesJson(): void
     {
-        $this->requireAdminRole();
-        header('Content-Type: application/json; charset=utf-8');
+        try {
+            $this->requireAdminRole();
+            header('Content-Type: application/json; charset=utf-8');
 
-        $userId = (int)($_GET['id'] ?? 0);
-        if ($userId <= 0) {
-            http_response_code(400);
-            echo json_encode(['error' => 'invalid_id'], JSON_UNESCAPED_UNICODE);
-            return;
+            $userId = (int)($_GET['id'] ?? 0);
+            if ($userId <= 0) {
+                http_response_code(400);
+                echo json_encode(['error' => 'invalid_id', 'message' => 'ID người dùng không hợp lệ'], JSON_UNESCAPED_UNICODE);
+                exit(0);
+            }
+
+            $user = User::findById($userId);
+            if ($user === null) {
+                http_response_code(404);
+                echo json_encode(['error' => 'not_found', 'message' => 'Không tìm thấy người dùng'], JSON_UNESCAPED_UNICODE);
+                exit(0);
+            }
+
+            $messages = AdminUserMessage::byUserId($userId);
+            echo json_encode(['messages' => $messages], JSON_UNESCAPED_UNICODE);
+            exit(0);
+        } catch (\Throwable $e) {
+            header('Content-Type: application/json; charset=utf-8');
+            http_response_code(500);
+            echo json_encode(['error' => 'server_error', 'message' => $e->getMessage()], JSON_UNESCAPED_UNICODE);
+            exit(1);
         }
-
-        $user = User::findById($userId);
-        if ($user === null) {
-            http_response_code(404);
-            echo json_encode(['error' => 'not_found'], JSON_UNESCAPED_UNICODE);
-            return;
-        }
-
-        $messages = AdminUserMessage::byUserId($userId);
-        echo json_encode(['messages' => $messages], JSON_UNESCAPED_UNICODE);
     }
 
     public function sendUserMessage(): void
