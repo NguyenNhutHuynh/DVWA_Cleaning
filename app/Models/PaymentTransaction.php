@@ -225,6 +225,7 @@ final class PaymentTransaction
     public static function hasSuccessfulCustomerPayment(int $bookingId): bool
     {
         try {
+            // First, try to find payment with booking_id
             $stmt = DB::pdo()->prepare(
                 "SELECT COUNT(*) AS total
                  FROM payment_transactions
@@ -243,7 +244,44 @@ final class PaymentTransaction
             ]);
 
             $result = $stmt->fetch();
-            return (int)($result['total'] ?? 0) > 0;
+            if ((int)($result['total'] ?? 0) > 0) {
+                return true;
+            }
+
+            // Fallback: If no payment found by booking_id, try to find by user_id
+            // This handles legacy data where payment_transactions might not have booking_id
+            $booking = \App\Models\Booking::getById($bookingId);
+            if ($booking === null) {
+                return false;
+            }
+
+            $userId = (int)($booking['user_id'] ?? 0);
+            if ($userId <= 0) {
+                return false;
+            }
+
+            // Check if user has ANY paid payment (fallback for old data)
+            $stmtFallback = DB::pdo()->prepare(
+                "SELECT COUNT(*) AS total
+                 FROM payment_transactions pt
+                 JOIN bookings b ON b.id = pt.booking_id OR (pt.booking_id IS NULL AND b.user_id = :user_id)
+                 WHERE b.id = :booking_id
+                   AND pt.status = 'paid'
+                   AND (
+                        pt.payment_method IS NULL
+                        OR pt.payment_method IN (:customer_method, :legacy_method)
+                   )"
+            );
+
+            $stmtFallback->execute([
+                ':booking_id' => $bookingId,
+                ':user_id' => $userId,
+                ':customer_method' => self::METHOD_CUSTOMER_PAYMENT,
+                ':legacy_method' => 'bank_transfer',
+            ]);
+
+            $resultFallback = $stmtFallback->fetch();
+            return (int)($resultFallback['total'] ?? 0) > 0;
         } catch (PDOException $e) {
             error_log('PaymentTransaction::hasSuccessfulCustomerPayment error: ' . $e->getMessage());
             return false;

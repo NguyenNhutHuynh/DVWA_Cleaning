@@ -716,6 +716,8 @@ $bookingStatusMap = [
                   $statusLabel = $bookingStatusMap[$status] ?? 'Không rõ';
                   $isCustomerPaid = !empty($b['is_customer_paid']);
                   $workerLabel = !empty($b['assigned_worker_id']) ? 'assigned' : 'unassigned';
+                  $bookingDate = (string)($b['date'] ?? $b['work_date'] ?? '');
+                  $bookingTime = (string)($b['time'] ?? $b['work_time'] ?? '');
                   $searchText = trim(strtolower(
                     (string)($b['id'] ?? '') . ' ' .
                     (string)($b['customer_name'] ?? $b['user_name'] ?? '') . ' ' .
@@ -738,15 +740,15 @@ $bookingStatusMap = [
                   data-status="<?= View::e($status) ?>"
                   data-payment="<?= $isCustomerPaid ? 'paid' : 'unpaid' ?>"
                   data-worker="<?= View::e($workerLabel) ?>"
-                  data-date="<?= View::e((string)($b['date'] ?? '')) ?>"
+                  data-date="<?= View::e($bookingDate) ?>"
                 >
                   <td data-label="Mã đơn">
                     <span class="booking-id">#<?= View::e($b['id']) ?></span>
                   </td>
 
                   <td data-label="Thời gian">
-                    <div class="booking-time"><?= View::e($b['time']) ?></div>
-                    <div class="booking-date"><?= View::e($b['date']) ?></div>
+                    <div class="booking-time"><?= View::e($bookingTime) ?></div>
+                    <div class="booking-date"><?= View::e($bookingDate) ?></div>
                   </td>
 
                   <td data-label="Dịch vụ / Địa điểm">

@@ -619,7 +619,11 @@ $serviceOptions = array_keys($serviceOptions);
             <div class="booking-card-head">
               <div class="booking-head-left">
                 <span class="booking-code">#<?= View::e($b['id']) ?></span>
-                <p class="booking-date">📅 <?= View::e($b['date']) ?> • <?= View::e($b['time']) ?></p>
+                <?php
+                  $bookingDate = (string)($b['date'] ?? $b['work_date'] ?? '');
+                  $bookingTime = (string)($b['time'] ?? $b['work_time'] ?? '');
+                ?>
+                <p class="booking-date">📅 <?= View::e($bookingDate) ?> • <?= View::e($bookingTime) ?></p>
                 <p class="booking-location">📍 <?= View::e($b['location']) ?></p>
               </div>
 

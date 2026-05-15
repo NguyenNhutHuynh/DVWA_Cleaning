@@ -88,31 +88,79 @@ final class Booking
 
     /**
      * Lấy toàn bộ đơn đặt kèm thông tin người dùng, dịch vụ và chi tiết từ booking_details.
+     * Fallback để xử lý dữ liệu cũ không có booking_details.
      *
      * @return array Danh sách toàn bộ đơn đặt và thông tin chi tiết
      */
     public static function getAll(): array
     {
-        $sql = "SELECT b.*, bd.*,
-                 bd.detail_status AS status,
-                 bd.work_date AS date,
-                 bd.work_time AS time,
-                 bd.note AS description,
-                 u.name AS user_name, u.name AS customer_name, u.phone AS user_phone, u.address AS user_address,
-                 s.name AS service_name, s.price AS service_price, s.unit AS service_unit,
-                 w.name AS worker_name, w.phone AS worker_phone
+        $sql = "SELECT
+                    b.id,
+                    b.user_id,
+                    b.assigned_worker_id,
+                    b.assigned_at,
+                    b.estimated_arrival_time,
+                    b.confirmed_at,
+                    b.started_at,
+                    b.completed_at,
+                    b.location,
+                    b.customer_name_snapshot,
+                    b.customer_phone_snapshot,
+                    b.service_name_snapshot,
+                    b.service_price_snapshot,
+                    b.worker_start_address,
+                    b.distance_km,
+                    b.eta_minutes,
+                    b.payment_method,
+                    b.payment_status,
+                    b.paid_at,
+                    b.payment_amount,
+                    b.payment_ref,
+                    b.created_at AS booking_created_at,
+                    b.updated_at AS booking_updated_at,
+                    bd.id AS booking_detail_id,
+                    bd.booking_id,
+                    bd.service_id,
+                    bd.service_name_snapshot AS detail_service_name_snapshot,
+                    bd.service_price_snapshot AS detail_service_price_snapshot,
+                    bd.assigned_worker_id AS detail_assigned_worker_id,
+                    bd.assigned_at AS detail_assigned_at,
+                    bd.estimated_arrival_time AS detail_estimated_arrival_time,
+                    bd.confirmed_at AS detail_confirmed_at,
+                    bd.started_at AS detail_started_at,
+                    bd.completed_at AS detail_completed_at,
+                    bd.work_date,
+                    bd.work_time,
+                    bd.quantity,
+                    bd.measure_unit,
+                    bd.unit_price,
+                    bd.line_total,
+                    bd.detail_status AS status,
+                    bd.note AS description,
+                    bd.created_at AS booking_detail_created_at,
+                    bd.updated_at AS booking_detail_updated_at,
+                    u.name AS user_name,
+                    u.name AS customer_name,
+                    u.phone AS user_phone,
+                    u.address AS user_address,
+                    s.name AS service_name,
+                    s.price AS service_price,
+                    s.unit AS service_unit,
+                    w.name AS worker_name,
+                    w.phone AS worker_phone
                 FROM bookings b
                 JOIN users u ON u.id = b.user_id
-                JOIN booking_details bd ON bd.booking_id = b.id
-                JOIN services s ON s.id = bd.service_id
+                LEFT JOIN booking_details bd ON bd.booking_id = b.id
+                LEFT JOIN services s ON s.id = bd.service_id
                 LEFT JOIN users w ON w.id = bd.assigned_worker_id
-                ORDER BY b.created_at DESC";
+                ORDER BY COALESCE(bd.work_date, DATE(b.created_at)) DESC, COALESCE(bd.work_time, TIME(b.created_at)) DESC, b.id DESC";
         $stmt = DB::pdo()->query($sql);
         return $stmt->fetchAll() ?: [];
     }
 
     /**
      * Tìm đơn đặt theo ID (lấy từ bookings và booking_details).
+     * Fallback để xử lý dữ liệu cũ không có booking_details.
      *
      * @param int $id ID đơn đặt
      * @return array|null Dữ liệu đơn đặt hoặc null nếu không tìm thấy
@@ -120,32 +168,111 @@ final class Booking
     public static function getById(int $id): ?array
     {
         $stmt = DB::pdo()->prepare(
-            "SELECT b.*, bd.*,
-             bd.detail_status AS status,
-             bd.work_date AS date,
-             bd.work_time AS time,
-             bd.note AS description
+            "SELECT
+                b.id,
+                b.user_id,
+                b.assigned_worker_id,
+                b.assigned_at,
+                b.estimated_arrival_time,
+                b.confirmed_at,
+                b.started_at,
+                b.completed_at,
+                b.location,
+                b.customer_name_snapshot,
+                b.customer_phone_snapshot,
+                b.service_name_snapshot,
+                b.service_price_snapshot,
+                b.worker_start_address,
+                b.distance_km,
+                b.eta_minutes,
+                b.payment_method,
+                b.payment_status,
+                b.paid_at,
+                b.payment_amount,
+                b.payment_ref,
+                b.created_at AS booking_created_at,
+                b.updated_at AS booking_updated_at,
+                bd.id AS booking_detail_id,
+                bd.booking_id,
+                bd.service_id,
+                bd.work_date,
+                bd.work_time,
+                bd.quantity,
+                bd.measure_unit,
+                bd.unit_price,
+                bd.line_total,
+                bd.detail_status AS status,
+                bd.note AS description,
+                bd.created_at AS booking_detail_created_at,
+                bd.updated_at AS booking_detail_updated_at
              FROM bookings b
              LEFT JOIN booking_details bd ON bd.booking_id = b.id
-             WHERE b.id = :id LIMIT 1"
+             WHERE b.id = :id
+             LIMIT 1"
         );
         $stmt->execute(['id' => $id]);
-        return $stmt->fetch() ?: null;
+        $result = $stmt->fetch();
+        
+        // Return null if booking doesn't exist
+        if (!$result) {
+            return null;
+        }
+        
+        return $result;
     }
 
     /**
      * Lấy chi tiết một đơn đặt (kèm khách hàng, worker, dịch vụ từ booking_details).
+     * Nếu booking_details trống, vẫn trả về thông tin booking cơ bản.
      */
     public static function getDetailById(int $id): ?array
     {
         $stmt = DB::pdo()->prepare(
             "SELECT
-                b.*,
-                bd.*,
+                b.id,
+                b.user_id,
+                b.assigned_worker_id,
+                b.assigned_at,
+                b.estimated_arrival_time,
+                b.confirmed_at,
+                b.started_at,
+                b.completed_at,
+                b.location,
+                b.customer_name_snapshot,
+                b.customer_phone_snapshot,
+                b.service_name_snapshot,
+                b.service_price_snapshot,
+                b.worker_start_address,
+                b.distance_km,
+                b.eta_minutes,
+                b.payment_method,
+                b.payment_status,
+                b.paid_at,
+                b.payment_amount,
+                b.payment_ref,
+                b.created_at AS booking_created_at,
+                b.updated_at AS booking_updated_at,
+                bd.id AS booking_detail_id,
+                bd.booking_id,
+                bd.service_id,
+                bd.service_name_snapshot AS detail_service_name_snapshot,
+                bd.service_price_snapshot AS detail_service_price_snapshot,
+                bd.assigned_worker_id AS detail_assigned_worker_id,
+                bd.assigned_at AS detail_assigned_at,
+                bd.estimated_arrival_time AS detail_estimated_arrival_time,
+                bd.confirmed_at AS detail_confirmed_at,
+                bd.started_at AS detail_started_at,
+                bd.completed_at AS detail_completed_at,
+                bd.work_date,
+                bd.work_time,
+                bd.quantity,
+                bd.measure_unit,
+                bd.unit_price,
+                bd.line_total,
                 bd.detail_status AS status,
-                bd.work_date AS date,
-                bd.work_time AS time,
                 bd.note AS description,
+                bd.created_at AS booking_detail_created_at,
+                bd.updated_at AS booking_detail_updated_at,
                 u.name AS user_name,
                 u.email AS customer_email,
                 u.phone AS user_phone,
@@ -161,18 +288,26 @@ final class Booking
                 w.address AS worker_address
              FROM bookings b
              JOIN users u ON u.id = b.user_id
-             JOIN booking_details bd ON bd.booking_id = b.id
-             JOIN services s ON s.id = bd.service_id
+             LEFT JOIN booking_details bd ON bd.booking_id = b.id
+             LEFT JOIN services s ON s.id = bd.service_id
              LEFT JOIN users w ON w.id = bd.assigned_worker_id
              WHERE b.id = :id
              LIMIT 1"
         );
         $stmt->execute(['id' => $id]);
-        return $stmt->fetch() ?: null;
+        $result = $stmt->fetch();
+        
+        // If no result, return null (booking doesn't exist)
+        if (!$result) {
+            return null;
+        }
+        
+        return $result;
     }
 
     /**
      * Lấy toàn bộ đơn đặt của một người dùng cụ thể (từ booking_details).
+     * Fallback để xử lý dữ liệu cũ không có booking_details.
      *
      * @param int $userId ID người dùng (khách hàng)
      * @return array Danh sách đơn đặt của khách hàng
@@ -180,43 +315,114 @@ final class Booking
     public static function getByUserId(int $userId): array
     {
         $stmt = DB::pdo()->prepare(
-            "SELECT b.*, bd.*,
-             bd.detail_status AS status,
-             bd.work_date AS date,
-             bd.work_time AS time,
-             bd.note AS description,
-             s.name AS service_name, s.price AS service_price,
-             w.name AS worker_name
+            "SELECT
+                b.id,
+                b.user_id,
+                b.assigned_worker_id,
+                b.assigned_at,
+                b.estimated_arrival_time,
+                b.confirmed_at,
+                b.started_at,
+                b.completed_at,
+                b.location,
+                b.customer_name_snapshot,
+                b.customer_phone_snapshot,
+                b.service_name_snapshot,
+                b.service_price_snapshot,
+                b.worker_start_address,
+                b.distance_km,
+                b.eta_minutes,
+                b.payment_method,
+                b.payment_status,
+                b.paid_at,
+                b.payment_amount,
+                b.payment_ref,
+                b.created_at AS booking_created_at,
+                b.updated_at AS booking_updated_at,
+                bd.id AS booking_detail_id,
+                bd.booking_id,
+                bd.service_id,
+                bd.work_date,
+                bd.work_time,
+                bd.quantity,
+                bd.measure_unit,
+                bd.unit_price,
+                bd.line_total,
+                bd.detail_status AS status,
+                bd.note AS description,
+                bd.created_at AS booking_detail_created_at,
+                bd.updated_at AS booking_detail_updated_at,
+                s.name AS service_name,
+                s.price AS service_price,
+                w.name AS worker_name
              FROM bookings b
-             JOIN booking_details bd ON bd.booking_id = b.id
-             JOIN services s ON s.id = bd.service_id
+             LEFT JOIN booking_details bd ON bd.booking_id = b.id
+             LEFT JOIN services s ON s.id = bd.service_id
              LEFT JOIN users w ON w.id = bd.assigned_worker_id
              WHERE b.user_id = :uid
-             ORDER BY b.created_at DESC"
+             ORDER BY COALESCE(bd.work_date, DATE(b.created_at)) DESC, COALESCE(bd.work_time, TIME(b.created_at)) DESC, b.id DESC"
         );
         $stmt->execute(['uid' => $userId]);
-        return $stmt->fetchAll() ?: [];
+        $results = $stmt->fetchAll() ?: [];
+        
+        return $results;
     }
 
     /**
      * Lấy danh sách đơn đã gán cho worker (từ booking_details).
+     * Fallback để xử lý dữ liệu cũ không có booking_details.
      */
     public static function getByWorkerId(int $workerId): array
     {
         $stmt = DB::pdo()->prepare(
-            "SELECT b.*, bd.*,
-             bd.detail_status AS status,
-             bd.work_date AS date,
-             bd.work_time AS time,
-             bd.note AS description,
-             u.name AS user_name, u.phone AS user_phone, u.name AS customer_name,
-             s.name AS service_name, s.price AS service_price
+            "SELECT
+                b.id,
+                b.user_id,
+                b.assigned_worker_id,
+                b.assigned_at,
+                b.estimated_arrival_time,
+                b.confirmed_at,
+                b.started_at,
+                b.completed_at,
+                b.location,
+                b.customer_name_snapshot,
+                b.customer_phone_snapshot,
+                b.service_name_snapshot,
+                b.service_price_snapshot,
+                b.worker_start_address,
+                b.distance_km,
+                b.eta_minutes,
+                b.payment_method,
+                b.payment_status,
+                b.paid_at,
+                b.payment_amount,
+                b.payment_ref,
+                b.created_at AS booking_created_at,
+                b.updated_at AS booking_updated_at,
+                bd.id AS booking_detail_id,
+                bd.booking_id,
+                bd.service_id,
+                bd.work_date,
+                bd.work_time,
+                bd.quantity,
+                bd.measure_unit,
+                bd.unit_price,
+                bd.line_total,
+                bd.detail_status AS status,
+                bd.note AS description,
+                bd.created_at AS booking_detail_created_at,
+                bd.updated_at AS booking_detail_updated_at,
+                u.name AS user_name,
+                u.phone AS user_phone,
+                u.name AS customer_name,
+                s.name AS service_name,
+                s.price AS service_price
              FROM bookings b
-             JOIN users u ON u.id = b.user_id
-             JOIN booking_details bd ON bd.booking_id = b.id
-             JOIN services s ON s.id = bd.service_id
+             LEFT JOIN users u ON u.id = b.user_id
+             LEFT JOIN booking_details bd ON bd.booking_id = b.id
+             LEFT JOIN services s ON s.id = bd.service_id
              WHERE bd.assigned_worker_id = :wid
-             ORDER BY bd.work_date ASC, bd.work_time ASC"
+             ORDER BY bd.work_date ASC, bd.work_time ASC, b.id ASC"
         );
         $stmt->execute(['wid' => $workerId]);
         return $stmt->fetchAll() ?: [];

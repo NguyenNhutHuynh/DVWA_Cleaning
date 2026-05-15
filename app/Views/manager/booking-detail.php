@@ -122,6 +122,44 @@ $bookingStatus = (string)($booking['status'] ?? '');
     </div>
   <?php endif; ?>
 
+  <!-- TIN NHẮN -->
+  <?php if (!empty($messages)): ?>
+    <div style="background: #fff; border-radius: 12px; border: 1px solid #dcefe6; padding: 24px; margin-bottom: 20px;">
+      <h3 style="margin: 0 0 16px; color: #1f2d3d; font-size: 18px;">Tin Nhắn</h3>
+      <div style="display: grid; gap: 12px; max-height: 400px; overflow-y: auto;">
+        <?php foreach ($messages as $msg): ?>
+          <div style="padding: 12px; background: #f7fdf9; border-radius: 6px; border-left: 4px solid #2eaf7d;">
+            <p style="margin: 0 0 4px; color: #1f2d3d; font-weight: 600;"><?= View::e($msg['sender_name'] ?? 'N/A') ?> <span style="color: #99aab5; font-size: 12px;">(<?= View::e($msg['sender_role'] ?? '') ?>)</span></p>
+            <p style="margin: 0 0 4px; color: #546e7a;"><?= View::e($msg['content'] ?? '') ?></p>
+            <p style="margin: 0; color: #99aab5; font-size: 12px;"><?= View::e($msg['created_at'] ?? '') ?></p>
+          </div>
+        <?php endforeach; ?>
+      </div>
+    </div>
+  <?php endif; ?>
+
+  <!-- CHI TIẾT THANH TOÁN -->
+  <div style="background: #fff; border-radius: 12px; border: 1px solid #dcefe6; padding: 24px; margin-bottom: 20px;">
+    <h3 style="margin: 0 0 16px; color: #1f2d3d; font-size: 18px;">Chi Tiết Thanh Toán</h3>
+    
+    <?php if ($customerPaidTransaction !== null): ?>
+      <div style="padding: 12px; background: #d4edda; border-radius: 6px; border-left: 4px solid #155724;">
+        <p style="margin: 0 0 8px; color: #155724; font-weight: 600;">✓ Đã Thanh Toán</p>
+        <p style="margin: 4px 0;"><strong>Số tiền:</strong> <?= number_format((float)($customerPaidTransaction['amount'] ?? 0), 0, ',', '.') ?> VNĐ</p>
+        <p style="margin: 4px 0;"><strong>Mã giao dịch:</strong> <?= View::e($customerPaidTransaction['transaction_id'] ?? $customerPaidTransaction['order_code'] ?? 'N/A') ?></p>
+        <p style="margin: 4px 0; color: #546e7a; font-size: 13px;"><strong>Thời gian:</strong> <?= View::e($customerPaidTransaction['paid_at'] ?? '') ?></p>
+      </div>
+    <?php elseif ($customerPayment !== null): ?>
+      <div style="padding: 12px; background: #fff3cd; border-radius: 6px; border-left: 4px solid #856404;">
+        <p style="margin: 0 0 8px; color: #856404; font-weight: 600;">⚠ Chưa Thanh Toán</p>
+        <p style="margin: 4px 0;"><strong>Số tiền cần thanh toán:</strong> <?= number_format((float)($customerPayment['amount'] ?? ($booking['service_price'] ?? 0)), 0, ',', '.') ?> VNĐ</p>
+        <p style="margin: 4px 0; color: #546e7a; font-size: 13px;"><strong>Trạng thái:</strong> <?= View::e($customerPayment['status'] ?? 'pending') ?></p>
+      </div>
+    <?php else: ?>
+      <p style="color: #546e7a;">Chưa có thông tin thanh toán</p>
+    <?php endif; ?>
+  </div>
+
   <!-- BÁO CÁO & ĐÁNH GIÁ -->
   <?php if ($report !== null || $review !== null): ?>
     <div style="background: #fff; border-radius: 12px; border: 1px solid #dcefe6; padding: 24px; margin-bottom: 20px;">
