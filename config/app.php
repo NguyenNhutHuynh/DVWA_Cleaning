@@ -9,7 +9,7 @@
     'charset' => getenv('DB_CHARSET') ?: 'utf8mb4',
   ],
   'app' => [
-    'base_url' => getenv('APP_BASE_URL') ?: 'http://cleaning.test',
+    'base_url' => getenv('APP_BASE_URL') ?: 'https://cleaning.id.vn',
     'session_name' => getenv('APP_SESSION_NAME') ?: 'CLEANINGSESSID',
   ],
   'payos' => [

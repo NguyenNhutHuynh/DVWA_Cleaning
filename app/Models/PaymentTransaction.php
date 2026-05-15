@@ -189,6 +189,37 @@ final class PaymentTransaction
     }
 
     /**
+     * Lấy giao dịch khách thanh toán gần nhất còn pending theo user.
+     */
+    public static function getLatestCustomerPendingByUserId(int $userId): ?array
+    {
+        try {
+            $stmt = DB::pdo()->prepare(
+                "SELECT pt.*
+                 FROM payment_transactions pt
+                 JOIN bookings b ON b.id = pt.booking_id
+                 WHERE b.user_id = :user_id
+                   AND (pt.payment_method IS NULL OR pt.payment_method IN (:customer_method, :legacy_method))
+                   AND pt.status = 'pending'
+                 ORDER BY pt.created_at DESC
+                 LIMIT 1"
+            );
+
+            $stmt->execute([
+                ':user_id' => $userId,
+                ':customer_method' => self::METHOD_CUSTOMER_PAYMENT,
+                ':legacy_method' => 'bank_transfer',
+            ]);
+
+            $result = $stmt->fetch();
+            return $result ?: null;
+        } catch (PDOException $e) {
+            error_log('PaymentTransaction::getLatestCustomerPendingByUserId error: ' . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
      * Kiểm tra booking đã có giao dịch khách thanh toán thành công chưa.
      */
     public static function hasSuccessfulCustomerPayment(int $bookingId): bool
@@ -378,6 +409,51 @@ final class PaymentTransaction
             return $stmt->fetchAll() ?: [];
         } catch (PDOException $e) {
             error_log('PaymentTransaction::getAll error: ' . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Lấy danh sách giao dịch thanh toán của khách hàng kèm thông tin booking, khách và dịch vụ.
+     */
+    public static function getCustomerPaymentDetails(int $limit = 30, int $offset = 0): array
+    {
+        try {
+            $stmt = DB::pdo()->prepare(" 
+                SELECT
+                    pt.*,
+                    b.date AS booking_date,
+                    b.time AS booking_time,
+                    b.location AS booking_location,
+                    b.description AS booking_description,
+                    b.status AS booking_status,
+                    b.assigned_worker_id,
+                    u.name AS customer_name,
+                    u.phone AS customer_phone,
+                    u.address AS customer_address,
+                    s.name AS service_name,
+                    w.name AS worker_name,
+                    w.phone AS worker_phone
+                FROM payment_transactions pt
+                JOIN bookings b ON b.id = pt.booking_id
+                JOIN users u ON u.id = b.user_id
+                JOIN services s ON s.id = b.service_id
+                LEFT JOIN users w ON w.id = b.assigned_worker_id
+                WHERE pt.payment_method IS NULL
+                   OR pt.payment_method IN (:customer_method, :legacy_method)
+                ORDER BY pt.created_at DESC
+                LIMIT :limit OFFSET :offset
+            ");
+
+            $stmt->bindValue(':customer_method', self::METHOD_CUSTOMER_PAYMENT);
+            $stmt->bindValue(':legacy_method', 'bank_transfer');
+            $stmt->bindValue(':limit', $limit, \PDO::PARAM_INT);
+            $stmt->bindValue(':offset', $offset, \PDO::PARAM_INT);
+            $stmt->execute();
+
+            return $stmt->fetchAll() ?: [];
+        } catch (PDOException $e) {
+            error_log('PaymentTransaction::getCustomerPaymentDetails error: ' . $e->getMessage());
             return [];
         }
     }

@@ -45,7 +45,7 @@ if "%PORT_FOUND%"=="0" (
 )
 
 echo Starting local server at http://%HOST%:%PORT%
-echo Press Ctrl+C to stop this window, or use stop-localhost.bat.
+echo Press Ctrl+C to stop this window, or use the matching stop script.
 echo.
 start "" "http://%HOST%:%PORT%"
 "%PHP_EXE%" -S %HOST%:%PORT% -t %DOCROOT% %ROUTER%

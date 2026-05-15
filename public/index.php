@@ -33,7 +33,7 @@ $cookieParams = [
   'lifetime' => 0,
   'path' => '/',
   'domain' => '',  // Empty = browser uses document.domain; works for all subdomains
-  'secure' => $isHttps,  // false on localhost (HTTP), true in production (HTTPS)
+  'secure' => $isHttps,  // false in local development (HTTP), true in production (HTTPS)
   'httponly' => true,  // Prevent JS access
   'samesite' => 'Lax',  // Protect against CSRF while allowing top-level navigation
 ];
@@ -188,6 +188,7 @@ $router->get('/book', [BookingController::class, 'create']);
 $router->post('/book', [BookingController::class, 'store']);
 $router->get('/bookings', [BookingController::class, 'index']);
 $router->get('/bookings/{id}', [BookingController::class, 'detail']);
+$router->get('/bookings/payment-return', [BookingController::class, 'paymentReturn']);
 $router->post('/bookings/{id}/cancel', [BookingController::class, 'cancel']);
 $router->post('/bookings/{id}/message', [BookingController::class, 'sendMessage']);
 $router->post('/bookings/{id}/repay', [BookingController::class, 'repay']);
@@ -221,6 +222,7 @@ $router->post('/admin/bookings/confirm', [AdminController::class, 'confirmBookin
 $router->post('/admin/bookings/cancel', [AdminController::class, 'cancelBooking']);
 $router->post('/admin/bookings/assign', [AdminController::class, 'assignBooking']);
 $router->get('/admin/moderation', [AdminController::class, 'moderation']);
+$router->get('/admin/worker-schedules', [AdminController::class, 'workerSchedules']);
 $router->post('/admin/contact/reply', [AdminController::class, 'replyContact']);
 $router->get('/admin/users', [AdminController::class, 'users']);
 $router->get('/admin/user', [AdminController::class, 'userDetail']);

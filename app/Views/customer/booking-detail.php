@@ -19,7 +19,7 @@ $bookingStatusMap = [
 ];
 
 $bookingStatus = (string)($booking['status'] ?? '');
-$bookingStatusLabel = $bookingStatusMap[$bookingStatus] ?? 'Không rõ';
+$bookingStatusLabel = !empty($isCustomerPaid) ? 'Đã thanh toán' : ($bookingStatusMap[$bookingStatus] ?? 'Không rõ');
 ?>
 
 <style>

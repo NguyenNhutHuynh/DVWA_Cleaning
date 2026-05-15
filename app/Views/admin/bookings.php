@@ -137,6 +137,58 @@ $bookingStatusMap = [
   flex-wrap: wrap;
 }
 
+.bookings-filters {
+  padding: 18px 26px 0;
+  display: grid;
+  grid-template-columns: 1.3fr 1fr 1fr 1fr 1fr;
+  gap: 12px;
+}
+
+.booking-filter-field {
+  display: grid;
+  gap: 8px;
+}
+
+.booking-filter-field label {
+  font-size: 13px;
+  font-weight: 900;
+  color: var(--text-dark);
+}
+
+.booking-filter-field input,
+.booking-filter-field select {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: #fcfffd;
+  color: var(--text-dark);
+  font: inherit;
+  font-weight: 700;
+}
+
+.booking-filter-summary {
+  margin: 0;
+  padding: 0 26px 18px;
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.bookings-empty-result {
+  display: none;
+  padding: 18px 26px 0;
+  margin: 0;
+  color: var(--text-muted);
+  text-align: center;
+  font-weight: 700;
+}
+
+.bookings-empty-result.is-visible {
+  display: block;
+}
+
 .bookings-panel-title {
   margin: 0;
   color: var(--text-dark);
@@ -535,6 +587,11 @@ $bookingStatusMap = [
     border-radius: 22px;
   }
 
+  .bookings-filters {
+    grid-template-columns: 1fr;
+    padding: 14px 18px 0;
+  }
+
   .bookings-panel {
     border-radius: 20px;
   }
@@ -583,6 +640,51 @@ $bookingStatusMap = [
           <span class="bookings-count"><?= count($bookings) ?> đơn</span>
         </div>
 
+        <div class="bookings-filters" id="adminBookingFilters">
+          <div class="booking-filter-field">
+            <label for="adminBookingSearch">Tìm kiếm</label>
+            <input type="search" id="adminBookingSearch" placeholder="Mã đơn, khách hàng, dịch vụ, địa chỉ...">
+          </div>
+
+          <div class="booking-filter-field">
+            <label for="adminBookingStatusFilter">Trạng thái</label>
+            <select id="adminBookingStatusFilter">
+              <option value="all">Tất cả</option>
+              <option value="pending">Chờ thanh toán</option>
+              <option value="paid">Đã thanh toán</option>
+              <option value="confirmed">Đã xác nhận</option>
+              <option value="accepted">Đang thực hiện</option>
+              <option value="completed">Đã hoàn thành</option>
+              <option value="cancelled">Đã hủy</option>
+            </select>
+          </div>
+
+          <div class="booking-filter-field">
+            <label for="adminBookingPaymentFilter">Thanh toán</label>
+            <select id="adminBookingPaymentFilter">
+              <option value="all">Tất cả</option>
+              <option value="paid">Đã thanh toán</option>
+              <option value="unpaid">Chưa thanh toán</option>
+            </select>
+          </div>
+
+          <div class="booking-filter-field">
+            <label for="adminBookingWorkerFilter">Worker</label>
+            <select id="adminBookingWorkerFilter">
+              <option value="all">Tất cả</option>
+              <option value="assigned">Đã gán</option>
+              <option value="unassigned">Chưa gán</option>
+            </select>
+          </div>
+
+          <div class="booking-filter-field">
+            <label for="adminBookingDateFilter">Ngày</label>
+            <input type="date" id="adminBookingDateFilter">
+          </div>
+        </div>
+
+        <p class="booking-filter-summary" id="adminBookingFilterSummary">Đang hiển thị toàn bộ đơn đặt.</p>
+
         <div class="table-wrap">
           <table class="bookings-table">
             <colgroup>
@@ -613,6 +715,14 @@ $bookingStatusMap = [
                   $status = (string)($b['status'] ?? '');
                   $statusLabel = $bookingStatusMap[$status] ?? 'Không rõ';
                   $isCustomerPaid = !empty($b['is_customer_paid']);
+                  $workerLabel = !empty($b['assigned_worker_id']) ? 'assigned' : 'unassigned';
+                  $searchText = trim(strtolower(
+                    (string)($b['id'] ?? '') . ' ' .
+                    (string)($b['customer_name'] ?? $b['user_name'] ?? '') . ' ' .
+                    (string)($b['service_name'] ?? '') . ' ' .
+                    (string)($b['location'] ?? '') . ' ' .
+                    (string)($b['assigned_worker_id'] ?? '')
+                  ));
 
                   $statusClass = match ($status) {
                     'pending' => 'status-pending',
@@ -623,7 +733,13 @@ $bookingStatusMap = [
                   };
                 ?>
 
-                <tr>
+                <tr
+                  data-search="<?= View::e($searchText) ?>"
+                  data-status="<?= View::e($status) ?>"
+                  data-payment="<?= $isCustomerPaid ? 'paid' : 'unpaid' ?>"
+                  data-worker="<?= View::e($workerLabel) ?>"
+                  data-date="<?= View::e((string)($b['date'] ?? '')) ?>"
+                >
                   <td data-label="Mã đơn">
                     <span class="booking-id">#<?= View::e($b['id']) ?></span>
                   </td>
@@ -714,7 +830,69 @@ $bookingStatusMap = [
             </tbody>
           </table>
         </div>
+
+        <p class="bookings-empty-result" id="adminBookingNoResults">Không có đơn nào khớp bộ lọc hiện tại.</p>
       </div>
     <?php endif; ?>
   </section>
 </section>
+
+<script>
+  (function () {
+    const searchInput = document.getElementById('adminBookingSearch');
+    const statusFilter = document.getElementById('adminBookingStatusFilter');
+    const paymentFilter = document.getElementById('adminBookingPaymentFilter');
+    const workerFilter = document.getElementById('adminBookingWorkerFilter');
+    const dateFilter = document.getElementById('adminBookingDateFilter');
+    const rows = Array.from(document.querySelectorAll('.bookings-table tbody tr'));
+    const summary = document.getElementById('adminBookingFilterSummary');
+    const noResults = document.getElementById('adminBookingNoResults');
+
+    if (!searchInput || !statusFilter || !paymentFilter || !workerFilter || !dateFilter || rows.length === 0) return;
+
+    const normalize = (value) => (value || '').toString().trim().toLowerCase();
+
+    const applyFilters = () => {
+      const query = normalize(searchInput.value);
+      const status = statusFilter.value;
+      const payment = paymentFilter.value;
+      const worker = workerFilter.value;
+      const dateValue = dateFilter.value;
+      let visibleCount = 0;
+
+      rows.forEach((row) => {
+        const text = normalize(row.getAttribute('data-search'));
+        const rowStatus = normalize(row.getAttribute('data-status'));
+        const rowPayment = normalize(row.getAttribute('data-payment'));
+        const rowWorker = normalize(row.getAttribute('data-worker'));
+        const rowDate = row.getAttribute('data-date') || '';
+        const matchesQuery = !query || text.includes(query);
+        const matchesStatus = status === 'all' || rowStatus === status;
+        const matchesPayment = payment === 'all' || rowPayment === payment;
+        const matchesWorker = worker === 'all' || rowWorker === worker;
+        const matchesDate = !dateValue || rowDate === dateValue;
+        const isVisible = matchesQuery && matchesStatus && matchesPayment && matchesWorker && matchesDate;
+
+        row.style.display = isVisible ? '' : 'none';
+        if (isVisible) visibleCount += 1;
+      });
+
+      if (summary) {
+        summary.textContent = visibleCount > 0
+          ? 'Đang hiển thị ' + visibleCount + ' đơn khớp bộ lọc.'
+          : 'Không có đơn nào khớp bộ lọc hiện tại.';
+      }
+
+      if (noResults) {
+        noResults.classList.toggle('is-visible', visibleCount === 0);
+      }
+    };
+
+    searchInput.addEventListener('input', applyFilters);
+    statusFilter.addEventListener('change', applyFilters);
+    paymentFilter.addEventListener('change', applyFilters);
+    workerFilter.addEventListener('change', applyFilters);
+    dateFilter.addEventListener('change', applyFilters);
+    applyFilters();
+  })();
+</script>

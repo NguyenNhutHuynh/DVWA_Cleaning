@@ -700,9 +700,9 @@ $progressLocked = $nextStep === null;
         </div>
 
         <div class="form-field">
-          <label>Ảnh cập nhật (có thể chọn nhiều ảnh)</label>
+          <label>Tệp đính kèm cập nhật (có thể chọn nhiều file)</label>
           <input type="file" name="photos[]" id="progressPhotos" multiple accept="image/*" class="file-input">
-          <p class="progress-note" style="margin-top:8px;color:#b26a00;font-weight:700;">Bắt buộc ảnh cho các bước: Đã đến, Ảnh trước dọn dẹp, Ảnh sau dọn dẹp.</p>
+          <p class="progress-note" style="margin-top:8px;color:#b26a00;font-weight:700;">Chỉ được tải ảnh JPG, PNG, WEBP hoặc GIF. Có thể chọn nhiều ảnh cùng lúc.</p>
         </div>
 
         <button type="submit" class="worker-btn">Cập nhật tiến độ</button>
@@ -726,9 +726,16 @@ $progressLocked = $nextStep === null;
               <?php if (!empty($item['photos'])): ?>
                 <div class="progress-photos">
                   <?php foreach ($item['photos'] as $photo): ?>
-                    <a href="<?= View::e($photo) ?>" target="_blank" rel="noopener">
-                      <img src="<?= View::e($photo) ?>" alt="progress">
-                    </a>
+                    <?php $ext = strtolower(pathinfo((string)$photo, PATHINFO_EXTENSION)); ?>
+                    <?php if (in_array($ext, ['jpg', 'jpeg', 'png', 'webp', 'gif'], true)): ?>
+                      <a href="<?= View::e($photo) ?>" target="_blank" rel="noopener">
+                        <img src="<?= View::e($photo) ?>" alt="progress">
+                      </a>
+                    <?php else: ?>
+                      <a href="<?= View::e($photo) ?>" target="_blank" rel="noopener" class="progress-file-link">
+                        📎 <?= View::e(basename((string)$photo)) ?>
+                      </a>
+                    <?php endif; ?>
                   <?php endforeach; ?>
                 </div>
               <?php endif; ?>

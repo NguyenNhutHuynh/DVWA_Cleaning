@@ -335,6 +335,11 @@ use App\Core\View;
       <p>Xác nhận, hủy và cập nhật trạng thái đơn đặt</p>
     </a>
 
+    <a href="/admin/worker-schedules" class="action-card">
+      <h3>Lịch làm việc nhân viên</h3>
+      <p>Xem lịch phân công, thời gian và thông tin khách theo từng worker</p>
+    </a>
+
     <a href="/admin/services" class="action-card">
       <h3>Quản lý dịch vụ</h3>
       <p>Thêm, sửa, xóa dịch vụ và cập nhật giá cả</p>

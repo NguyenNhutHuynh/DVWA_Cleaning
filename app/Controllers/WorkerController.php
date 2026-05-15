@@ -305,8 +305,9 @@ final class WorkerController
             $this->redirect('/worker/jobs/' . $id);
         }
 
-        if (in_array($step, $requiredPhotoSteps, true) && !$this->hasUploadedPhotos()) {
-            $_SESSION['error'] = 'Vui lòng tải ít nhất 1 ảnh cho bước này.';
+        $photoError = $this->validateUploadedProgressPhotos(in_array($step, $requiredPhotoSteps, true));
+        if ($photoError !== null) {
+            $_SESSION['error'] = $photoError;
             $this->redirect('/worker/jobs/' . $id);
         }
 
@@ -327,25 +328,47 @@ final class WorkerController
         $this->redirect('/worker/jobs/' . $id);
     }
 
-    private function hasUploadedPhotos(): bool
+    private function validateUploadedProgressPhotos(bool $requireAtLeastOne): ?string
     {
         if (!isset($_FILES['photos']) || !is_array($_FILES['photos']['name'])) {
-            return false;
+            return $requireAtLeastOne ? 'Vui lòng tải ít nhất 1 ảnh cho bước này.' : null;
         }
 
         $count = count($_FILES['photos']['name']);
+        $hasImage = false;
         for ($index = 0; $index < $count; $index++) {
             $name = (string)($_FILES['photos']['name'][$index] ?? '');
             if ($name === '') {
                 continue;
             }
+
             $error = (int)($_FILES['photos']['error'][$index] ?? UPLOAD_ERR_NO_FILE);
             if ($error === UPLOAD_ERR_OK) {
-                return true;
+                $tmpPath = (string)($_FILES['photos']['tmp_name'][$index] ?? '');
+                if ($tmpPath === '') {
+                    continue;
+                }
+
+                $finfo = new \finfo(FILEINFO_MIME_TYPE);
+                $mime = $finfo->file($tmpPath) ?: '';
+                if (!in_array($mime, [
+                    'image/jpeg',
+                    'image/png',
+                    'image/webp',
+                    'image/gif',
+                ], true)) {
+                    return 'Chỉ được tải lên file ảnh (JPG, PNG, WEBP hoặc GIF).';
+                }
+
+                $hasImage = true;
             }
         }
 
-        return false;
+        if ($requireAtLeastOne && !$hasImage) {
+            return 'Vui lòng tải ít nhất 1 ảnh cho bước này.';
+        }
+
+        return null;
     }
 
     /**
@@ -502,11 +525,71 @@ final class WorkerController
     /**
      * Hiển thị lịch làm việc từ các đơn đã phân công cho nhân viên.
      * Yêu cầu vai trò worker và trạng thái duyệt đang hoạt động.
-     * Bao gồm các đơn còn hiệu lực theo mốc thời gian.
+     * Lịch này gom các đơn đã phân công theo ngày để worker dễ theo dõi.
      *
      * @return void
      */
-   
+    public function schedule(): void
+    {
+        $this->requireApprovedWorkerRole();
+        $workerId = (int)Auth::id();
+        $bookings = Booking::getByWorkerId($workerId);
+
+        $scheduleItems = array_values(array_map(
+            static function (array $booking): array {
+                $status = (string)($booking['status'] ?? '');
+
+                return [
+                    'id' => (int)($booking['id'] ?? 0),
+                    'date' => (string)($booking['date'] ?? ''),
+                    'time' => (string)($booking['time'] ?? ''),
+                    'service_name' => (string)($booking['service_name'] ?? 'N/A'),
+                    'location' => (string)($booking['location'] ?? 'N/A'),
+                    'customer_name' => (string)($booking['user_name'] ?? 'N/A'),
+                    'phone' => (string)($booking['user_phone'] ?? ''),
+                    'status' => $status,
+                    'status_label' => match ($status) {
+                        Booking::STATUS_CONFIRMED => 'Chờ nhận việc',
+                        Booking::STATUS_ACCEPTED => 'Đã nhận việc',
+                        Booking::STATUS_IN_PROGRESS => 'Đang thực hiện',
+                        Booking::STATUS_COMPLETED => 'Hoàn thành',
+                        Booking::STATUS_CANCELLED => 'Đã hủy',
+                        default => ucfirst($status !== '' ? $status : 'unknown'),
+                    },
+                ];
+            },
+            $bookings
+        ));
+
+        $today = date('Y-m-d');
+        $upcomingCount = count(array_filter(
+            $scheduleItems,
+            static fn(array $item): bool => ($item['status'] ?? '') !== Booking::STATUS_CANCELLED &&
+                (($item['date'] ?? '') >= $today)
+        ));
+
+        $todayItems = array_values(array_filter(
+            $scheduleItems,
+            static fn(array $item): bool => ($item['date'] ?? '') === $today &&
+                ($item['status'] ?? '') !== Booking::STATUS_CANCELLED
+        ));
+
+        $groupedByDate = [];
+        foreach ($scheduleItems as $item) {
+            $date = $item['date'] !== '' ? $item['date'] : 'unknown';
+            $groupedByDate[$date][] = $item;
+        }
+
+        ksort($groupedByDate);
+
+        View::render('worker/schedule', [
+            'scheduleItems' => $scheduleItems,
+            'groupedByDate' => $groupedByDate,
+            'todayItems' => $todayItems,
+            'upcomingCount' => $upcomingCount,
+            'csrf' => Csrf::token(),
+        ]);
+    }
 
     /**
      * Tìm job theo id và kiểm tra worker sở hữu job đó.

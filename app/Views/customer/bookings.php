@@ -11,6 +11,15 @@ $statusLabels = [
     'completed' => '<span class="booking-status booking-status-completed">🌟 Đã hoàn thành</span>',
     'cancelled' => '<span class="booking-status booking-status-cancelled">❌ Đã hủy</span>',
 ];
+
+$serviceOptions = [];
+foreach ($bookings as $bookingOption) {
+  $serviceName = trim((string)($bookingOption['service_name'] ?? ''));
+  if ($serviceName !== '') {
+    $serviceOptions[$serviceName] = true;
+  }
+}
+$serviceOptions = array_keys($serviceOptions);
 ?>
 
 <style>
@@ -160,6 +169,65 @@ $statusLabels = [
   font-size: clamp(24px, 3vw, 34px);
   font-weight: 900;
   letter-spacing: -0.03em;
+}
+
+.booking-filters {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding: 18px;
+  border-radius: 20px;
+  background: var(--bg-soft);
+  border: 1px solid var(--border);
+}
+
+.booking-filter-field {
+  display: grid;
+  gap: 8px;
+}
+
+.booking-filter-field label {
+  font-size: 13px;
+  font-weight: 900;
+  color: var(--text-dark);
+}
+
+.booking-filter-field input,
+.booking-filter-field select {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: white;
+  color: var(--text-dark);
+  font: inherit;
+  font-weight: 700;
+}
+
+.booking-filter-note {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.booking-empty-result {
+  display: none;
+  margin: 18px 0 0;
+  padding: 18px 20px;
+  border-radius: 18px;
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  color: var(--text-muted);
+  text-align: center;
+  font-weight: 700;
+}
+
+.booking-empty-result.is-visible {
+  display: block;
 }
 
 .booking-list {
@@ -441,6 +509,11 @@ $statusLabels = [
     align-items: stretch;
   }
 
+  .booking-filters {
+    grid-template-columns: 1fr;
+    padding: 14px;
+  }
+
   .booking-head-right {
     justify-content: flex-start;
   }
@@ -472,6 +545,47 @@ $statusLabels = [
   <section class="bookings-section">
     <h2>Danh sách đơn đặt</h2>
 
+    <div class="booking-filters" id="bookingFilters">
+      <div class="booking-filter-field">
+        <label for="bookingSearch">Tìm kiếm</label>
+        <input type="search" id="bookingSearch" placeholder="Mã đơn, dịch vụ, địa chỉ, mô tả...">
+      </div>
+
+      <div class="booking-filter-field">
+        <label for="bookingStatusFilter">Trạng thái</label>
+        <select id="bookingStatusFilter">
+          <option value="all">Tất cả</option>
+          <option value="pending">Chờ thanh toán</option>
+          <option value="paid">Đã thanh toán</option>
+          <option value="confirmed">Đã xác nhận</option>
+          <option value="accepted">Đang thực hiện</option>
+          <option value="completed">Đã hoàn thành</option>
+          <option value="cancelled">Đã hủy</option>
+        </select>
+      </div>
+
+      <div class="booking-filter-field">
+        <label for="bookingPaymentFilter">Thanh toán</label>
+        <select id="bookingPaymentFilter">
+          <option value="all">Tất cả</option>
+          <option value="paid">Đã thanh toán</option>
+          <option value="pending">Chưa thanh toán</option>
+        </select>
+      </div>
+
+      <div class="booking-filter-field">
+        <label for="bookingServiceFilter">Dịch vụ</label>
+        <select id="bookingServiceFilter">
+          <option value="all">Tất cả</option>
+          <?php foreach ($serviceOptions as $serviceName): ?>
+            <option value="<?= View::e(mb_strtolower($serviceName)) ?>"><?= View::e($serviceName) ?></option>
+          <?php endforeach; ?>
+        </select>
+      </div>
+
+      <p class="booking-filter-note">Bộ lọc này hoạt động ngay trên trình duyệt để bạn tìm đơn nhanh hơn.</p>
+    </div>
+
     <div class="booking-list">
       <?php if (empty($bookings)): ?>
         <p class="booking-empty">
@@ -481,10 +595,27 @@ $statusLabels = [
         <?php foreach ($bookings as $b): ?>
           <?php 
             $status = $b['status'] ?? '';
+            $isCustomerPaid = !empty($b['is_customer_paid']);
+            $displayStatus = $isCustomerPaid ? 'paid' : $status;
             $isCancelled = ($status === 'cancelled');
+            $serviceName = trim((string)($b['service_name'] ?? ''));
+            $searchText = trim(
+              strtolower(
+                (string)($b['id'] ?? '') . ' ' .
+                $serviceName . ' ' .
+                (string)($b['location'] ?? '') . ' ' .
+                (string)($b['description'] ?? '')
+              )
+            );
           ?>
 
-          <article class="booking-card <?= $isCancelled ? 'is-cancelled' : '' ?>">
+          <article
+            class="booking-card <?= $isCancelled ? 'is-cancelled' : '' ?>"
+            data-search="<?= View::e($searchText) ?>"
+            data-status="<?= View::e((string)$displayStatus) ?>"
+            data-payment="<?= $isCustomerPaid ? 'paid' : 'pending' ?>"
+            data-service="<?= View::e(mb_strtolower($serviceName)) ?>"
+          >
             <div class="booking-card-head">
               <div class="booking-head-left">
                 <span class="booking-code">#<?= View::e($b['id']) ?></span>
@@ -493,7 +624,7 @@ $statusLabels = [
               </div>
 
               <div class="booking-head-right">
-                <?= $statusLabels[$status] ?? '<span class="booking-status" style="background:#f3f4f6;color:#6b7280;">' . View::e($status) . '</span>' ?>
+                <?= $statusLabels[$displayStatus] ?? '<span class="booking-status" style="background:#f3f4f6;color:#6b7280;">' . View::e($displayStatus) . '</span>' ?>
               </div>
             </div>
 
@@ -533,7 +664,7 @@ $statusLabels = [
                 <div class="booking-side-box">
                   <h3 class="booking-side-title">Trạng thái thanh toán</h3>
                   <div class="booking-meta-stack">
-                    <?php if ($status === 'paid' || $status === 'confirmed'): ?>
+                    <?php if ($isCustomerPaid || $status === 'paid' || $status === 'confirmed'): ?>
                       <span class="booking-paid-chip">✅ Đã thanh toán</span>
                     <?php elseif ($status === 'pending'): ?>
                       <span class="booking-status booking-status-pending">⏳ Chờ thanh toán</span>
@@ -546,7 +677,7 @@ $statusLabels = [
                   <div class="booking-actions">
                     <a class="booking-btn booking-btn-primary" href="/bookings/<?= (int)$b['id'] ?>">Theo dõi đơn</a>
 
-                    <?php if ($status === 'pending'): ?>
+                    <?php if ($status === 'pending' && !$isCustomerPaid): ?>
                       <form method="post" action="/bookings/<?= (int)$b['id'] ?>/repay">
                         <input type="hidden" name="_csrf" value="<?= View::e($csrf) ?>">
                         <button type="submit" class="booking-btn booking-btn-blue">
@@ -582,6 +713,56 @@ $statusLabels = [
           </article>
         <?php endforeach; ?>
       <?php endif; ?>
+
+      <p class="booking-empty-result" id="bookingNoResults">Không tìm thấy đơn nào khớp bộ lọc hiện tại.</p>
     </div>
   </section>
 </section>
+
+<script>
+  (function () {
+    const searchInput = document.getElementById('bookingSearch');
+    const statusFilter = document.getElementById('bookingStatusFilter');
+    const paymentFilter = document.getElementById('bookingPaymentFilter');
+    const serviceFilter = document.getElementById('bookingServiceFilter');
+    const cards = Array.from(document.querySelectorAll('.booking-card'));
+    const noResults = document.getElementById('bookingNoResults');
+
+    if (!searchInput || !statusFilter || !paymentFilter || !serviceFilter || cards.length === 0) return;
+
+    const normalize = (value) => (value || '').toString().trim().toLowerCase();
+
+    const applyFilters = () => {
+      const query = normalize(searchInput.value);
+      const status = statusFilter.value;
+      const payment = paymentFilter.value;
+      const service = serviceFilter.value;
+      let visibleCount = 0;
+
+      cards.forEach((card) => {
+        const text = normalize(card.getAttribute('data-search'));
+        const cardStatus = normalize(card.getAttribute('data-status'));
+        const cardPayment = normalize(card.getAttribute('data-payment'));
+        const cardService = normalize(card.getAttribute('data-service'));
+        const matchesQuery = !query || text.includes(query);
+        const matchesStatus = status === 'all' || cardStatus === status;
+        const matchesPayment = payment === 'all' || cardPayment === payment;
+        const matchesService = service === 'all' || cardService === service;
+        const isVisible = matchesQuery && matchesStatus && matchesPayment && matchesService;
+
+        card.style.display = isVisible ? '' : 'none';
+        if (isVisible) visibleCount += 1;
+      });
+
+      if (noResults) {
+        noResults.classList.toggle('is-visible', visibleCount === 0);
+      }
+    };
+
+    searchInput.addEventListener('input', applyFilters);
+    statusFilter.addEventListener('change', applyFilters);
+    paymentFilter.addEventListener('change', applyFilters);
+    serviceFilter.addEventListener('change', applyFilters);
+    applyFilters();
+  })();
+</script>

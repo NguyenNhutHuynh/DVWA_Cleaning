@@ -74,7 +74,7 @@ if (empty($rawData)) {
 $requestData = json_decode($rawData, true);
 writeLog('Received data:', $requestData);
 
-// THỦ THUẬT: Bắt chữ ký từ Body (vì Header đã bị Ngrok ăn chặn)
+// THỦ THUẬT: Bắt chữ ký từ Body (vì Header đã bị proxy bên ngoài chặn)
 $signature = $_SERVER['HTTP_PAYOS_SIGNATURE'] 
           ?? $_SERVER['HTTP_X_PAYOS_SIGNATURE'] 
           ?? $requestData['signature'] 

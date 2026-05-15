@@ -81,35 +81,35 @@ User → Truy cập /admin/login?key=... → Kiểm tra key trong URL
 ## 📋 Kiểm Tra Chức Năng
 
 ### ✅ Test 1: Admin không thể đăng nhập trên /login
-- Truy cập: `http://localhost/login`
+- Truy cập: `https://cleaning.id.vn/login`
 - Email: admin@example.com
 - Password: admin_password
 - Kết quả: **Lỗi** - "Tài khoản admin không thể đăng nhập trên trang này..."
 
 ### ✅ Test 2: Customer có thể đăng nhập trên /login
-- Truy cập: `http://localhost/login`
+- Truy cập: `https://cleaning.id.vn/login`
 - Email: customer@example.com
 - Password: customer_password
 - Kết quả: **Thành công** - Redirect tới customer dashboard
 
 ### ✅ Test 3: Worker có thể đăng nhập trên /login
-- Truy cập: `http://localhost/login`
+- Truy cập: `https://cleaning.id.vn/login`
 - Email: worker@example.com
 - Password: worker_password
 - Kết quả: **Thành công** - Redirect tới worker dashboard
 
 ### ✅ Test 4: Admin đăng nhập trên /admin/login với key đúng
-- Truy cập: `http://localhost/admin/login?key=admin-secret-key-2024`
+- Truy cập: `https://cleaning.id.vn/admin/login?key=admin-secret-key-2024`
 - Email: admin@example.com
 - Password: admin_password
 - Kết quả: **Thành công** - Redirect tới admin dashboard
 
 ### ✅ Test 5: Admin không thể vào /admin/login mà không có key
-- Truy cập: `http://localhost/admin/login` (không có key)
+- Truy cập: `https://cleaning.id.vn/admin/login` (không có key)
 - Kết quả: **Redirect** - Về trang chủ
 
 ### ✅ Test 6: Customer không thể đăng nhập trên /admin/login
-- Truy cập: `http://localhost/admin/login?key=admin-secret-key-2024`
+- Truy cập: `https://cleaning.id.vn/admin/login?key=admin-secret-key-2024`
 - Email: customer@example.com
 - Password: customer_password
 - Kết quả: **Lỗi** - "Tài khoản này không có quyền truy cập khu vực quản trị..."

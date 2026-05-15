@@ -1,6 +1,19 @@
 <?php
 use App\Core\View;
 /** @var array $stats Dữ liệu thống kê */
+
+$paymentMethodLabels = [
+  'customer_payment' => 'Thanh toán khách',
+  'bank_transfer' => 'Chuyển khoản',
+  'worker_payout' => 'Trả lương worker',
+];
+
+$paymentStatusLabels = [
+  'paid' => 'Đã thanh toán',
+  'pending' => 'Đang chờ',
+  'failed' => 'Thất bại',
+  'cancelled' => 'Đã hủy',
+];
 ?>
 
 <section class="home-container admin-stats">
@@ -12,6 +25,7 @@ use App\Core\View;
 
   <div class="hero-actions">
     <button class="home-btn" id="exportPdfBtn">📥 Tải xuống PDF</button>
+    
     <button class="home-btn home-btn-outline" id="refreshBtn">🔄 Làm mới</button>
   </div>
 
@@ -203,6 +217,172 @@ use App\Core\View;
           </tbody>
         </table>
       </div>
+    </div>
+  </section>
+
+  <section class="home-feature stats-group">
+    <div class="stats-group-head">
+      <h2>💳 Danh sách thanh toán của khách</h2>
+      <button type="button" class="stats-toggle-btn" data-target="paymentsGroup" aria-expanded="true">Thu gọn</button>
+    </div>
+
+    <div class="stats-group-content" id="paymentsGroup">
+      <div class="payment-summary">
+        <p>Hiển thị <?= count($stats['customer_payments'] ?? []) ?> giao dịch gần nhất của khách hàng, kèm đầy đủ thông tin booking, dịch vụ và người thanh toán.</p>
+      </div>
+
+      <div class="payment-filters" id="paymentFilters">
+        <div class="payment-filter-field">
+          <label for="paymentSearch">Tìm kiếm</label>
+          <input type="search" id="paymentSearch" placeholder="Order code, khách hàng, booking, txn...">
+        </div>
+
+        <div class="payment-filter-field">
+          <label for="paymentStatusFilter">Trạng thái</label>
+          <select id="paymentStatusFilter">
+            <option value="all">Tất cả</option>
+            <option value="paid">Đã thanh toán</option>
+            <option value="pending">Đang chờ</option>
+            <option value="failed">Thất bại</option>
+            <option value="cancelled">Đã hủy</option>
+          </select>
+        </div>
+
+        <div class="payment-filter-field">
+          <label for="paymentMethodFilter">Phương thức</label>
+          <select id="paymentMethodFilter">
+            <option value="all">Tất cả</option>
+            <option value="customer_payment">Thanh toán khách</option>
+            <option value="bank_transfer">Chuyển khoản</option>
+            <option value="worker_payout">Trả lương worker</option>
+          </select>
+        </div>
+
+        <div class="payment-filter-field">
+          <label for="paymentDateFilter">Ngày tạo</label>
+          <input type="date" id="paymentDateFilter">
+        </div>
+
+        <p class="payment-filter-summary" id="paymentFilterSummary">Đang hiển thị toàn bộ giao dịch.</p>
+      </div>
+
+      <div class="stats-table-container">
+        <table class="stats-table payments-table">
+          <thead>
+            <tr>
+              <th>Giao dịch</th>
+              <th>Khách hàng</th>
+              <th>Booking / Dịch vụ</th>
+              <th>Thanh toán</th>
+              <th>Trạng thái</th>
+              <th>Thời gian</th>
+            </tr>
+          </thead>
+          <tbody>
+            <?php if (empty($stats['customer_payments'])): ?>
+              <tr>
+                <td colspan="6" style="text-align:center; color: var(--text-muted);">Chưa có giao dịch thanh toán của khách.</td>
+              </tr>
+            <?php else: ?>
+              <?php foreach ($stats['customer_payments'] as $payment): ?>
+                <?php
+                  $paymentMethod = (string)($payment['payment_method'] ?? '');
+                  $paymentStatus = (string)($payment['status'] ?? 'pending');
+                  $bookingStatus = (string)($payment['booking_status'] ?? '');
+                  $searchText = trim(strtolower(
+                    (string)($payment['id'] ?? '') . ' ' .
+                    (string)($payment['order_code'] ?? '') . ' ' .
+                    (string)($payment['transaction_id'] ?? '') . ' ' .
+                    (string)($payment['payer_name'] ?? '') . ' ' .
+                    (string)($payment['customer_name'] ?? '') . ' ' .
+                    (string)($payment['service_name'] ?? '') . ' ' .
+                    (string)($payment['booking_location'] ?? '')
+                  ));
+                  $methodLabel = $paymentMethodLabels[$paymentMethod] ?? ($paymentMethod !== '' ? $paymentMethod : 'Không rõ');
+                  $statusLabel = $paymentStatusLabels[$paymentStatus] ?? ($paymentStatus !== '' ? $paymentStatus : 'Không rõ');
+                ?>
+                <tr
+                  data-search="<?= View::e($searchText) ?>"
+                  data-status="<?= View::e($paymentStatus) ?>"
+                  data-method="<?= View::e($paymentMethod !== '' ? $paymentMethod : 'unknown') ?>"
+                  data-date="<?= View::e(substr((string)($payment['created_at'] ?? ''), 0, 10)) ?>"
+                >
+                  <td>
+                    <div class="payment-stack">
+                      <strong>#<?= View::e((string)($payment['id'] ?? '')) ?></strong>
+                      <span>Order: <?= View::e((string)($payment['order_code'] ?? '')) ?></span>
+                      <?php if (!empty($payment['transaction_id'])): ?>
+                        <span>Txn: <?= View::e((string)$payment['transaction_id']) ?></span>
+                      <?php endif; ?>
+                      <?php if (!empty($payment['payer_name'])): ?>
+                        <span>Người thanh toán: <?= View::e((string)$payment['payer_name']) ?></span>
+                      <?php endif; ?>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="payment-stack">
+                      <strong><?= View::e((string)($payment['customer_name'] ?? '')) ?></strong>
+                      <?php if (!empty($payment['customer_phone'])): ?>
+                        <span>SĐT: <?= View::e((string)$payment['customer_phone']) ?></span>
+                      <?php endif; ?>
+                      <?php if (!empty($payment['customer_address'])): ?>
+                        <span>Địa chỉ: <?= View::e((string)$payment['customer_address']) ?></span>
+                      <?php endif; ?>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="payment-stack">
+                      <strong>Booking #<?= View::e((string)($payment['booking_id'] ?? '')) ?> - <?= View::e((string)($payment['service_name'] ?? '')) ?></strong>
+                      <?php if (!empty($payment['booking_date']) || !empty($payment['booking_time'])): ?>
+                        <span><?= View::e(trim((string)($payment['booking_date'] ?? '') . ' ' . (string)($payment['booking_time'] ?? ''))) ?></span>
+                      <?php endif; ?>
+                      <?php if (!empty($payment['booking_location'])): ?>
+                        <span>Địa điểm: <?= View::e((string)$payment['booking_location']) ?></span>
+                      <?php endif; ?>
+                      <?php if (!empty($payment['worker_name'])): ?>
+                        <span>Worker: <?= View::e((string)$payment['worker_name']) ?></span>
+                      <?php endif; ?>
+                      <?php if (!empty($payment['booking_description'])): ?>
+                        <span>Ghi chú: <?= View::e((string)$payment['booking_description']) ?></span>
+                      <?php endif; ?>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="payment-stack">
+                      <strong><?= number_format((float)($payment['amount'] ?? 0), 0, ',', '.') ?>đ</strong>
+                      <span class="payment-pill payment-pill-method"><?= View::e($methodLabel) ?></span>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="payment-stack">
+                      <span class="payment-pill payment-pill-status payment-status-<?= View::e($paymentStatus) ?>"><?= View::e($statusLabel) ?></span>
+                      <?php if ($bookingStatus !== ''): ?>
+                        <span>Booking: <?= View::e($bookingStatus) ?></span>
+                      <?php endif; ?>
+                      <?php if (!empty($payment['payer_account_number'])): ?>
+                        <span>TK: <?= View::e((string)$payment['payer_account_number']) ?></span>
+                      <?php endif; ?>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="payment-stack">
+                      <span>Tạo: <?= View::e((string)($payment['created_at'] ?? '')) ?></span>
+                      <?php if (!empty($payment['paid_at'])): ?>
+                        <span>Paid: <?= View::e((string)$payment['paid_at']) ?></span>
+                      <?php endif; ?>
+                      <?php if (!empty($payment['webhook_received_at'])): ?>
+                        <span>Webhook: <?= View::e((string)$payment['webhook_received_at']) ?></span>
+                      <?php endif; ?>
+                    </div>
+                  </td>
+                </tr>
+              <?php endforeach; ?>
+            <?php endif; ?>
+          </tbody>
+        </table>
+      </div>
+
+      <p class="payment-empty-result" id="paymentNoResults">Không có giao dịch nào khớp bộ lọc hiện tại.</p>
     </div>
   </section>
 </section>
@@ -447,6 +627,58 @@ use App\Core\View;
   document.getElementById('refreshBtn')?.addEventListener('click', () => {
     location.reload();
   });
+
+  const paymentSearch = document.getElementById('paymentSearch');
+  const paymentStatusFilter = document.getElementById('paymentStatusFilter');
+  const paymentMethodFilter = document.getElementById('paymentMethodFilter');
+  const paymentDateFilter = document.getElementById('paymentDateFilter');
+  const paymentRows = Array.from(document.querySelectorAll('.payments-table tbody tr'));
+  const paymentSummary = document.getElementById('paymentFilterSummary');
+  const paymentNoResults = document.getElementById('paymentNoResults');
+
+  if (paymentSearch && paymentStatusFilter && paymentMethodFilter && paymentDateFilter && paymentRows.length > 0) {
+    const normalize = (value) => (value || '').toString().trim().toLowerCase();
+
+    const applyPaymentFilters = () => {
+      const query = normalize(paymentSearch.value);
+      const status = paymentStatusFilter.value;
+      const method = paymentMethodFilter.value;
+      const dateValue = paymentDateFilter.value;
+      let visibleCount = 0;
+
+      paymentRows.forEach((row) => {
+        const rowSearch = normalize(row.getAttribute('data-search'));
+        const rowStatus = normalize(row.getAttribute('data-status'));
+        const rowMethod = normalize(row.getAttribute('data-method'));
+        const rowDate = row.getAttribute('data-date') || '';
+
+        const matchesQuery = !query || rowSearch.includes(query);
+        const matchesStatus = status === 'all' || rowStatus === status;
+        const matchesMethod = method === 'all' || rowMethod === method;
+        const matchesDate = !dateValue || rowDate === dateValue;
+        const isVisible = matchesQuery && matchesStatus && matchesMethod && matchesDate;
+
+        row.style.display = isVisible ? '' : 'none';
+        if (isVisible) visibleCount += 1;
+      });
+
+      if (paymentSummary) {
+        paymentSummary.textContent = visibleCount > 0
+          ? 'Đang hiển thị ' + visibleCount + ' giao dịch khớp bộ lọc.'
+          : 'Không có giao dịch nào khớp bộ lọc hiện tại.';
+      }
+
+      if (paymentNoResults) {
+        paymentNoResults.classList.toggle('is-visible', visibleCount === 0);
+      }
+    };
+
+    paymentSearch.addEventListener('input', applyPaymentFilters);
+    paymentStatusFilter.addEventListener('change', applyPaymentFilters);
+    paymentMethodFilter.addEventListener('change', applyPaymentFilters);
+    paymentDateFilter.addEventListener('change', applyPaymentFilters);
+    applyPaymentFilters();
+  }
 
   document.querySelectorAll('.stats-toggle-btn').forEach((btn) => {
     btn.addEventListener('click', () => {
@@ -963,10 +1195,144 @@ use App\Core\View;
   background: #d9f2e7 !important;
 }
 
+.payment-summary {
+  margin-bottom: 16px;
+  padding: 16px 18px;
+  border-radius: 18px;
+  background: var(--bg-soft);
+  border: 1px solid var(--border);
+}
+
+.payment-summary p {
+  margin: 0;
+  color: var(--text-muted);
+  line-height: 1.6;
+  font-weight: 700;
+}
+
+.payment-filters {
+  margin-bottom: 16px;
+  padding: 16px 18px;
+  border-radius: 18px;
+  background: #fbfffd;
+  border: 1px solid var(--border);
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr 1fr;
+  gap: 12px;
+}
+
+.payment-filter-field {
+  display: grid;
+  gap: 8px;
+}
+
+.payment-filter-field label {
+  font-size: 13px;
+  font-weight: 900;
+  color: var(--text-dark);
+}
+
+.payment-filter-field input,
+.payment-filter-field select {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: white;
+  color: var(--text-dark);
+  font: inherit;
+  font-weight: 700;
+}
+
+.payment-filter-summary {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.payment-empty-result {
+  display: none;
+  margin-top: 14px;
+  padding: 18px 20px;
+  border-radius: 18px;
+  border: 1px dashed #cbd5e1;
+  background: #f8fafc;
+  color: var(--text-muted);
+  text-align: center;
+  font-weight: 700;
+}
+
+.payment-empty-result.is-visible {
+  display: block;
+}
+
+.payments-table td {
+  vertical-align: top;
+}
+
+.payment-stack {
+  display: grid;
+  gap: 6px;
+}
+
+.payment-stack strong {
+  color: var(--text-dark);
+}
+
+.payment-stack span {
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+.payment-pill {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.payment-pill-method {
+  background: var(--primary-soft);
+  color: var(--primary-dark);
+}
+
+.payment-pill-status {
+  background: #eef2ff;
+  color: #3730a3;
+}
+
+.payment-status-paid {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.payment-status-pending {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.payment-status-failed,
+.payment-status-cancelled {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
 @media (max-width: 980px) {
   .home-stats,
   .charts-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 980px) {
+  .payment-filters {
+    grid-template-columns: 1fr 1fr;
   }
 }
 
@@ -1001,6 +1367,11 @@ use App\Core\View;
 
   .chart-container {
     height: 280px;
+  }
+
+  .payment-filters {
+    grid-template-columns: 1fr;
+    padding: 14px;
   }
 }
 

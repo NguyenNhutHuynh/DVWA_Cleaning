@@ -34,12 +34,12 @@ ADMIN_LOGIN_KEY=my-super-secret-admin-key-2024
 - Customer và Worker **không thể** đăng nhập ở trang này
 - Trang riêng biệt với giao diện khác nhau (màu đỏ, badge bảo mật)
 ```
-http://localhost:8080/admin/login?key=your-secret-key
+https://cleaning.id.vn/admin/login?key=your-secret-key
 ```
 
 ### Ví Dụ Cụ Thể (với key mặc định):
 ```
-http://localhost:8080/admin/login?key=admin-secret-key-2024
+https://cleaning.id.vn/admin/login?key=admin-secret-key-2024
 ```
 
 ### Điều kiện truy cập:
@@ -74,7 +74,7 @@ http://localhost:8080/admin/login?key=admin-secret-key-2024
 ### Cho Admin (Trên trang /admin/login)
 1. **Nhận URL đặc biệt:**
    ```
-   http://localhost:8080/admin/login?key=admin-secret-key-2024
+   https://cleaning.id.vn/admin/login?key=admin-secret-key-2024
    ```
 
 2. **Hệ thống kiểm tra key:**

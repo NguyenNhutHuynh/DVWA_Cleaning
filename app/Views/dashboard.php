@@ -33,6 +33,7 @@ use App\Models\User;
         <a href="/admin/bookings" class="function-btn">Đơn đặt</a>
         <a href="/admin/moderation" class="function-btn">Kiểm duyệt</a>
         <a href="/admin/users" class="function-btn">Người dùng</a>
+        <a href="/admin/worker-schedules" class="function-btn">Lịch nhân viên</a>
         <a href="/admin/stats" class="function-btn">Thống kê</a>
       <!-- MANAGER MENU -->
       <?php elseif ($role === 'manager'): ?>
@@ -45,7 +46,7 @@ use App\Models\User;
         <a href="/worker/dashboard" class="function-btn">Bảng điều khiển</a>
         <a href="/worker/jobs" class="function-btn">Nhận việc</a>
         <a href="/worker/progress" class="function-btn">Tiến độ</a>
-        <!-- <a href="/worker/schedule" class="function-btn">Lịch làm</a> -->
+        <a href="/worker/schedule" class="function-btn">Lịch làm</a>
       <!-- CUSTOMER MENU -->
       <?php else: ?>
         <a href="/" class="function-btn">Trang chủ</a>

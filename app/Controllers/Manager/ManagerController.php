@@ -257,8 +257,17 @@ final class ManagerController extends BaseManagerController
             $this->redirect('/manager/workers');
         }
 
+        $bookings = Booking::getByWorkerId($id);
+        foreach ($bookings as &$bk) {
+            $bk['is_customer_paid'] = PaymentTransaction::hasSuccessfulCustomerPayment((int)($bk['id'] ?? 0));
+            if (empty($bk['customer_name']) && !empty($bk['user_name'])) {
+                $bk['customer_name'] = $bk['user_name'];
+            }
+        }
+
         View::render('manager/worker-detail', [
             'worker' => $worker,
+            'bookings' => $bookings,
             'csrf' => Csrf::token(),
         ]);
     }
@@ -328,8 +337,17 @@ final class ManagerController extends BaseManagerController
             $this->redirect('/manager/customers');
         }
 
+        $bookings = Booking::getByUserId($id);
+        foreach ($bookings as &$bk) {
+            $bk['is_customer_paid'] = PaymentTransaction::hasSuccessfulCustomerPayment((int)($bk['id'] ?? 0));
+            if (empty($bk['worker_name']) && !empty($bk['assigned_worker_id'])) {
+                $bk['worker_name'] = 'Worker #' . $bk['assigned_worker_id'];
+            }
+        }
+
         View::render('manager/customer-detail', [
             'customer' => $customer,
+            'bookings' => $bookings,
             'csrf' => Csrf::token(),
         ]);
     }

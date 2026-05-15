@@ -93,7 +93,7 @@ return [
 		'charset' => 'utf8mb4',
 	],
 	'app' => [
-		'base_url' => 'http://localhost/cleaning/public',
+		'base_url' => 'https://cleaning.id.vn',
 		'session_name' => 'CLEANINGSESSID',
 	],
 ];
@@ -103,12 +103,12 @@ return [
 ### Cách 1: PHP built-in server
 ```bash
 cd public
-php -S localhost:8000
+php -S 127.0.0.1:8000
 ```
-Truy cập: `http://localhost:8000`
+Truy cập: `https://cleaning.id.vn`
 
 ### Cách 2: Laragon/Apache
-Truy cập: `http://localhost/cleaning/public`
+Truy cập: `https://cleaning.id.vn`
 
 ## 8. Các route chính
 ### Public

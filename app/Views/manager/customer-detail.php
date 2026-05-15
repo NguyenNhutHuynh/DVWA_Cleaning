@@ -34,5 +34,44 @@ use App\Core\View;
         <p style="margin: 12px 0;"><strong>Ngày Tạo:</strong> <?= View::e($customer['created_at'] ?? 'N/A') ?></p>
       </div>
     </div>
+
+      <?php if (!empty($bookings) && is_array($bookings)): ?>
+        <div style="margin-top:20px;">
+          <h2 style="margin:12px 0 14px; color:#1f2d3d;">Lịch sử đặt lịch (<?= count($bookings) ?>)</h2>
+
+          <div style="background:#fff; border:1px solid #dcefe6; border-radius:12px; padding:12px;">
+            <?php if (count($bookings) === 0): ?>
+              <p class="empty-bookings">Không có lịch sử đặt lịch.</p>
+            <?php else: ?>
+              <table style="width:100%; border-collapse:collapse;">
+                <thead>
+                  <tr style="text-align:left; border-bottom:1px solid #eef6f1;">
+                    <th style="padding:8px;">Mã đơn</th>
+                    <th style="padding:8px;">Thời gian</th>
+                    <th style="padding:8px;">Dịch vụ</th>
+                    <th style="padding:8px;">Trạng thái</th>
+                    <th style="padding:8px;">Thanh toán</th>
+                    <th style="padding:8px;">Worker</th>
+                    <th style="padding:8px;">Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <?php foreach ($bookings as $b): ?>
+                    <tr style="border-bottom:1px solid #f3f7f4;">
+                      <td style="padding:10px; font-weight:800;">#<?= View::e($b['id'] ?? '') ?></td>
+                      <td style="padding:10px;"><?= View::e(($b['time'] ?? '') . ' • ' . ($b['date'] ?? '')) ?></td>
+                      <td style="padding:10px;"><?= View::e($b['service_name'] ?? '') ?></td>
+                      <td style="padding:10px;"><?= View::e(ucfirst((string)($b['status'] ?? ''))) ?></td>
+                      <td style="padding:10px;"><?= !empty($b['is_customer_paid']) ? 'Đã thanh toán' : 'Chưa thanh toán' ?></td>
+                      <td style="padding:10px;"><?= View::e($b['worker_name'] ?? ($b['assigned_worker_id'] ? 'Worker #' . $b['assigned_worker_id'] : '—')) ?></td>
+                      <td style="padding:10px;"><a href="/manager/bookings/<?= (int)($b['id'] ?? 0) ?>" style="color:#2eaf7d; font-weight:700;">Chi tiết</a></td>
+                    </tr>
+                  <?php endforeach; ?>
+                </tbody>
+              </table>
+            <?php endif; ?>
+          </div>
+        </div>
+      <?php endif; ?>
   </div>
 </div>

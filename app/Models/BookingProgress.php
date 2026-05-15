@@ -63,7 +63,7 @@ final class BookingProgress
 
     private static function resolveWorkerIdFromBooking(int $bookingId): ?int
     {
-        $stmt = DB::pdo()->prepare("SELECT assigned_worker_id FROM bookings WHERE id = :id LIMIT 1");
+        $stmt = DB::pdo()->prepare("SELECT assigned_worker_id FROM booking_details WHERE booking_id = :id LIMIT 1");
         $stmt->execute(['id' => $bookingId]);
         $row = $stmt->fetch();
         $workerId = isset($row['assigned_worker_id']) ? (int)$row['assigned_worker_id'] : 0;

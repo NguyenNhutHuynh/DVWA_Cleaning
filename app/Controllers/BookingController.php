@@ -36,6 +36,7 @@ final class BookingController
             $cancel = $_GET['cancel'] ?? 'false';
             
             if ($code === '00' && $cancel === 'false') {
+                $this->syncSuccessfulPaymentFromQuery((int)Auth::id(), $_GET);
                 $_SESSION['success'] = '🎉 Thanh toán thành công! Vui lòng chờ hệ thống cập nhật trạng thái.';
             } else {
                 $_SESSION['error'] = '❌ Giao dịch thanh toán thất bại hoặc đã bị hủy.';
@@ -52,7 +53,9 @@ final class BookingController
 
         foreach ($bookings as &$booking) {
             $booking['has_review'] = BookingReview::exists((int)$booking['id']);
+            $booking['is_customer_paid'] = PaymentTransaction::hasSuccessfulCustomerPayment((int)$booking['id']);
         }
+        unset($booking);
 
         View::render('customer/bookings', [
             'bookings' => $bookings,
@@ -176,6 +179,17 @@ final class BookingController
     }
 
     /**
+     * Nhận callback từ PayOS khi thanh toán thành công và đồng bộ trạng thái vào DB.
+     */
+    public function paymentReturn(): void
+    {
+        $this->requireAuthentication();
+
+        $this->syncSuccessfulPaymentFromQuery((int)Auth::id(), $_GET);
+        $this->redirect('/bookings');
+    }
+
+    /**
      * Hủy một đơn đặt lịch.
      * Chỉ cho phép người dùng hủy các đơn của chính họ.
      *
@@ -232,6 +246,7 @@ final class BookingController
         $progress = BookingProgress::byBookingId($id);
         $messages = BookingMessage::byBookingId($id);
         $payment = BookingPayment::byBookingId($id);
+        $isCustomerPaid = PaymentTransaction::hasSuccessfulCustomerPayment($id);
         $hasReview = BookingReview::exists($id);
         $review = BookingReview::getByBookingId($id);
 
@@ -240,6 +255,7 @@ final class BookingController
             'progress' => $progress,
             'messages' => $messages,
             'payment' => $payment,
+            'isCustomerPaid' => $isCustomerPaid,
             'hasReview' => $hasReview,
             'review' => $review,
             'csrf' => Csrf::token(),
@@ -428,6 +444,55 @@ final class BookingController
     }
 
     /**
+     * Đồng bộ thanh toán khách hàng từ query string trả về bởi PayOS.
+     */
+    private function syncSuccessfulPaymentFromQuery(int $userId, array $query): void
+    {
+        $isSuccessful = (($query['code'] ?? '') === '00')
+            || (($query['status'] ?? '') === 'PAID')
+            || (($query['payment_success'] ?? '') === '1');
+
+        if (!$isSuccessful) {
+            return;
+        }
+
+        $orderCode = trim((string)($query['order_code'] ?? $query['orderCode'] ?? ''));
+        $bookingId = (int)($query['booking_id'] ?? 0);
+
+        $payment = null;
+        if ($orderCode !== '') {
+            $payment = PaymentTransaction::getByOrderCode($orderCode);
+        }
+
+        if ($payment === null && $bookingId > 0) {
+            $payment = PaymentTransaction::getByBookingId($bookingId);
+        }
+
+        if ($payment === null) {
+            $payment = PaymentTransaction::getLatestCustomerPendingByUserId($userId);
+        }
+
+        if ($payment === null) {
+            return;
+        }
+
+        $resolvedBookingId = (int)($payment['booking_id'] ?? 0);
+        $resolvedOrderCode = (string)($payment['order_code'] ?? $orderCode);
+
+        PaymentTransaction::updateStatus($resolvedOrderCode, 'paid', [
+            'transaction_id' => (string)($query['id'] ?? $query['transactionId'] ?? ''),
+            'payer_account_number' => (string)($query['accountNumber'] ?? $query['payer_account_number'] ?? ''),
+            'payer_name' => (string)($query['accountName'] ?? $query['payer_name'] ?? ''),
+            'webhook_raw_data' => json_encode($query, JSON_UNESCAPED_UNICODE),
+            'webhook_received_at' => date('Y-m-d H:i:s'),
+        ]);
+
+        if ($resolvedBookingId > 0) {
+            Booking::updateStatus($resolvedBookingId, Booking::STATUS_CONFIRMED);
+        }
+    }
+
+    /**
      * Gọi API PayOS để tạo payment link.
      * 
      * YÊU CẦU ĐẦU VÀO:
@@ -476,11 +541,10 @@ final class BookingController
         // BƯỚC 3: CHUẨN BỊ DỮ LIỆU GỬI ĐẾN PAYOS
         // ============================================================================
         
-        //$baseUrl = 'http://localhost/DVWA_Cleaning/public';
-        $baseUrl = 'https://suasively-metaphoric-gearldine.ngrok-free.dev';
+        $baseUrl = 'https://cleaning.id.vn';
         $description = "DVWA_" . $orderCode . "_" . $bookingId;
         $cancelUrl = $baseUrl . '/bookings';
-        $returnUrl = $baseUrl . '/bookings?payment_success=1';
+        $returnUrl = $baseUrl . '/bookings/payment-return?booking_id=' . $bookingId . '&order_code=' . $orderCode;
         
         $paymentData = [
             'orderCode' => $orderCode,         // int

@@ -28,7 +28,7 @@ $bookingStatus = (string)($booking['status'] ?? '');
         <h3 style="margin: 0 0 12px; color: #1f2d3d;">Thông Tin Cơ Bản</h3>
         <p style="margin: 8px 0;"><strong>Khách Hàng:</strong> <?= View::e($booking['customer_name'] ?? 'N/A') ?></p>
         <p style="margin: 8px 0;"><strong>Dịch Vụ:</strong> <?= View::e($booking['service_name'] ?? 'N/A') ?></p>
-        <p style="margin: 8px 0;"><strong>Ngày Đặt:</strong> <?= View::e($booking['booking_date'] ?? 'N/A') ?></p>
+        <p style="margin: 8px 0;"><strong>Ngày Đặt:</strong> <?= View::e(($booking['date'] ?? $booking['booking_date'] ?? 'N/A') . (($booking['time'] ?? '') !== '' ? ' ' . ($booking['time'] ?? '') : '')) ?></p>
         <p style="margin: 8px 0;"><strong>Trạng Thái:</strong> 
           <span style="display: inline-block; padding: 4px 8px; border-radius: 4px; font-weight: 600;
             <?php
@@ -50,8 +50,9 @@ $bookingStatus = (string)($booking['status'] ?? '');
             <?= $isCustomerPaid ? 'Đã Thanh Toán' : 'Chưa Thanh Toán' ?>
           </span>
         </p>
-        <p style="margin: 8px 0;"><strong>Giá:</strong> <?= View::e($booking['price'] ?? '0') ?> VNĐ</p>
-        <p style="margin: 8px 0;"><strong>Ghi Chú:</strong> <?= View::e($booking['notes'] ?? 'Không có') ?></p>
+        <?php $displayPrice = $booking['line_total'] ?? $booking['service_price'] ?? 0; ?>
+        <p style="margin: 8px 0;"><strong>Giá:</strong> <?= number_format((float)$displayPrice, 0, ',', '.') ?> VNĐ</p>
+        <p style="margin: 8px 0;"><strong>Ghi Chú:</strong> <?= View::e($booking['description'] ?? $booking['notes'] ?? 'Không có') ?></p>
       </div>
     </div>
   </div>

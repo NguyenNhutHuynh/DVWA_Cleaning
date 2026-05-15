@@ -10,11 +10,13 @@ use PDOException;
 /**
  * Model Booking dùng để quản lý các lịch đặt dịch vụ.
  * Xử lý tạo mới, truy vấn và cập nhật trạng thái đơn đặt của khách hàng.
+ * 
+ * Ghi chú: Từ schema mới, chi tiết booking được lưu trong bảng booking_details.
+ * Các aliases được dùng để giữ tương thích với code cũ (status, date, time, description).
  */
 final class Booking
 {
     private static ?array $statusEnumCache = null;
-    private static ?array $bookingColumnsCache = null;
 
     // Các trạng thái của đơn đặt lịch
     public const STATUS_PENDING = 'pending';
@@ -26,6 +28,7 @@ final class Booking
 
     /**
      * Tạo một đơn đặt lịch mới trong cơ sở dữ liệu.
+     * Tạo record trong bookings (metadata) và booking_details (chi tiết).
      *
      * @param int $userId ID người dùng (khách hàng)
      * @param int $serviceId ID dịch vụ được đặt
@@ -47,95 +50,102 @@ final class Booking
         ?float $unitPrice = null,
         ?float $lineTotal = null
     ): int {
-        self::ensurePricingColumnsIfNeeded();
+        // Insert into bookings (metadata only)
+        $stmtBooking = DB::pdo()->prepare(
+            "INSERT INTO bookings (user_id, created_at, updated_at)
+             VALUES (:user_id, NOW(), NOW())"
+        );
+        $stmtBooking->execute(['user_id' => $userId]);
+        $bookingId = (int)DB::pdo()->lastInsertId();
 
-        if (self::supportsPricingColumns()) {
-            $stmt = DB::pdo()->prepare(
-                "INSERT INTO bookings (
-                    user_id, service_id, quantity, measure_unit, unit_price, line_total,
-                    date, time, location, description, status, created_at, updated_at
-                ) VALUES (
-                    :user_id, :service_id, :quantity, :measure_unit, :unit_price, :line_total,
-                    :date, :time, :location, :description, :status, NOW(), NOW()
-                )"
-            );
-            $stmt->execute([
-                'user_id' => $userId,
-                'service_id' => $serviceId,
-                'quantity' => $quantity,
-                'measure_unit' => $measureUnit ?? '',
-                'unit_price' => $unitPrice ?? 0,
-                'line_total' => $lineTotal ?? 0,
-                'date' => $date,
-                'time' => $time,
-                'location' => $location,
-                'description' => $description,
-                'status' => self::STATUS_PENDING,
-            ]);
-        } else {
-            $stmt = DB::pdo()->prepare(
-                "INSERT INTO bookings (user_id, service_id, date, time, location, description, status, created_at, updated_at)
-                 VALUES (:user_id, :service_id, :date, :time, :location, :description, :status, NOW(), NOW())"
-            );
-            $stmt->execute([
-                'user_id' => $userId,
-                'service_id' => $serviceId,
-                'date' => $date,
-                'time' => $time,
-                'location' => $location,
-                'description' => $description,
-                'status' => self::STATUS_PENDING,
-            ]);
-        }
+        // Insert into booking_details (full details)
+        $stmtDetail = DB::pdo()->prepare(
+            "INSERT INTO booking_details (
+                booking_id, service_id, work_date, work_time,
+                quantity, measure_unit, unit_price, line_total,
+                detail_status, note, created_at, updated_at
+            ) VALUES (
+                :booking_id, :service_id, :work_date, :work_time,
+                :quantity, :measure_unit, :unit_price, :line_total,
+                :detail_status, :note, NOW(), NOW()
+            )"
+        );
+        $stmtDetail->execute([
+            'booking_id' => $bookingId,
+            'service_id' => $serviceId,
+            'work_date' => $date,
+            'work_time' => $time,
+            'quantity' => $quantity,
+            'measure_unit' => $measureUnit ?? '',
+            'unit_price' => $unitPrice ?? 0,
+            'line_total' => $lineTotal ?? 0,
+            'detail_status' => 'pending',
+            'note' => $description,
+        ]);
 
-        return (int)DB::pdo()->lastInsertId();
+        return $bookingId;
     }
 
     /**
-     * Lấy toàn bộ đơn đặt kèm thông tin người dùng và dịch vụ liên quan.
+     * Lấy toàn bộ đơn đặt kèm thông tin người dùng, dịch vụ và chi tiết từ booking_details.
      *
      * @return array Danh sách toàn bộ đơn đặt và thông tin chi tiết
      */
     public static function getAll(): array
     {
-        $servicePriceExpr = self::supportsPricingColumns()
-            ? 'COALESCE(NULLIF(b.line_total, 0), s.price)'
-            : 's.price';
-
-        $sql = "SELECT b.*, u.name AS user_name, u.name AS customer_name, COALESCE(b.date, b.created_at) AS booking_date, s.name AS service_name, {$servicePriceExpr} AS service_price
+        $sql = "SELECT b.*, bd.*,
+                 bd.detail_status AS status,
+                 bd.work_date AS date,
+                 bd.work_time AS time,
+                 bd.note AS description,
+                 u.name AS user_name, u.name AS customer_name, u.phone AS user_phone, u.address AS user_address,
+                 s.name AS service_name, s.price AS service_price, s.unit AS service_unit,
+                 w.name AS worker_name, w.phone AS worker_phone
                 FROM bookings b
                 JOIN users u ON u.id = b.user_id
-                JOIN services s ON s.id = b.service_id
+                JOIN booking_details bd ON bd.booking_id = b.id
+                JOIN services s ON s.id = bd.service_id
+                LEFT JOIN users w ON w.id = bd.assigned_worker_id
                 ORDER BY b.created_at DESC";
         $stmt = DB::pdo()->query($sql);
         return $stmt->fetchAll() ?: [];
     }
 
     /**
-     * Tìm đơn đặt theo ID.
+     * Tìm đơn đặt theo ID (lấy từ bookings và booking_details).
      *
      * @param int $id ID đơn đặt
      * @return array|null Dữ liệu đơn đặt hoặc null nếu không tìm thấy
      */
     public static function getById(int $id): ?array
     {
-        $stmt = DB::pdo()->prepare("SELECT * FROM bookings WHERE id = :id LIMIT 1");
+        $stmt = DB::pdo()->prepare(
+            "SELECT b.*, bd.*,
+             bd.detail_status AS status,
+             bd.work_date AS date,
+             bd.work_time AS time,
+             bd.note AS description
+             FROM bookings b
+             LEFT JOIN booking_details bd ON bd.booking_id = b.id
+             WHERE b.id = :id LIMIT 1"
+        );
         $stmt->execute(['id' => $id]);
         return $stmt->fetch() ?: null;
     }
 
     /**
-     * Lấy chi tiết một đơn đặt (kèm khách hàng, worker, dịch vụ).
+     * Lấy chi tiết một đơn đặt (kèm khách hàng, worker, dịch vụ từ booking_details).
      */
     public static function getDetailById(int $id): ?array
     {
-        $servicePriceExpr = self::supportsPricingColumns()
-            ? 'COALESCE(NULLIF(b.line_total, 0), s.price)'
-            : 's.price';
-
         $stmt = DB::pdo()->prepare(
             "SELECT
                 b.*,
+                bd.*,
+                bd.detail_status AS status,
+                bd.work_date AS date,
+                bd.work_time AS time,
+                bd.note AS description,
                 u.name AS user_name,
                 u.email AS customer_email,
                 u.phone AS user_phone,
@@ -143,17 +153,17 @@ final class Booking
                 u.address AS user_address,
                 u.address AS customer_address,
                 u.name AS customer_name,
-                COALESCE(b.date, b.created_at) AS booking_date,
                 s.name AS service_name,
-                {$servicePriceExpr} AS service_price,
+                s.price AS service_price,
                 s.unit AS service_unit,
                 w.name AS worker_name,
                 w.phone AS worker_phone,
                 w.address AS worker_address
              FROM bookings b
              JOIN users u ON u.id = b.user_id
-             JOIN services s ON s.id = b.service_id
-             LEFT JOIN users w ON w.id = b.assigned_worker_id
+             JOIN booking_details bd ON bd.booking_id = b.id
+             JOIN services s ON s.id = bd.service_id
+             LEFT JOIN users w ON w.id = bd.assigned_worker_id
              WHERE b.id = :id
              LIMIT 1"
         );
@@ -162,22 +172,25 @@ final class Booking
     }
 
     /**
-     * Lấy toàn bộ đơn đặt của một người dùng cụ thể.
+     * Lấy toàn bộ đơn đặt của một người dùng cụ thể (từ booking_details).
      *
      * @param int $userId ID người dùng (khách hàng)
      * @return array Danh sách đơn đặt của khách hàng
      */
     public static function getByUserId(int $userId): array
     {
-        $servicePriceExpr = self::supportsPricingColumns()
-            ? 'COALESCE(NULLIF(b.line_total, 0), s.price)'
-            : 's.price';
-
         $stmt = DB::pdo()->prepare(
-            "SELECT b.*, s.name AS service_name, {$servicePriceExpr} AS service_price, w.name AS worker_name
+            "SELECT b.*, bd.*,
+             bd.detail_status AS status,
+             bd.work_date AS date,
+             bd.work_time AS time,
+             bd.note AS description,
+             s.name AS service_name, s.price AS service_price,
+             w.name AS worker_name
              FROM bookings b
-             JOIN services s ON s.id = b.service_id
-             LEFT JOIN users w ON w.id = b.assigned_worker_id
+             JOIN booking_details bd ON bd.booking_id = b.id
+             JOIN services s ON s.id = bd.service_id
+             LEFT JOIN users w ON w.id = bd.assigned_worker_id
              WHERE b.user_id = :uid
              ORDER BY b.created_at DESC"
         );
@@ -186,28 +199,31 @@ final class Booking
     }
 
     /**
-     * Lấy danh sách đơn đã gán cho worker.
+     * Lấy danh sách đơn đã gán cho worker (từ booking_details).
      */
     public static function getByWorkerId(int $workerId): array
     {
-        $servicePriceExpr = self::supportsPricingColumns()
-            ? 'COALESCE(NULLIF(b.line_total, 0), s.price)'
-            : 's.price';
-
         $stmt = DB::pdo()->prepare(
-            "SELECT b.*, u.name AS user_name, u.phone AS user_phone, s.name AS service_name, {$servicePriceExpr} AS service_price
+            "SELECT b.*, bd.*,
+             bd.detail_status AS status,
+             bd.work_date AS date,
+             bd.work_time AS time,
+             bd.note AS description,
+             u.name AS user_name, u.phone AS user_phone, u.name AS customer_name,
+             s.name AS service_name, s.price AS service_price
              FROM bookings b
              JOIN users u ON u.id = b.user_id
-             JOIN services s ON s.id = b.service_id
-             WHERE b.assigned_worker_id = :wid
-             ORDER BY b.date ASC, b.time ASC"
+             JOIN booking_details bd ON bd.booking_id = b.id
+             JOIN services s ON s.id = bd.service_id
+             WHERE bd.assigned_worker_id = :wid
+             ORDER BY bd.work_date ASC, bd.work_time ASC"
         );
         $stmt->execute(['wid' => $workerId]);
         return $stmt->fetchAll() ?: [];
     }
 
     /**
-     * Cập nhật trạng thái của đơn đặt.
+     * Cập nhật trạng thái của đơn đặt (cập nhật detail_status trong booking_details).
      *
      * @param int $id ID đơn đặt
      * @param string $status Trạng thái mới
@@ -218,13 +234,13 @@ final class Booking
         $safeStatus = self::resolveStatusForDatabase($status);
 
         $stmt = DB::pdo()->prepare(
-            "UPDATE bookings SET status = :status, updated_at = NOW() WHERE id = :id"
+            "UPDATE booking_details SET detail_status = :status, updated_at = NOW() WHERE booking_id = :id"
         );
         return $stmt->execute(['status' => $safeStatus, 'id' => $id]);
     }
 
     /**
-     * Phân công nhân viên cho một đơn đặt.
+     * Phân công nhân viên cho một đơn đặt (cập nhật booking_details).
      *
      * @param int $id ID đơn đặt
      * @param int $workerId ID nhân viên (người dùng)
@@ -233,13 +249,13 @@ final class Booking
     public static function assignWorker(int $id, int $workerId): bool
     {
         $stmt = DB::pdo()->prepare(
-            "UPDATE bookings SET assigned_worker_id = :wid, assigned_at = NOW(), updated_at = NOW() WHERE id = :id"
+            "UPDATE booking_details SET assigned_worker_id = :wid, assigned_at = NOW(), updated_at = NOW() WHERE booking_id = :id"
         );
         return $stmt->execute(['wid' => $workerId, 'id' => $id]);
     }
 
     /**
-     * Cập nhật thời gian ước tính worker sẽ đến.
+     * Cập nhật thời gian ước tính worker sẽ đến (cập nhật booking_details).
      *
      * @param int $id ID đơn đặt
      * @param string $estimatedArrivalTime Thời gian ước tính (định dạng: YYYY-MM-DD HH:MM)
@@ -247,8 +263,17 @@ final class Booking
      */
     public static function updateEstimatedArrivalTime(int $id, string $estimatedArrivalTime): bool
     {
+        try {
+            $stmt = DB::pdo()->query("SHOW COLUMNS FROM booking_details LIKE 'estimated_arrival_time'");
+            if ($stmt->fetch() === false) {
+                return true;
+            }
+        } catch (PDOException $exception) {
+            return true;
+        }
+
         $stmt = DB::pdo()->prepare(
-            "UPDATE bookings SET estimated_arrival_time = :eta, updated_at = NOW() WHERE id = :id"
+            "UPDATE booking_details SET estimated_arrival_time = :eta, updated_at = NOW() WHERE booking_id = :id"
         );
         return $stmt->execute(['eta' => $estimatedArrivalTime, 'id' => $id]);
     }
@@ -284,7 +309,7 @@ final class Booking
     }
 
     /**
-     * Lấy danh sách giá trị enum cột bookings.status từ DB.
+     * Lấy danh sách giá trị enum cột booking_details.detail_status từ DB.
      */
     private static function getSupportedStatuses(): array
     {
@@ -293,7 +318,7 @@ final class Booking
         }
 
         try {
-            $stmt = DB::pdo()->query("SHOW COLUMNS FROM bookings LIKE 'status'");
+            $stmt = DB::pdo()->query("SHOW COLUMNS FROM booking_details LIKE 'detail_status'");
             $column = $stmt->fetch();
             $type = (string)($column['Type'] ?? '');
 
@@ -318,63 +343,5 @@ final class Booking
         }
 
         return self::$statusEnumCache;
-    }
-
-    private static function supportsPricingColumns(): bool
-    {
-        return self::hasBookingColumn('quantity')
-            && self::hasBookingColumn('measure_unit')
-            && self::hasBookingColumn('unit_price')
-            && self::hasBookingColumn('line_total');
-    }
-
-    private static function hasBookingColumn(string $name): bool
-    {
-        $columns = self::getBookingColumns();
-        return in_array($name, $columns, true);
-    }
-
-    private static function getBookingColumns(): array
-    {
-        if (self::$bookingColumnsCache !== null) {
-            return self::$bookingColumnsCache;
-        }
-
-        try {
-            $stmt = DB::pdo()->query('SHOW COLUMNS FROM bookings');
-            $rows = $stmt->fetchAll() ?: [];
-            self::$bookingColumnsCache = array_values(array_map(
-                static fn(array $row): string => (string)($row['Field'] ?? ''),
-                $rows
-            ));
-        } catch (PDOException $exception) {
-            self::$bookingColumnsCache = [];
-        }
-
-        return self::$bookingColumnsCache;
-    }
-
-    private static function ensurePricingColumnsIfNeeded(): void
-    {
-        if (self::supportsPricingColumns()) {
-            return;
-        }
-
-        $alterStatements = [
-            "ALTER TABLE bookings ADD COLUMN quantity DECIMAL(10,2) NOT NULL DEFAULT 1.00 AFTER service_id",
-            "ALTER TABLE bookings ADD COLUMN measure_unit VARCHAR(32) NOT NULL DEFAULT '' AFTER quantity",
-            "ALTER TABLE bookings ADD COLUMN unit_price DECIMAL(15,2) NOT NULL DEFAULT 0.00 AFTER measure_unit",
-            "ALTER TABLE bookings ADD COLUMN line_total DECIMAL(15,2) NOT NULL DEFAULT 0.00 AFTER unit_price",
-        ];
-
-        foreach ($alterStatements as $sql) {
-            try {
-                DB::pdo()->exec($sql);
-            } catch (PDOException $exception) {
-                // Cột có thể đã tồn tại hoặc không có quyền ALTER TABLE.
-            }
-        }
-
-        self::$bookingColumnsCache = null;
     }
 }

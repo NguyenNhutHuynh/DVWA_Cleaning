@@ -441,6 +441,7 @@ final class AdminController
         $users = User::listAll();
         $customerPaidRevenue = PaymentTransaction::getTotalPaidCustomerRevenue();
         $monthlyPaidRevenue = PaymentTransaction::getPaidCustomerRevenueByMonth();
+        $customerPayments = PaymentTransaction::getCustomerPaymentDetails();
         $paidBookingsCount = count(array_filter(
             $bookings,
             static fn(array $booking): bool => PaymentTransaction::hasSuccessfulCustomerPayment((int)($booking['id'] ?? 0))
@@ -465,9 +466,91 @@ final class AdminController
             'average_order_value' => $averagePaidOrderValue,
             'conversion_rate' => $this->calculateConversionRate($bookings),
             'completion_rate' => $this->calculateCompletionRate($bookings),
+            'customer_payments' => $customerPayments,
+            'customer_payment_count' => count($customerPayments),
         ];
 
         View::render('admin/stats', ['stats' => $stats]);
+    }
+
+    public function workerSchedules(): void
+    {
+        $this->requireAdminRole();
+
+        $scheduleItems = [];
+        foreach (Booking::getAll() as $booking) {
+            $workerId = (int)($booking['assigned_worker_id'] ?? 0);
+            if ($workerId <= 0) {
+                continue;
+            }
+
+            $bookingId = (int)($booking['id'] ?? 0);
+            $status = (string)($booking['status'] ?? '');
+            $latestStep = BookingProgress::latestStep($bookingId);
+
+            $scheduleItems[] = [
+                'booking_id' => $bookingId,
+                'worker_id' => $workerId,
+                'worker_name' => trim((string)($booking['worker_name'] ?? '')),
+                'worker_phone' => trim((string)($booking['worker_phone'] ?? '')),
+                'customer_name' => trim((string)($booking['customer_name'] ?? $booking['user_name'] ?? '')),
+                'customer_phone' => trim((string)($booking['user_phone'] ?? '')),
+                'customer_address' => trim((string)($booking['user_address'] ?? '')),
+                'service_name' => trim((string)($booking['service_name'] ?? '')),
+                'location' => trim((string)($booking['location'] ?? '')),
+                'date' => (string)($booking['date'] ?? ''),
+                'time' => (string)($booking['time'] ?? ''),
+                'status' => $status,
+                'status_label' => match ($status) {
+                    Booking::STATUS_PENDING => 'Chờ xử lý',
+                    Booking::STATUS_CONFIRMED => 'Chờ nhận việc',
+                    Booking::STATUS_ACCEPTED => 'Đã nhận việc',
+                    Booking::STATUS_IN_PROGRESS => 'Đang thực hiện',
+                    Booking::STATUS_COMPLETED => 'Hoàn thành',
+                    Booking::STATUS_CANCELLED => 'Đã hủy',
+                    default => ucfirst($status !== '' ? $status : 'unknown'),
+                },
+                'latest_step' => $latestStep !== null ? BookingProgress::stepLabel($latestStep) : 'Chưa cập nhật',
+                'estimated_arrival_time' => trim((string)($booking['estimated_arrival_time'] ?? '')),
+                'service_price' => (float)($booking['service_price'] ?? 0),
+            ];
+        }
+
+        usort($scheduleItems, static function (array $left, array $right): int {
+            $leftDateTime = trim((string)($left['date'] ?? '')) . ' ' . trim((string)($left['time'] ?? ''));
+            $rightDateTime = trim((string)($right['date'] ?? '')) . ' ' . trim((string)($right['time'] ?? ''));
+            return strcmp($leftDateTime, $rightDateTime) ?: ((int)($left['booking_id'] ?? 0) <=> (int)($right['booking_id'] ?? 0));
+        });
+
+        $groupedByWorker = [];
+        foreach ($scheduleItems as $item) {
+            $workerKey = (string)($item['worker_id'] ?? 0);
+            if (!isset($groupedByWorker[$workerKey])) {
+                $groupedByWorker[$workerKey] = [
+                    'worker_id' => (int)$item['worker_id'],
+                    'worker_name' => $item['worker_name'] !== '' ? $item['worker_name'] : 'Worker #' . (int)$item['worker_id'],
+                    'worker_phone' => $item['worker_phone'],
+                    'items' => [],
+                ];
+            }
+
+            $groupedByWorker[$workerKey]['items'][] = $item;
+        }
+
+        $today = date('Y-m-d');
+        $stats = [
+            'total_assignments' => count($scheduleItems),
+            'worker_count' => count($groupedByWorker),
+            'today_count' => count(array_filter($scheduleItems, static fn(array $item): bool => ($item['date'] ?? '') === $today)),
+            'active_count' => count(array_filter($scheduleItems, static fn(array $item): bool => !in_array(($item['status'] ?? ''), [Booking::STATUS_CANCELLED], true))),
+        ];
+
+        View::render('admin/worker-schedules', [
+            'stats' => $stats,
+            'groupedByWorker' => $groupedByWorker,
+            'scheduleItems' => $scheduleItems,
+            'csrf' => Csrf::token(),
+        ]);
     }
 
 
